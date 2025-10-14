@@ -29,10 +29,19 @@ export default StyleSheet.create({
     txDecor: {textDecorationLine: 'underline'},
   
     txbold: {fontFamily: family.semiBold},
+
+    mt_10 : {
+      marginTop:'10%'
+    },
   
     tx12: {
       fontSize: size.label,
       color: colors.black,
+      fontFamily: family.regular,
+    },
+    error:{
+      fontSize: size.label,
+      color: colors.red,
       fontFamily: family.regular,
     },
   
@@ -49,7 +58,7 @@ export default StyleSheet.create({
     tx16: {
       fontSize: size.title,
       color: colors.black,
-      fontFamily: family.semiBold,
+      fontFamily: family.bold,
     },
   
     tx20: {
@@ -60,6 +69,6 @@ export default StyleSheet.create({
     tx22: {
       fontSize: size.extraHead,
       color: colors.secondary,
-      fontFamily: family.semiBold,
+      fontFamily: family.bold,
     },
 })

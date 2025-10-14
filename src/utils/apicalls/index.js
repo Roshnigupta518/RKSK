@@ -1,8 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { store } from '../../redux/store';
-import { clearLogin } from '../../redux/slices/loginSlice';
-
+import { clearLogin } from '../../redux/slices/login';
 export const getApi = async (api) => {
 
   const state = store.getState()
@@ -26,7 +25,7 @@ export const getApi = async (api) => {
 };
 
 export const postApi = async (api, data) => {
-  // console.log({api, data})
+  console.log({api, data})
   const config = {
     headers: {
       // Authorization: 'Bearer ' + token,

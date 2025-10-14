@@ -3,60 +3,63 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Platform,
-  ActivityIndicator, Keyboard
+  ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import React from 'react';
 import st from '../../global/styles';
 import { colors } from '../../global';
+
 const Button = ({
   title,
   backgroundColor,
   onPress = () => {},
-  disabled,
-  isLoading,
+  disabled = false,
   titleColor,
+  loading = false,
 }) => {
   const finalBgColor = disabled
     ? colors.grey
-    : backgroundColor || colors.orange;
+    : backgroundColor || colors.blue;
 
   return (
     <TouchableOpacity
-      onPress={()=>{
-        onPress()
-        Keyboard.dismiss()
+      onPress={() => {
+        Keyboard.dismiss();
+        if (!loading) onPress(); // Prevent multiple presses while loading
       }}
       activeOpacity={0.7}
-      disabled={disabled}
+      disabled={disabled || loading}
       style={[
         {
-          borderRadius: 8,
+          borderRadius: 50,
           marginTop: 15,
           height: 50,
           borderWidth: 0.5,
           borderColor: colors.lightGrey,
-          // elevation: Platform.OS == 'android' ? 1 : null,
           shadowColor: colors.black,
           shadowOpacity: 0.3,
-          shadowOffset: {width: 0, height: 0.5},
+          shadowOffset: { width: 0, height: 0.5 },
           shadowRadius: 8,
           backgroundColor: finalBgColor,
           alignItems: 'center',
-          justifyContent:'center',
+          justifyContent: 'center',
           paddingVertical: 5,
-          paddingHorizontal:15
+          paddingHorizontal: 15,
         },
       ]}>
       <View style={st.row}>
-        {(isLoading) && <ActivityIndicator color={colors.lightOrange} style={{marginRight:10}} />}
-        {/* {(isLoading && !disabled) && <ActivityIndicator color={titleColor || "#fff"} style={{marginRight:10}} />} */}
-
-        <Text numberOfLines={1} adjustsFontSizeToFit
+        {loading && (
+          <ActivityIndicator color={colors.white} style={{ marginRight: 10 }} />
+        )}
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
           style={[
-            st.tx14, st.txbold,
+            st.tx14,
+            st.txbold,
             st.txAlignC,
-            {color: titleColor || colors.white},
+            { color: titleColor || colors.white },
           ]}>
           {title}
         </Text>
@@ -66,5 +69,3 @@ const Button = ({
 };
 
 export default Button;
-
-const styles = StyleSheet.create({});
