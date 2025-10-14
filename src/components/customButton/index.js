@@ -32,7 +32,7 @@ const Button = ({
       disabled={disabled || loading}
       style={[
         {
-          borderRadius: 50,
+          borderRadius: 5,
           marginTop: 15,
           height: 50,
           borderWidth: 0.5,

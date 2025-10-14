@@ -83,9 +83,9 @@ const style = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     paddingRight: 15,
-    borderRadius: 50,
+    borderRadius: 5,
     // alignItems: 'center',
-    marginTop: 20,
+    marginVertical: 10,
     borderWidth: 1,
     borderColor: 'rgba(200, 200, 200, 1)',
     height: 48,

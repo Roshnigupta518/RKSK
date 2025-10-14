@@ -19,6 +19,7 @@ import { sha256 } from 'react-native-sha256';
 import DeviceInfo from 'react-native-device-info';
 import CustomPopup from '../../../components/customPopup';
 import { setLogin } from '../../../redux/slices/login';
+import { useDispatch } from 'react-redux';
 
 const INITIALINPUT = {
   userName: 'du_Betul',
@@ -32,6 +33,8 @@ const Login = ({ navigation }) => {
   const [ipAddress, setIpAddress] = useState('');
   const [visible, setVisible] = useState(false);
   const [message, setMessage] = useState('')
+
+  const dispatch = useDispatch()
 
   const handleOnchange = (text, input) => {
     setInputs(prevState => ({ ...prevState, [input]: text }));
@@ -72,7 +75,8 @@ const Login = ({ navigation }) => {
     }
 
     if (valid) {
-      handlePress();
+      // handlePress();
+      dispatch(setLogin(true))
     }
   };
 
@@ -174,6 +178,7 @@ const Login = ({ navigation }) => {
                 <Button
                   title="Login"
                   onPress={validation}
+                  // onPress={()=>navigation.navigate('ATPListScreen')}
                   loading={isLoading}
                   disabled={isLoading}
                 />

@@ -4,10 +4,13 @@ import {colors, family, size} from "../index";
 export default StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor:colors.white
+      backgroundColor:colors.lightGrey
     },
     flex: {
       flex: 1,
+    },
+    pd20:{
+      padding:20
     },
     row: {flexDirection: 'row'},
     center: {justifyContent: 'center', alignItems: 'center', flex: 1},
@@ -58,7 +61,7 @@ export default StyleSheet.create({
     tx16: {
       fontSize: size.title,
       color: colors.black,
-      fontFamily: family.bold,
+      fontFamily: family.semiBold,
     },
   
     tx20: {
@@ -69,6 +72,19 @@ export default StyleSheet.create({
     tx22: {
       fontSize: size.extraHead,
       color: colors.secondary,
-      fontFamily: family.bold,
+      fontFamily: family.semiBold,
     },
+
+    inputContainer:{
+      flexDirection: 'row',
+      paddingHorizontal: 15,
+      borderRadius: 5,
+      alignItems: 'center',
+      marginVertical: 10,
+      borderWidth: 1,
+      borderColor: 'rgba(200, 200, 200, 1)',
+      height: 48,
+      backgroundColor: colors.white
+    },
+    iconLeft:{position:'absolute', right:15}
 })

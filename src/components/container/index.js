@@ -1,9 +1,9 @@
 import {StyleSheet, Text, View, ScrollView} from 'react-native';
 import React from 'react';
 import { colors } from '../../global';
-
+import st from '../../global/styles';
 const CustomContainer = ({children, style}) => {
-  return <View style={[styles.container, style]}>{children}</View>;
+  return <View style={[st.container, style]}>{children}</View>;
 };
 
 const CustomContent = ({children, style}) => {
