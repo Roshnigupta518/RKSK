@@ -12,6 +12,9 @@ export default StyleSheet.create({
     pd20:{
       padding:20
     },
+    pd_H20:{
+  paddingHorizontal:20
+    },
     row: {flexDirection: 'row'},
     center: {justifyContent: 'center', alignItems: 'center', flex: 1},
     align_C: {alignItems: 'center'},
@@ -35,6 +38,10 @@ export default StyleSheet.create({
 
     mt_10 : {
       marginTop:'10%'
+    },
+
+    mt_5 : {
+      marginTop:'5%'
     },
   
     tx12: {

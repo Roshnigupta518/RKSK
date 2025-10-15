@@ -13,6 +13,7 @@ import {
   REGISTER,
 } from 'redux-persist';
 import loginSlice from '../slices/login';
+import ClockTimeSlice from '../slices/ClockTime';
 
 const authPersistConfig = {
     key: 'Login',
@@ -20,10 +21,15 @@ const authPersistConfig = {
     whitelist: ['data'],
   };
 
+  const clockPersistConfig = {
+    key: 'ClockTime',
+    storage: AsyncStorage,
+    whitelist: ['loginDetails','logoutDetails'],
+  };
 
   const appReducer = combineReducers({
     login: persistReducer(authPersistConfig, loginSlice),
-
+    clockTime: persistReducer(clockPersistConfig, ClockTimeSlice),
   })
 
 export const store = configureStore({

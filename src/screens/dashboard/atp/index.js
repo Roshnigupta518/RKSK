@@ -10,10 +10,14 @@ import {
 import CustomHeader from '../../../components/customHeader';
 import Field from '../../../components/field';
 import st from '../../../global/styles';
-
+import HomeHeader from '../../../components/homeHeader';
 const ATPListScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
 
+  const ontogglePress = () => {
+    navigation.toggleDrawer();
+  };
+  
   const data = [
     {
       id: '1',
@@ -70,7 +74,11 @@ const ATPListScreen = ({ navigation }) => {
 
   return (
     <View style={st.container}>
-      <CustomHeader title="ATP List" />
+      {/* <CustomHeader title="ATP List" /> */}
+      {/* <HomeHeader
+        title={'ATP List'}
+        onBackPress={ontogglePress}
+      /> */}
       <FlatList
         data={data}
         keyExtractor={item => item.id}

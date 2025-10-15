@@ -5,121 +5,248 @@ import {
   Platform,
   PermissionsAndroid,
   Text,
+  Linking,
+  Alert,
   Keyboard,
 } from 'react-native';
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
-// import {CustomContainer} from '../../../components/container';
-import Geolocation from '@react-native-community/geolocation';
-import Geocoder from 'react-native-geocoder';
+import {CustomContainer} from '../../../../components/container';
+import st from '../../../../global/styles';
+import { colors } from '../../../../global';
+import Button from '../../../../components/customButton';
+import {
+  formatDate,
+  formatTime,
+} from '../../../../utils/helper';
+import {
+  setClockIn,
+  setClockOut,
+  clearClock,
+} from '../../../../redux/slices/ClockTime';
+import {useDispatch, useSelector} from 'react-redux';
+import {API} from '../../../../utils/endpoints';
+import {postApi} from '../../../../utils/apicalls';
+// import {ValueEmpty} from '../../../../utils/validations';
+import { isEmpty } from '../../../../utils/validations';
+import {useLocation} from '../../../../hooks/useLocation';
+// import {getAttandanceHandle} from '../../../../API/attandance';
 import CustomHeader from '../../../../components/customHeader';
-import { CustomContainer } from '../../../../components/container';
-const LoginMap = ({navigation, route}) => {
-//   const myregion = route?.params?.region;
-  const [myregion, setMyregion] = useState({
-    latitude:'',
-    longitude:''
-  })
+import MyInput from '../../../../components/customInput'
+import { handleAPIErrorResponse } from '../../../../utils/validations';
+
+const INITIALINPUT = {
+  remark: '',
+};
+
+const App = ({navigation}) => {
+  // const [region, setRegion] = useState(null);
+  const [date, setDate] = useState(null);
+  // const [locationArea, setLocationArea] = useState();
+  const [isLoading, setIsLoading] = useState(false);
+  const [inputs, setInputs] = useState(INITIALINPUT);
+  const [errors, setErrors] = useState(INITIALINPUT);
+  const [time, setTime] = useState();
+
+  const dispatch = useDispatch();
+
+  const {region, locationArea} = useLocation();
+
+  const attendance = useSelector(state => state.clockTime?.loginDetails);
+  const loginDetails = useSelector(state => state.login?.data);
+  const logoutDetails = useSelector(state => state.clockTime?.logoutDetails);
+
+  const handleOnchange = (text, input) => {
+    setInputs(prevState => ({...prevState, [input]: text}));
+  };
+
+  const handleError = (error, input) => {
+    setErrors(prevState => ({...prevState, [input]: error}));
+  };
 
   useEffect(() => {
-    const requestLocationPermission = async () => {
-      if (Platform.OS === 'ios') {
-        getOneTimeLocation();
-        subscribeLocationLocation();
-      } else {
-        try {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-            {
-              title: 'Location Access Required',
-              message: 'This App needs to Access your location',
-              buttonNeutral: 'Ask Me Later',
-              buttonNegative: 'Cancel',
-              buttonPositive: 'Okay',
-            },
-          );
-          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            //To Check, If Permission is granted
-            getOneTimeLocation();
-            subscribeLocationLocation();
-          } else {
-            // ('Permission Denied');
-          }
-        } catch (err) {
-          console.warn(err);
-        }
-      }
-    };
-    requestLocationPermission();
-    return () => {
-      Geolocation.clearWatch();
-    };
+    const date = new Date();
+    const todayDate = formatDate(date);
+    setDate(todayDate);
+    // console.log({attendance, logoutDetails});
   }, []);
 
-  const getOneTimeLocation = () => {
-    ('Getting Location ...');
-    Geolocation.getCurrentPosition(
-      //Will give you the current location
-      position => {
-        ('You are Here');
-      },
-      error => {
-        console.log({error});
-      },
-      
-    );
+  const validation = () => {
+    Keyboard.dismiss();
+    const emptyRemark = isEmpty(inputs?.remark);
+
+    let isValid = true;
+
+    if (emptyRemark) {
+      handleError('*Required', 'remark');
+      isValid = false;
+    } else {
+      handleError('', 'remark');
+    }
+
+    if (isValid) {
+      navigation.navigate('ATPForm')
+      // handleLogin();
+    }
   };
 
-  const subscribeLocationLocation = () => {
-    watchID = Geolocation.watchPosition(
-      position => {
-        'You are Here', position;
-        getCurrentAddress(position.coords.latitude, position.coords.longitude);
-      },
-      error => {
-        console.log({error});
-      },
-      
-    );
-  };
+  // const handleLogin = async () => {
+  //   const currentDateTime = new Date();
+  //   const url = `${API.ATTENDANCE_LOGIN}`;
+  //   const param = {
+  //     divisionID: loginDetails.data.division.divisionID,
+  //     districtID: loginDetails.data.district.districtID,
+  //     remarks: inputs?.remark,
+  //     attendancedate: currentDateTime,
+  //     loginTime: '',
+  //     loginLocation: locationArea.locality,
+  //     logoutLocation: '',
+  //     logoutTime: '',
+  //     blockID: loginDetails.data.block.blockID,
+  //     ashasahyogiID: loginDetails.data.ashasahyogiID,
+  //     loginlat: region.latitude,
+  //     loginlong: region.longitude,
+  //   };
+  //   try {
+  //     setIsLoading(true);
+  //     const result = await postApi(url, param);
+  //     if (result.status == 200) {
+  //       const data = result.data;
+  //       console.log({data});
+  //       if (data.status == 'Your attendance for today is already logged') {
+  //         setIsLoading(false);
+  //         alert(data.status);
+  //       } else {
+  //         setIsLoading(false);
+  //         // dispatch(setClockIn(data));
+  //         getAttandanceHandle(dispatch);
+  //         navigation.goBack();
+  //       }
+  //     }
+  //   } catch (e) {
+  //     console.log(e);
+  //     setIsLoading(false);
+  //     handleAPIErrorResponse(e);
+  //   }
+  // };
 
-  const getCurrentAddress = (Latitude, Longitude) => {
-    var NY = {
-      lat: Latitude,
-      lng: Longitude,
-    };
-    Geocoder.geocodePosition(NY)
-      .then(res => {
-        // console.log({res: res});
-        if (res) {
-          // setLocationArea(res[0]);
-        }
-      })
-      .catch(err => console.log(err));
-  };
+  // const handleLogOut = async () => {
+  //   const currentDateTime = new Date();
+
+  //   const url = `${API.ATTENDANCE_LOGOUT}`;
+  //   const param = {
+  //     divisionID: loginDetails.data.division.divisionID,
+  //     districtID: loginDetails.data.district.districtID,
+  //     remarks: inputs?.remark,
+  //     attendancedate: currentDateTime,
+  //     loginTime: '',
+  //     loginLocation: '',
+  //     logoutLocation: locationArea.locality,
+  //     logoutTime: '',
+  //     blockID: loginDetails.data.block.blockID,
+  //     ashasahyogiID: loginDetails.data.ashasahyogiID,
+  //     logoutlat: region.latitude,
+  //     logoutlong: region.longitude,
+  //   };
+  //   try {
+  //     setIsLoading(true);
+  //     const result = await postApi(url, param);
+  //     if (result.status == 200) {
+  //       const data = result.data;
+  //       console.log({data});
+  //       setIsLoading(false);
+  //       // dispatch(setClockOut(data));
+  //       getAttandanceHandle(dispatch);
+  //       navigation.goBack();
+  //     }
+  //   } catch (e) {
+  //     setIsLoading(false);
+  //     handleAPIErrorResponse(e);
+  //   }
+  // };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const time = formatTime();
+      setTime(time);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <CustomContainer>
-      <CustomHeader title={''} onBack={() => navigation.goBack()} />
-      {/* {myregion && ( */}
-        <MapView
-          style={styles.map}
-        //   provider={PROVIDER_GOOGLE}
-          initialRegion={{
-            latitude: parseFloat(myregion.latitute),
-            longitude: parseFloat(myregion.longitute),
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}>
+      <CustomHeader title={''} onBackPress={() => navigation.goBack()} />
+
+      <MapView
+        style={styles.map}
+        provider={PROVIDER_GOOGLE}
+        showsUserLocation={true}
+        followUserLocation={true}
+        initialRegion={region}>
+        {region && (
           <Marker
             coordinate={{
-              latitude: parseFloat(myregion.latitute),
-              longitude: parseFloat(myregion.longitute),
+              latitude: region.latitude,
+              longitude: region.longitude,
             }}
           />
-        </MapView>
-      {/* )} */}
+        )}
+      </MapView>
 
-     
+      <View style={st.pd20}>
+        <View>
+          <Text style={[st.tx12, {color: colors.grey}]}>LOCATION</Text>
+          <Text style={st.tx12}>{locationArea?.formattedAddress}</Text>
+        </View>
+        {(!attendance?.loginTime || (attendance?.loginTime && attendance?.logoutTime)) && (
+          <View>
+            <MyInput
+              onChangeText={text => handleOnchange(text, 'remark')}
+              onFocus={() => handleError(null, 'remark')}
+              error={errors?.remark}
+              value={inputs.remark}
+              placeholder={'Enter remark'}
+            />
+          </View>
+        )}
+
+        <View>
+          <View style={[st.row, st.align_C, st.justify_S]}>
+            <View style={st.wdh70}>
+              <Text style={st.tx16}>{time}</Text>
+              <Text style={st.tx12}>{date}</Text>
+            </View>
+            <View style={st.wdh30}>
+              <Button
+                disabled={locationArea ? false : true}
+                title={
+                  !attendance?.loginTime ||
+                  (attendance?.loginTime && attendance?.logoutTime)
+                    ? 'Login'
+                    : 'Logout'
+                }
+                onPress={() => {
+                  console.log({attendance, logoutDetails});
+                  if ((!attendance?.loginTime || (attendance?.loginTime && attendance?.logoutTime))) {
+                    dispatch(clearClock());
+                    validation();
+                  } else {
+                    // handleLogOut();
+                    alert('logout')
+                  }
+                }}
+                // backgroundColor={
+                //   locationArea
+                //     ? [colors.secondary, colors.secondary]
+                //     : [colors.grey, colors.grey]
+                // }
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* <Loader loading={isLoading} /> */}
     </CustomContainer>
   );
 };
@@ -135,4 +262,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginMap;
+export default App;
