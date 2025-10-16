@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,9 +8,10 @@ import {
   Linking,
   Alert,
   Keyboard,
+  KeyboardAvoidingView
 } from 'react-native';
-import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
-import {CustomContainer} from '../../../../components/container';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { CustomContainer } from '../../../../components/container';
 import st from '../../../../global/styles';
 import { colors } from '../../../../global';
 import Button from '../../../../components/customButton';
@@ -23,12 +24,12 @@ import {
   setClockOut,
   clearClock,
 } from '../../../../redux/slices/ClockTime';
-import {useDispatch, useSelector} from 'react-redux';
-import {API} from '../../../../utils/endpoints';
-import {postApi} from '../../../../utils/apicalls';
+import { useDispatch, useSelector } from 'react-redux';
+import { API } from '../../../../utils/endpoints';
+import { postApi } from '../../../../utils/apicalls';
 // import {ValueEmpty} from '../../../../utils/validations';
 import { isEmpty } from '../../../../utils/validations';
-import {useLocation} from '../../../../hooks/useLocation';
+import { useLocation } from '../../../../hooks/useLocation';
 // import {getAttandanceHandle} from '../../../../API/attandance';
 import CustomHeader from '../../../../components/customHeader';
 import MyInput from '../../../../components/customInput'
@@ -38,7 +39,7 @@ const INITIALINPUT = {
   remark: '',
 };
 
-const App = ({navigation}) => {
+const App = ({ navigation }) => {
   // const [region, setRegion] = useState(null);
   const [date, setDate] = useState(null);
   // const [locationArea, setLocationArea] = useState();
@@ -49,18 +50,18 @@ const App = ({navigation}) => {
 
   const dispatch = useDispatch();
 
-  const {region, locationArea} = useLocation();
+  const { region, locationArea } = useLocation();
 
   const attendance = useSelector(state => state.clockTime?.loginDetails);
   const loginDetails = useSelector(state => state.login?.data);
   const logoutDetails = useSelector(state => state.clockTime?.logoutDetails);
 
   const handleOnchange = (text, input) => {
-    setInputs(prevState => ({...prevState, [input]: text}));
+    setInputs(prevState => ({ ...prevState, [input]: text }));
   };
 
   const handleError = (error, input) => {
-    setErrors(prevState => ({...prevState, [input]: error}));
+    setErrors(prevState => ({ ...prevState, [input]: error }));
   };
 
   useEffect(() => {
@@ -176,7 +177,10 @@ const App = ({navigation}) => {
   return (
     <CustomContainer>
       <CustomHeader title={''} onBackPress={() => navigation.goBack()} />
-
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        >
       <MapView
         style={styles.map}
         provider={PROVIDER_GOOGLE}
@@ -192,60 +196,60 @@ const App = ({navigation}) => {
           />
         )}
       </MapView>
-
-      <View style={st.pd20}>
-        <View>
-          <Text style={[st.tx12, {color: colors.grey}]}>LOCATION</Text>
-          <Text style={st.tx12}>{locationArea?.formattedAddress}</Text>
-        </View>
-        {(!attendance?.loginTime || (attendance?.loginTime && attendance?.logoutTime)) && (
+     
+        <View style={[st.pd_H20, st.mt_5]}>
           <View>
-            <MyInput
-              onChangeText={text => handleOnchange(text, 'remark')}
-              onFocus={() => handleError(null, 'remark')}
-              error={errors?.remark}
-              value={inputs.remark}
-              placeholder={'Enter remark'}
-            />
+            <Text style={[st.tx12, st.txbold]}>LOCATION</Text>
+            <Text style={st.tx12}>{locationArea}</Text>
           </View>
-        )}
-
-        <View>
-          <View style={[st.row, st.align_C, st.justify_S]}>
-            <View style={st.wdh70}>
-              <Text style={st.tx16}>{time}</Text>
-              <Text style={st.tx12}>{date}</Text>
+          {(!attendance?.loginTime || (attendance?.loginTime && attendance?.logoutTime)) && (
+            <View>
+              <MyInput
+                onChangeText={text => handleOnchange(text, 'remark')}
+                onFocus={() => handleError(null, 'remark')}
+                error={errors?.remark}
+                value={inputs.remark}
+                placeholder={'Enter remark'}
+              />
             </View>
-            <View style={st.wdh30}>
-              <Button
-                disabled={locationArea ? false : true}
-                title={
-                  !attendance?.loginTime ||
-                  (attendance?.loginTime && attendance?.logoutTime)
-                    ? 'Login'
-                    : 'Logout'
-                }
-                onPress={() => {
-                  console.log({attendance, logoutDetails});
-                  if ((!attendance?.loginTime || (attendance?.loginTime && attendance?.logoutTime))) {
-                    dispatch(clearClock());
-                    validation();
-                  } else {
-                    // handleLogOut();
-                    alert('logout')
+          )}
+
+          <View>
+            <View style={[st.row, st.align_C, st.justify_S]}>
+              <View style={st.wdh70}>
+                <Text style={st.tx16}>{time}</Text>
+                <Text style={st.tx12}>{date}</Text>
+              </View>
+              <View style={st.wdh30}>
+                <Button
+                  disabled={locationArea ? false : true}
+                  title={
+                    !attendance?.loginTime ||
+                      (attendance?.loginTime && attendance?.logoutTime)
+                      ? 'Login'
+                      : 'Logout'
                   }
-                }}
+                  onPress={() => {
+                    console.log({ attendance, logoutDetails });
+                    if ((!attendance?.loginTime || (attendance?.loginTime && attendance?.logoutTime))) {
+                      dispatch(clearClock());
+                      validation();
+                    } else {
+                      // handleLogOut();
+                      alert('logout')
+                    }
+                  }}
                 // backgroundColor={
                 //   locationArea
                 //     ? [colors.secondary, colors.secondary]
                 //     : [colors.grey, colors.grey]
                 // }
-              />
+                />
+              </View>
             </View>
           </View>
         </View>
-      </View>
-
+      </KeyboardAvoidingView>
       {/* <Loader loading={isLoading} /> */}
     </CustomContainer>
   );

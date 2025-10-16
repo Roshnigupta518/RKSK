@@ -22,8 +22,8 @@ import { setLogin } from '../../../redux/slices/login';
 import { useDispatch } from 'react-redux';
 
 const INITIALINPUT = {
-  userName: 'du_Betul',
-  password: 'admin123',
+  userName: 'Bhavra#M2',
+  password: 'Admin@123',
 };
 
 const Login = ({ navigation }) => {
@@ -75,8 +75,8 @@ const Login = ({ navigation }) => {
     }
 
     if (valid) {
-      // handlePress();
-      dispatch(setLogin(true))
+      handlePress();
+      // dispatch(setLogin(true))
     }
   };
 
