@@ -108,7 +108,7 @@ const Login = ({ navigation }) => {
       setIsLoading(true);
       const result = await postApi(url, params);
       console.log({ result })
-      if (result?.data?.success) {
+      if (result?.status == 200) {
         const data = result.data;
         console.log({ data });
         dispatch(setLogin(data))
