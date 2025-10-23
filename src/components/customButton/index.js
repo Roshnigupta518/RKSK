@@ -19,7 +19,7 @@ const Button = ({
   loading = false,
 }) => {
   const finalBgColor = disabled
-    ? colors.grey
+    ? colors.black
     : backgroundColor || colors.blue;
 
   return (

@@ -20,9 +20,10 @@ import DeviceInfo from 'react-native-device-info';
 import CustomPopup from '../../../components/customPopup';
 import { setLogin } from '../../../redux/slices/login';
 import { useDispatch } from 'react-redux';
+import {jwtDecode} from 'jwt-decode';
 
 const INITIALINPUT = {
-  userName: 'Bhavra#M2',
+  userName: 'Jhabua#F2',
   password: 'Admin@123',
 };
 
@@ -42,6 +43,39 @@ const Login = ({ navigation }) => {
 
   const handleError = (error, input) => {
     setErrors(prevState => ({ ...prevState, [input]: error }));
+  };
+
+
+  const decodeToken = async(token) => {
+    try {
+      const decoded = jwtDecode(token);
+      // console.log('Decoded token:', decoded);
+  
+      const userId = decoded.sub;           // "990"
+      const email = decoded.email;          // "Bhavra#M2"
+      const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];  // "TrainerUser"
+      const divisionId = decoded.DivisionId;
+      const districtId = decoded.DistrictId;
+      const blockId = decoded.BlockId;
+      const trainerId = decoded.TrainerId;
+      const ngoId = decoded.NGOId;
+      const jwtToken = token
+  
+      return {
+        userId,
+        email,
+        role,
+        divisionId,
+        districtId,
+        blockId,
+        trainerId,
+        ngoId,
+        jwtToken
+      };
+    } catch (error) {
+      console.error('Invalid token', error);
+      return null;
+    }
   };
 
   const showMsg = () => {
@@ -110,8 +144,9 @@ const Login = ({ navigation }) => {
       console.log({ result })
       if (result?.status == 200) {
         const data = result.data;
-        console.log({ data });
-        dispatch(setLogin(data))
+        const userData = await decodeToken(data.token);
+        console.log({ userData });
+        dispatch(setLogin(userData))
         setIsLoading(false);
         setInputs(INITIALINPUT)
       } else {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,86 +7,67 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
-import CustomHeader from '../../../components/customHeader';
 import Field from '../../../components/field';
 import st from '../../../global/styles';
-import HomeHeader from '../../../components/homeHeader';
+import { getATPListRequest } from '../../../utils/services';
+import EmptyItem from '../../../components/emptyItem';
+
 const ATPListScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
+  const [data, setData] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
-  const ontogglePress = () => {
-    navigation.toggleDrawer();
+  const getATPDataHandle = async () => {
+    try {
+      setIsLoading(true);
+      const result = await getATPListRequest();
+      console.log('ATP Result:', result);
+      if (Array.isArray(result)) {
+        setData(result);
+      } else {
+        console.warn('Unexpected data format:', result);
+        setData([]);
+      }
+    } catch (e) {
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  const data = [
-    {
-      id: '1',
-      title: 'Peer Educator Training',
-      startDate: '12/09/2025',
-      startTime: '10:30 AM',
-      endDate: '12/09/2025',
-      endTime: '12:30 PM',
-    },
-    {
-      id: '2',
-      title: 'Supportive Supervision Activity',
-      startDate: '12/09/2025',
-      startTime: '10:30 AM',
-      endDate: '12/09/2025',
-      endTime: '12:30 PM',
-    },
-    {
-      id: '3',
-      title: 'Cluster Meeting',
-      startDate: '12/09/2025',
-      startTime: '10:30 AM',
-      endDate: '12/09/2025',
-      endTime: '12:30 PM',
-    },
-    {
-      id: '4',
-      title: 'Peer Educator Training',
-      startDate: '12/09/2025',
-      startTime: '10:30 AM',
-      endDate: '12/09/2025',
-      endTime: '12:30 PM',
-    },
-  ];
+
+  useEffect(() => {
+    getATPDataHandle()
+  }, [])
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
-      // You can call API here to refresh data
+      getATPDataHandle()
       setRefreshing(false);
     }, 1500);
   }, []);
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity 
-    onPress={()=>navigation.navigate('ATPLogin')}
-    style={styles.card}>
-      <Text style={styles.title}>{item.title}</Text>
-
-      <Field label="Visit Start Date and Time" value={item.startDate} />
-      <Field label="Visit End Date and Time" value={item.endDate} />
+    <TouchableOpacity
+      onPress={() => navigation.navigate('ATPLogin')}
+      style={st.card}>
+      <Text style={styles.title}>{item.visit_Purpose}</Text>
+      <Field label="Visit Start Date and Time" value={item.visit_Start_Date} />
+      <Field label="Visit End Date and Time" value={item.visit_End_Date} />
     </TouchableOpacity>
   );
 
   return (
     <View style={st.container}>
-      {/* <CustomHeader title="ATP List" /> */}
-      {/* <HomeHeader
-        title={'ATP List'}
-        onBackPress={ontogglePress}
-      /> */}
       <FlatList
         data={data}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.atP_Id}
         renderItem={renderItem}
         contentContainerStyle={st.pd20}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        ListEmptyComponent={<EmptyItem isLoading={isLoading} />}
       />
     </View>
   );
@@ -95,54 +76,9 @@ const ATPListScreen = ({ navigation }) => {
 export default ATPListScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#EEF1F6',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: '#EEF1F6',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-  },
-  listContainer: {
-    padding: 10,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2,
-    elevation: 2,
-  },
   title: {
     ...st.tx14,
     ...st.txbold,
     marginBottom: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  label: {
-    color: '#777',
-    fontSize: 13,
-  },
-  value: {
-    color: '#000',
-    fontSize: 13,
-    fontWeight: '500',
   },
 });

@@ -93,5 +93,16 @@ export default StyleSheet.create({
       height: 48,
       backgroundColor: colors.white
     },
-    iconLeft:{position:'absolute', right:15}
+    iconLeft:{position:'absolute', right:15},
+    card: {
+      backgroundColor: '#fff',
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 14,
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowOffset: { width: 0, height: 1 },
+      shadowRadius: 2,
+      elevation: 2,
+    },
 })

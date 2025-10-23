@@ -239,11 +239,6 @@ const App = ({ navigation }) => {
                       alert('logout')
                     }
                   }}
-                // backgroundColor={
-                //   locationArea
-                //     ? [colors.secondary, colors.secondary]
-                //     : [colors.grey, colors.grey]
-                // }
                 />
               </View>
             </View>
