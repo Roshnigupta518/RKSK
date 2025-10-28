@@ -49,44 +49,48 @@ export const postApiWithToken = async (api, data) => {
   console.log({ api, data })
   const state = store.getState()
   const token = state.login.data.jwtToken;
+  console.log({token})
   const config = {
     headers: {
-      Authorization: 'Bearer ' + token,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   };
-  return new Promise((resolve, reject) => {
-    axios
-      .post(api, data, config)
-      .then(resolve)
-      .catch(err => {
-        reject(err.response);
-        handleAuthorization(err.response?.status);
-      });
-  });
+  try {
+    const response = await axios.post(api, data, config);
+    return response; // returns full axios response (status, data, etc.)
+  } catch (error) {
+    const status = error?.response?.status;
+    console.log('API Error:', status, error?.message);
+    handleAuthorization(status);
+    // Forward the error to the caller
+    throw error.response || error;
+  }
 };
 
 export const uploadApi = async (api, data) => {
   console.log({api, data})
   const state = store.getState()
-  const token = state.login.data.data.token;
+  const token = state.login.data.jwtToken;
+  console.log({token})
   const config = {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'multipart/form-data',
-      Authorization: 'Bearer ' + token,
+      Authorization: `Bearer ${token}`,
     },
   };
 
-  return new Promise((resolve, reject) => {
-    axios
-      .post(api, data, config)
-      .then(resolve)
-      .catch(err => {
-        reject(err.response);
-        handleAuthorization(err.response?.status);
-      });
-  });
+  try {
+    const response = await axios.post(api, data, config);
+    return response; // returns full axios response (status, data, etc.)
+  } catch (error) {
+    const status = error?.response?.status;
+    console.log('API Error:', status, error?.message);
+    handleAuthorization(status);
+    // Forward the error to the caller
+    throw error.response || error;
+  }
 };
 
 export const putApi = async (api, data) => {

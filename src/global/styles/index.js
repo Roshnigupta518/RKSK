@@ -43,6 +43,23 @@ export default StyleSheet.create({
     mt_5 : {
       marginTop:'5%'
     },
+
+    wdh60: {width: '60%'},
+    wdh40: {width: '40%'},
+    wdh20: {width: '20%'},
+    wdh30: {width: '30%'},
+    wdh10: {width: '10%'},
+    wdh15: {width: '15%'},
+    wdh18: {width: '18%'},
+    wdh55: {width: '55%'},
+    wdh70: {width: '70%'},
+    wdh50: {width: '50%'},
+    wdh48: {width: '48%'},
+    wdh75: {width: '75%'},
+    wdh80: {width: '80%'},
+    wdh90: {width: '90%'},
+    wdh65: {width: '65%'},
+    wdh85: {width: '85%'},
   
     tx12: {
       fontSize: size.label,
@@ -105,4 +122,9 @@ export default StyleSheet.create({
       shadowRadius: 2,
       elevation: 2,
     },
+    imageSty:{
+      width:100,
+      height:100, 
+      marginBottom:10
+    }
 })

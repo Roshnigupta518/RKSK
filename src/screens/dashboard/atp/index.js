@@ -29,6 +29,7 @@ const ATPListScreen = ({ navigation }) => {
         setData([]);
       }
     } catch (e) {
+      console.log('ATP_LIST', e)
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +50,7 @@ const ATPListScreen = ({ navigation }) => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('ATPLogin')}
+      onPress={() => navigation.navigate('ATPLogin',{activiyDetails: item})}
       style={st.card}>
       <Text style={styles.title}>{item.visit_Purpose}</Text>
       <Field label="Visit Start Date and Time" value={item.visit_Start_Date} />

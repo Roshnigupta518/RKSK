@@ -39,7 +39,7 @@ const INITIALINPUT = {
   remark: '',
 };
 
-const App = ({ navigation }) => {
+const App = ({ navigation, route }) => {
   // const [region, setRegion] = useState(null);
   const [date, setDate] = useState(null);
   // const [locationArea, setLocationArea] = useState();
@@ -49,6 +49,7 @@ const App = ({ navigation }) => {
   const [time, setTime] = useState();
 
   const dispatch = useDispatch();
+  const {atP_Id} = route.params || {}
 
   const { region, locationArea } = useLocation();
 
@@ -85,7 +86,11 @@ const App = ({ navigation }) => {
     }
 
     if (isValid) {
-      navigation.navigate('ATPForm')
+      const data = {
+        loginTime : new Date()
+      }
+      dispatch(setClockIn(data))
+      navigation.navigate('ATPForm',{atP_Id})
       // handleLogin();
     }
   };
@@ -225,18 +230,23 @@ const App = ({ navigation }) => {
                   disabled={locationArea ? false : true}
                   title={
                     !attendance?.loginTime ||
-                      (attendance?.loginTime && attendance?.logoutTime)
+                      (attendance?.loginTime && logoutDetails?.logoutTime)
                       ? 'Login'
                       : 'Logout'
                   }
                   onPress={() => {
                     console.log({ attendance, logoutDetails });
-                    if ((!attendance?.loginTime || (attendance?.loginTime && attendance?.logoutTime))) {
+                    if ((!attendance?.loginTime || (attendance?.loginTime && logoutDetails?.logoutTime))) {
                       dispatch(clearClock());
                       validation();
                     } else {
                       // handleLogOut();
-                      alert('logout')
+                      // alert('logout')
+                      const data = {
+                        logoutTime : new Date()
+                      }
+                      dispatch(setClockOut(data))
+                      navigation.goBack()
                     }
                   }}
                 />

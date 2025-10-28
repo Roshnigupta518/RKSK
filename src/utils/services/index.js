@@ -1,5 +1,5 @@
 import { API } from "../endpoints";
-import { getApi } from "../apicalls";
+import { getApi, postApi, postApiWithToken, uploadApi } from "../apicalls";
 import { handleAPIErrorResponse } from "../validations";
 import { store } from "../../redux/store";
 
@@ -26,3 +26,20 @@ export const getATPListRequest = async () => {
     }
 };
   
+export const atpFormRequest = async (data) => {
+  const loginDetails = getLoginDetails()
+  try {
+    const url = `${API.ATP_POST}`;
+    const result = await uploadApi(url, data);
+    
+    if (result?.status === 200) {
+      return result.data; // return only the data
+    } else {
+      console.warn('Unexpected response:', result);
+      return [];
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+    return [];
+  }
+};

@@ -60,3 +60,35 @@ export const formatTime = mydate => {
   let formattedTime = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
   return formattedTime;
 };
+
+export const convertToLabelValue = (arr, labelKey, valueKey) => {
+  return (arr || []).map(item => ({
+    label: item[labelKey] || '',
+    value: item[valueKey] || null,
+    ...item
+  }));
+};
+
+export function timeDifferenceFun(storedTime, logoutTime) {
+  // console.log({storedTime, logoutTime});
+  let currentTime = (logoutTime && new Date(logoutTime)) || new Date();
+  let timeDiff = currentTime - storedTime; // Difference in milliseconds
+
+  // Convert milliseconds to different time units
+  let seconds = Math.floor((timeDiff / 1000) % 60)
+    .toString()
+    .padStart(2, '0');
+  let minutes = Math.floor((timeDiff / (1000 * 60)) % 60)
+    .toString()
+    .padStart(2, '0');
+  let hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
+  let days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  // console.log(`Difference:
+  //   ${days} days,
+  //   ${hours} hours,
+  //   ${minutes} minutes,
+  //   ${seconds} seconds.`);
+
+  return hours + ':' + minutes + ':' + seconds;
+}
+

@@ -51,9 +51,9 @@ const Login = ({ navigation }) => {
       const decoded = jwtDecode(token);
       // console.log('Decoded token:', decoded);
   
-      const userId = decoded.sub;           // "990"
-      const email = decoded.email;          // "Bhavra#M2"
-      const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];  // "TrainerUser"
+      const userId = decoded.sub;           
+      const email = decoded.email;         
+      const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];  
       const divisionId = decoded.DivisionId;
       const districtId = decoded.DistrictId;
       const blockId = decoded.BlockId;
@@ -110,14 +110,12 @@ const Login = ({ navigation }) => {
 
     if (valid) {
       handlePress();
-      // dispatch(setLogin(true))
     }
   };
 
   const convertSHA = async (pass) => {
     try {
       const hash = await sha256(pass);
-      console.log({ hash });
       return hash;
     } catch (error) {
       console.log('Error hashing password:', error);

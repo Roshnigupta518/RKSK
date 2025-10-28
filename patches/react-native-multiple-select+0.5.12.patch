@@ -1,0 +1,27 @@
+diff --git a/node_modules/react-native-multiple-select/lib/react-native-multi-select.js b/node_modules/react-native-multiple-select/lib/react-native-multi-select.js
+index 9b7a0d7..ec23e60 100644
+--- a/node_modules/react-native-multiple-select/lib/react-native-multi-select.js
++++ b/node_modules/react-native-multiple-select/lib/react-native-multi-select.js
+@@ -617,9 +617,10 @@ export default class MultiSelect extends Component {
+                     name="menu-down"
+                     style={[
+                       styles.indicator,
+-                      { paddingLeft: 15, paddingRight: 15 },
++                      { paddingLeft: 15, paddingRight: 15, color:'#000',fontSize:24  },
+                       styleIndicator && styleIndicator,
+                     ]}
++                    size={22}
+                   />
+                 </TouchableOpacity>
+               )}
+@@ -721,8 +722,9 @@ export default class MultiSelect extends Component {
+                       name={hideSubmitButton ? 'menu-right' : 'menu-down'}
+                       style={[
+                         styles.indicator,
+-                        styleIndicator && styleIndicator,
++                        styleIndicator && styleIndicator,{color:'#000', fontSize:24 }
+                       ]}
++                      size={22}
+                     />
+                   </View>
+                 </TouchableWithoutFeedback>

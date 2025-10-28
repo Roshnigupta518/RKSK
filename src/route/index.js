@@ -6,6 +6,8 @@ import AuthStack from './AuthStack'
 import {useAppSelector} from '../hooks'
 import HomeStack from './HomeStack'
 import NetworkStatus from '../components/NetworkStatus'
+import Toast from 'react-native-toast-message';
+import MyToast from '../components/customToast';
 
 const index = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +22,7 @@ const index = () => {
               PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
               PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
               PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+              PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
               PermissionsAndroid.PERMISSIONS.CAMERA,
             ]
           : [
@@ -57,6 +60,10 @@ const index = () => {
     init();
   }, []);
 
+  const toastConfig = {
+    myCustomType: (props) => <MyToast {...props} />, 
+  };
+
   return (
     <NavigationContainer fallback={<ActivityIndicator />}>
     <StatusBar
@@ -66,6 +73,7 @@ const index = () => {
     />
     {isLoading ? <Splash /> : !onBoarding ? <AuthStack /> : <HomeStack />}
     <NetworkStatus />
+    <Toast config={toastConfig} />
   </NavigationContainer>
   )
 }

@@ -23,6 +23,7 @@ const CustomDatePicker = ({
   placeholder = 'Select date',
   error = '',
   disabled = false,
+  iconName
 }) => {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -58,9 +59,15 @@ const CustomDatePicker = ({
             disabled && styles.disabledText,
           ]}
         >
-          {value ? moment(value).format('DD-MM-YYYY') : placeholder}
+          {/* {value ? moment(value).format('DD-MM-YYYY') : placeholder} */}
+          {/* {value ? (mode === 'time' ? moment(value).format('hh:mm A') : moment(value).format('DD-MM-YYYY')) : placeholder} */}
+          {value
+  ? (mode === 'time'
+      ? moment(value).local().format('hh:mm A')   // ✅ ensure local time
+      : moment(value).format('DD-MM-YYYY'))
+  : placeholder}
         </Text>
-        <Icon name="calendar" size={20} color={colors.black} />
+        <Icon name={iconName} size={20} color={colors.black} />
       </TouchableOpacity>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}

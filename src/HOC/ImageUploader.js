@@ -12,14 +12,7 @@ import Authbtn from '../components/customButton';
 import Alert from '../components/alert';
 import st from '../global/styles';
 import { colors } from '../global';
-
-/**
- * HOC: WithMediaUpload
- * Supports both image and video capture or selection.
- * @param {React.Component} WrappedComponent - Component that triggers upload modal
- * @param {Function} uploadFileToServer - callback for uploading media
- * @param {('image'|'video'|'both')} mediaType - what to allow (default: 'image')
- */
+import { compressMedia } from '../components/compressMedia';
 const WithMediaUpload = (WrappedComponent, uploadFileToServer, mediaType = 'image') => {
   return props => {
     const [showModal, setShowModal] = useState(false);
@@ -53,33 +46,47 @@ const WithMediaUpload = (WrappedComponent, uploadFileToServer, mediaType = 'imag
       }
     };
 
-    // ✅ Storage permission check
     const checkStoragePermission = async () => {
-      if (Platform.OS === 'android') {
-        try {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-            {
-              title: 'Storage Permission',
-              message: 'App needs access to save your captured media.',
-              buttonNegative: 'Cancel',
-              buttonPositive: 'OK',
-            },
-          );
-          return granted === PermissionsAndroid.RESULTS.GRANTED;
-        } catch (err) {
-          console.warn(err);
-          return false;
+      try {
+        if (Platform.OS === 'android') {
+          if (Platform.Version >= 33) {
+            // Android 13+ (API 33)
+            const imagePermission = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+            );
+            const videoPermission = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+            );
+            return (
+              imagePermission === PermissionsAndroid.RESULTS.GRANTED ||
+              videoPermission === PermissionsAndroid.RESULTS.GRANTED
+            );
+          } else {
+            // Android 12 and below
+            const granted = await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+              {
+                title: 'Storage Permission',
+                message: 'App needs access to save your captured media.',
+                buttonNegative: 'Cancel',
+                buttonPositive: 'OK',
+              },
+            );
+            return granted === PermissionsAndroid.RESULTS.GRANTED;
+          }
         }
+        return true;
+      } catch (err) {
+        console.warn(err);
+        return false;
       }
-      return true;
     };
-
+    
     // ✅ Open camera
     const handleCaptureMedia = async () => {
       const cameraGranted = await checkCameraPermission();
       const storageGranted = await checkStoragePermission();
-
+      console.log({cameraGranted, storageGranted})
       if (!cameraGranted || !storageGranted) {
         alert('Camera or storage permission denied.');
         return;
@@ -92,7 +99,7 @@ const WithMediaUpload = (WrappedComponent, uploadFileToServer, mediaType = 'imag
         saveToPhotos: true,
       };
 
-      launchCamera(options, res => {
+      launchCamera(options, async(res) => {
         if (res.errorCode) {
           console.warn(res.errorCode);
           return;
@@ -100,9 +107,11 @@ const WithMediaUpload = (WrappedComponent, uploadFileToServer, mediaType = 'imag
 
         if (!res.didCancel && res.assets && res.assets[0]) {
           const file = res.assets[0];
-          if (!validateFileSize(file)) return;
-
-          uploadFileToServer(res);
+          // if (!validateFileSize(file)) return;
+          const compressedFile = await compressMedia(file);
+          // console.log({compressedFile, res})
+          uploadFileToServer(compressedFile);
+          // uploadFileToServer(res);
           setShowModal(false);
         }
       });
@@ -122,7 +131,7 @@ const WithMediaUpload = (WrappedComponent, uploadFileToServer, mediaType = 'imag
 
         if (!res.didCancel && res.assets && res.assets[0]) {
           const file = res.assets[0];
-          if (!validateFileSize(file)) return;
+          // if (!validateFileSize(file)) return;
 
           uploadFileToServer(res);
           setShowModal(false);
@@ -163,7 +172,7 @@ const WithMediaUpload = (WrappedComponent, uploadFileToServer, mediaType = 'imag
             </Text>
 
             <Authbtn title={'Capture from Camera'} onPress={handleCaptureMedia} />
-            <Authbtn title={'Choose from Gallery'} onPress={handleChooseFromGallery} />
+            {/* <Authbtn title={'Choose from Gallery'} onPress={handleChooseFromGallery} /> */}
           </View>
         </Alert>
       </View>

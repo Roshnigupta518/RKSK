@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native'
-import React, { useState, useCallback } from 'react'
+import { StyleSheet, Text, View, Pressable, Image, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native'
+import React, { useState, useCallback, useEffect } from 'react'
 import CustomHeader from '../../../../components/customHeader';
 import { CustomContainer, CustomContent } from '../../../../components/container';
 import MyInput from '../../../../components/customInput';
@@ -9,21 +9,28 @@ import CustomPicker from '../../../../components/customPicker';
 import { family, colors } from '../../../../global';
 import st from '../../../../global/styles';
 import Icon from 'react-native-vector-icons/Feather'
-import { getPickerImageResp } from '../../../../utils/helper';
+import { convertToLabelValue, getPickerImageResp } from '../../../../utils/helper';
 import { isEmpty } from '../../../../utils/validations';
 import WithImageUpload from '../../../../HOC/ImageUploader';
-
+import { useLocation } from '../../../../hooks/useLocation';
+import { atpFormRequest, getATPListRequest } from '../../../../utils/services';
+import Video from 'react-native-video';
+import CustomMultiSelect from '../../../../components/customMultiselect';
+import moment from 'moment';
+import Toast from 'react-native-toast-message';
 const INITIALINPUT = {
-  dateTime:'',
-  planedActivity:'',
-  meetings:'',
-  activityDetails : '',
-  visitCompletion : ''
+  date: '',
+  time: '',
+  planedActivity: '',
+  meetings: [],
+  other: '',
+  activityDetails: '',
+  visitCompletion: ''
 };
 
 const errMsg = 'This field is required'
 
-const ATPForm = ({ navigation }) => {
+const ATPForm = ({ navigation, route }) => {
   const [inputs, setInputs] = useState(INITIALINPUT);
   const [errors, setErrors] = useState(INITIALINPUT);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +38,10 @@ const ATPForm = ({ navigation }) => {
   const [attachedVideo, setAttachedVideo] = useState(null)
   const [attachmentErr, setAttachmentErr] = useState();
   const [attachedVideoErr, setAttachedVideoErr] = useState();
+  const [data, setData] = useState([])
+
+  const { location, locationArea } = useLocation()
+  const { atP_Id } = route.params || {}
 
   const handleOnchange = useCallback(
     (field) => (value) => {
@@ -44,33 +55,34 @@ const ATPForm = ({ navigation }) => {
   const handleError = useCallback((errorMsg, field) => {
     setErrors(prev => ({ ...prev, [field]: errorMsg }));
   }, []);
-  
+
 
   const fieldProps = (field) => ({
     value: inputs[field],
     error: errors[field],
     onChangeText: (value) => {
       handleOnchange(field)(value);
-      if (errors[field]) handleError('', field); // clear error while typing
+      if (errors[field]) handleError('', field);
     },
     onFocus: () => {
-      if (errors[field]) handleError('', field); // clear error on focus
-    },
-    disabled: isLoading,
-  });
-  
-
-  const dateFieldProps = (field) => ({
-    value: inputs[field] ? new Date(inputs[field]) : null,
-    error: errors[field],
-    onChange: (val) => {
-      const isoDate = new Date(val).toISOString();
-      handleOnchange(field)(isoDate);
       if (errors[field]) handleError('', field);
     },
     disabled: isLoading,
   });
-  
+
+  const dateFieldProps = (field, mode = 'date') => ({
+    value: inputs[field] ? new Date(inputs[field]) : new Date(),
+    error: errors[field],
+    mode,
+    onChange: (val) => {
+      // ✅ store as ISO string to preserve the actual time
+      handleOnchange(field)(val.toISOString());
+      if (errors[field]) handleError('', field);
+    },
+    disabled: isLoading,
+  });
+
+
 
   const pickerFieldProps = (field) => ({
     selectedValue: inputs[field],
@@ -81,167 +93,306 @@ const ATPForm = ({ navigation }) => {
     },
     disabled: isLoading,
   });
-  
+
   const uploadProfileToServer = async res => {
     setAttachmentErr('')
-    const imageResp = getPickerImageResp(res);
-    setAttachment(imageResp);
+    // const imageResp = getPickerImageResp(res);
+    setAttachment(res);
   };
 
   const uploadVideoToServer = async res => {
-    setAttachmentErr('')
-    const imageResp = getPickerImageResp(res);
-    setAttachedVideo(imageResp);
+    setAttachedVideoErr('')
+    // const imageResp = getPickerImageResp(res);
+    setAttachedVideo(res);
   };
 
   const AvatarPicker = WithImageUpload(
     ({ handleMediaUpload, ...props }) => (
       <View>
-      <Text style={st.tx12}>Photo Capture</Text>
-      <Pressable
-        onPress={handleMediaUpload}
-        {...props}>
-        <View style={[st.inputContainer,{borderColor:attachmentErr?colors.red:'rgba(200, 200, 200, 1)'}]}>
-        <Text style={st.tx12}>{attachment?.fileName}</Text>
-          <View style={st.iconLeft}>
-            <Icon name={'camera'} size={20} />
+        <Text style={st.tx12}>Photo Capture</Text>
+        <Pressable
+          onPress={handleMediaUpload}
+          {...props}>
+          <View style={[st.inputContainer, { borderColor: attachmentErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
+            <View style={st.wdh90}>
+              <Text style={st.tx12}>{attachment?.fileName}</Text>
+            </View>
+            <View style={st.iconLeft}>
+              <Icon name={'camera'} size={20} />
+            </View>
           </View>
-        </View>
-      </Pressable>
-      {attachmentErr && <Text style={st.error}>{attachmentErr}</Text>}
+        </Pressable>
+        {attachment &&
+          <View style={st.row}>
+            <Image source={{ uri: attachment?.uri }} style={st.imageSty} resizeMode='contain' />
+            <TouchableOpacity onPress={() => setAttachment(null)}>
+              <Icon name={'x'} size={20} />
+            </TouchableOpacity>
+          </View>}
+        {attachmentErr && <Text style={st.error}>{attachmentErr}</Text>}
 
-    </View>
+      </View>
     ),
     uploadProfileToServer,
     'image'
   );
-  
+
   const VideoPicker = WithImageUpload(
     ({ handleMediaUpload, props }) => (
       <View>
-      <Text style={st.tx12}>Video Capture</Text>
-      <Pressable
-        onPress={handleMediaUpload}
-        {...props}>
-        <View style={[st.inputContainer,{borderColor: attachedVideoErr ?colors.red:'rgba(200, 200, 200, 1)'}]}>
-          <Text style={st.tx12}>{attachedVideo?.fileName}</Text>
-          <View style={st.iconLeft}>
-            <Icon name={'camera'} size={20} />
+        <Text style={st.tx12}>Video Capture</Text>
+        <Pressable
+          onPress={handleMediaUpload}
+          {...props}>
+          <View style={[st.inputContainer, { borderColor: attachedVideoErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
+            <View style={st.wdh90}>
+              <Text style={st.tx12}>{attachedVideo?.fileName}</Text>
+            </View>
+            <View style={st.iconLeft}>
+              <Icon name={'camera'} size={20} />
+            </View>
           </View>
-        </View>
-      </Pressable>
-      {attachedVideoErr && <Text style={st.error}>{attachedVideoErr}</Text>}
+        </Pressable>
 
-    </View>
+        {attachedVideo &&
+          <View style={st.row}>
+            <Video source={{ uri: attachedVideo?.uri }}
+              controls
+              style={st.imageSty} />
+            <TouchableOpacity onPress={() => setAttachedVideo(null)}>
+              <Icon name={'x'} size={20} />
+            </TouchableOpacity>
+          </View>}
+        {attachedVideoErr && <Text style={st.error}>{attachedVideoErr}</Text>}
+
+      </View>
     ),
     uploadVideoToServer,
     'video'
   );
 
-
   const validateForm = () => {
     let valid = true;
-  
-    // Temporary object to collect errors
+    console.log({ inputs })
     let tempErrors = { ...INITIALINPUT };
-  
-    // Date validation
-    if (isEmpty(inputs.dateTime)) {
-      tempErrors.dateTime = errMsg;
+
+    if (!inputs.date || isNaN(new Date(inputs.date).getTime())) {
+      tempErrors.date = errMsg;
       valid = false;
     }
-  
-    // Planned activity validation
+
+    if (!inputs.time || isNaN(new Date(inputs.time).getTime())) {
+      tempErrors.time = errMsg;
+      valid = false;
+    }
+
     if (isEmpty(inputs.planedActivity)) {
       tempErrors.planedActivity = errMsg;
       valid = false;
     }
-  
-    // Meetings validation
-    if (isEmpty(inputs.meetings)) {
+
+    if (!inputs.meetings || inputs.meetings.length === 0) {
       tempErrors.meetings = errMsg;
       valid = false;
     }
-  
-    // Activity details validation
+
+    if (inputs.meetings.includes(3) && isEmpty(inputs.other)) {
+      tempErrors.other = errMsg;
+      valid = false;
+    }
+
     if (isEmpty(inputs.activityDetails)) {
       tempErrors.activityDetails = errMsg;
       valid = false;
     }
-  
-    // Photo validation
+
+    if (inputs.meetings === 3 && isEmpty(inputs.other)) {
+      tempErrors.other = errMsg;
+      valid = false;
+    }
+
     if (!attachment) {
       setAttachmentErr(errMsg);
       valid = false;
     } else {
       setAttachmentErr('');
     }
-  
-    // Video validation
+
     if (!attachedVideo) {
       setAttachedVideoErr(errMsg);
       valid = false;
     } else {
       setAttachedVideoErr('');
     }
-  
-    // Visit completion validation
-    if (isEmpty(inputs.visitCompletion)) {
-      tempErrors.visitCompletion = errMsg;
-      valid = false;
-    }
-  
+
     setErrors(tempErrors);
     return valid;
   };
 
-  const onSave = () => {
+  const onSave = async () => {
     const isValid = validateForm();
     if (!isValid) return;
-  
-    // ✅ proceed to save form here
+
     console.log('Form data is valid:', inputs, attachment, attachedVideo);
+    const datePart = moment(inputs.date);
+    const timePart = moment(inputs.time);
+
+    const combined = moment(datePart)
+      .set({
+        hour: timePart.hour(),
+        minute: timePart.minute(),
+        second: timePart.second(),
+      });
+
+    const ActivityDateTime = combined.format('YYYY-MM-DD HH:mm:ss');
+
+    try {
+      setIsLoading(true);
+      const params = {
+        ActivityDateTime,
+        PlannedActivity: inputs.planedActivity,
+        MeetingParticipant: inputs.meetings?.toString(),
+        ActivityDetails: inputs.activityDetails,
+        VisitCompletion: moment().format('YYYY-MM-DD HH:mm:ss'),
+        Latitude: location.latitude,
+        Longitude: location.longitude,
+        Address: locationArea,
+        Photo: attachment,
+        Video: attachedVideo,
+        ATP_Id: atP_Id,
+        Other_MeetingParticipant: inputs.other
+      }
+      const result = await atpFormRequest(params);
+      console.log('ATP FORM Result:', result);
+      if (result) {
+        Toast.show({
+          type: "myCustomType",
+          text1: "Success",
+          text2: result.message,
+          props: { key: 'success' },
+          position: 'bottom',
+          bottomOffset: 60,
+        });
+        navigation.navigate('MainApp')
+      } else {
+        console.warn('Unexpected data format:', result);
+
+      }
+    } catch (e) {
+      console.log('ATP_FORM', e)
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
-  
+
+  const getATPDataHandle = async () => {
+    try {
+      setIsLoading(true);
+      const result = await getATPListRequest();
+      console.log('ATP Result:', result);
+      if (Array.isArray(result)) {
+        const tempData = convertToLabelValue(result, 'visit_Purpose', 'visit_PurposeId_Id')
+        console.log({ tempData })
+        setData(tempData);
+      } else {
+        console.warn('Unexpected data format:', result);
+        setData([]);
+      }
+    } catch (e) {
+      console.log('ATP_LIST', e)
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getATPDataHandle()
+  }, [])
+
+  useEffect(() => {
+    setInputs(prev => ({
+      ...prev,
+      date: prev.date || new Date().toISOString(),
+      time: prev.time || new Date().toISOString(),
+    }));
+  }, []);
+
   return (
     <CustomContainer>
       <CustomHeader title="Field activity form" onBackPress={() => navigation.goBack()} />
+      <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}>
       <CustomContent>
-        <View>
+      
+        <View style={st.flex}>
           <CustomDatePicker
-            label="Entry Date & Time"
+            label="Entry Date"
             placeholder=""
             minimumDate={new Date(1900, 0, 1)}
             maximumDate={new Date()}
-            {...dateFieldProps('dateTime', true)}
+            iconName={'calendar'}
+            {...dateFieldProps('date', 'date')}
+          />
+
+          <CustomDatePicker
+            label="Entry Time"
+            placeholder=""
+            iconName={'clock'}
+            {...dateFieldProps('time', 'time')}
           />
 
           <CustomPicker
             label="Planned Activity"
-            items={[]}
+            items={data || []}
             placeholder=""
             fontFamily={family.regular}
             {...pickerFieldProps('planedActivity')}
             disabled={isLoading}
           />
-          <MyInput label="Meeting Participants" {...fieldProps('meetings')} />
+
+          <CustomMultiSelect
+            label="Meeting Participants"
+            items={ParticipantsList}
+            selectedItems={inputs.meetings}
+            onSelectedItemsChange={(val) => {
+              setInputs({
+                ...inputs,
+                meetings: val,
+                other: val.includes(3) ? inputs.other : '', // clear "other" if deselected
+              });
+            }}
+            required
+            placeholder=""
+            disabled={isLoading}
+            error={errors.meetings}
+          />
+
+          {inputs.meetings.includes('Other') && (
+            <MyInput label="Other" {...fieldProps('other')} />
+          )}
+
           <MyInput label="Activity Details" {...fieldProps('activityDetails')} />
 
           <AvatarPicker />
           <VideoPicker />
 
-          <MyInput label="Visit Completion" {...fieldProps('visitCompletion')} />
-
           <CustomButton title='Save'
-           onPress={onSave} 
+            onPress={onSave}
+            disabled={isLoading}
           />
         </View>
       </CustomContent>
+      </KeyboardAvoidingView>
+
     </CustomContainer>
   )
 }
 
 export default ATPForm
 
-const styles = StyleSheet.create({})
+const ParticipantsList = [
+  { name: 'Peer Educator', id: 'Peer Educator' },
+  { name: 'ASHA', id: 'ASHA' },
+  { name: 'Other', id: 'Other' },
+]
