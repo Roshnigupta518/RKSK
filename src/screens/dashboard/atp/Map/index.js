@@ -49,7 +49,7 @@ const App = ({ navigation, route }) => {
   const [time, setTime] = useState();
 
   const dispatch = useDispatch();
-  const {atP_Id} = route.params || {}
+  const {activiyDetails} = route.params || {}
 
   const { region, locationArea } = useLocation();
 
@@ -90,7 +90,7 @@ const App = ({ navigation, route }) => {
         loginTime : new Date()
       }
       dispatch(setClockIn(data))
-      navigation.navigate('ATPForm',{atP_Id})
+      navigation.navigate('ATPForm',{activiyDetails})
       // handleLogin();
     }
   };

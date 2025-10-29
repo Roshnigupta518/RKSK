@@ -13,7 +13,7 @@ import st from '../../../../global/styles';
 import { colors } from '../../../../global';
 import Field from '../../../../components/field';
 import { useSelector } from 'react-redux';
-import { timeDifferenceFun, formatTime } from '../../../../utils/helper';
+import { timeDifferenceFun, formatTime, formatDate } from '../../../../utils/helper';
 import Icon from 'react-native-vector-icons/Feather';
 
 const ATPDetailScreen = ({ navigation, route }) => {
@@ -25,21 +25,13 @@ const ATPDetailScreen = ({ navigation, route }) => {
 
     const { activiyDetails } = route.params || {}
     const [timeDifference, setTimeDifference] = useState('');
+    const [date, setDate] = useState(null);
 
-    const data = {
-        title: 'Peer Educator Training',
-        startDate: '12/09/2025',
-        startTime: '10:30 AM',
-        endDate: '12/09/2025',
-        endTime: '12:30 PM',
-        block: 'Bhopal',
-        ashaFacilitator: 'Name',
-        ashaName: 'Name',
-        village: 'Bhopal',
-        purpose: 'Peer Educator Training',
-        otherActivity: 'Other',
-        duration: '10 Hour',
-    };
+    useEffect(() => {
+        const date = new Date();
+        const todayDate = formatDate(date);
+        setDate(todayDate);
+    }, []);
 
     useEffect(() => {
         if (attendance) {
@@ -63,17 +55,19 @@ const ATPDetailScreen = ({ navigation, route }) => {
             <CustomContent>
                 <View style={styles.dateCard}>
                     <Text style={[st.tx14, st.txAlignC]}>
-                        <Text style={{ color: colors.blue }}>12 Sep 2025</Text> Thursday
+                        <Text style={{ color: colors.blue }}>{date}</Text>
                     </Text>
                     {(!attendance?.loginTime || (attendance?.loginTime && logoutDetails?.logoutTime)) ? (
                         <CustomButton title='LOG IN'
-                            onPress={() => navigation.navigate('LoginMap', { atP_Id:activiyDetails.atP_Id })}
+                            onPress={() => navigation.navigate('LoginMap', { activiyDetails })}
                         />
                     ) : (
                         <View style={styles.content_logout}>
-                            <TouchableOpacity
-                                style={styles.logoutcontainer}
-                                onPress={() => navigation.navigate('LoginMap', { atP_Id:activiyDetails.atP_Id })}>
+                            <TouchableOpacity disabled={(attendance?.loginTime && activiyDetails.activity_Id === null) ? true : false}
+                                style={[styles.logoutcontainer, {
+                                    backgroundColor: (attendance?.loginTime && activiyDetails.activity_Id === null) ? colors.black : colors.blue
+                                }]}
+                                onPress={() => navigation.navigate('LoginMap', { activiyDetails })}>
                                 <Text style={[st.tx16, { color: colors.white }]}>LOG OUT</Text>
                             </TouchableOpacity>
                             <View style={st.wdh50}>
@@ -93,21 +87,43 @@ const ATPDetailScreen = ({ navigation, route }) => {
                             </View>
                         </View>
                     )}
+                      {(attendance?.loginTime && activiyDetails.activity_Id === null) &&
+                    <View style={st.mt_5}>
+                    <Text style={[st.tx12,{color:'#ccc'}]}>The Logout button will be enabled once the activity form is filled and submitted successfully</Text>
+                    </View>}
+
+                    {(activiyDetails.activity_Id == null && attendance?.loginTime) && (
+                        <CustomButton title='Proceed to fill activity form'
+                        onPress={() => navigation.navigate('ATPForm', { activiyDetails })}
+                    />)} 
 
                 </View>
 
                 <View style={styles.detailCard}>
-                    <Text style={styles.title}>{data.title}</Text>
+                    <Text style={styles.title}>{activiyDetails.visit_Purpose}</Text>
                     <Field label="Visit Start Date and Time" value={activiyDetails.visit_Start_Date} />
                     <Field label="Visit End Date and Time" value={activiyDetails.visit_End_Date} />
                     <Field label="Block" value={activiyDetails.blockNameE} />
                     <Field label="ASHA Facilitator (AF)" value={activiyDetails.ashaSahyogi_Name} />
                     <Field label="ASHA Name" value={activiyDetails.ashaNameEnglish} />
                     <Field label="Village" value={activiyDetails.villageName} />
-                    <Field label="Purpose of Visit" value={activiyDetails.visit_Purpose} />
                     <Field label="Other Activity" value={activiyDetails.other_Activity} />
                     <Field label="Duration" value={activiyDetails.duration} />
                 </View>
+                {activiyDetails.activity_DateTime &&
+                    <View style={styles.detailCard}>
+                        <Text style={styles.title}>Activity Details</Text>
+                        <Field label="Entry Date and Time" value={activiyDetails.activity_DateTime} />
+                        <Field label="Entry End Date and Time" value={activiyDetails.visit_Completion} />
+                        <Field label="Planned Activity" value={activiyDetails.planned_Activity} />
+                        <Field label="Other Planned Activity" value={activiyDetails.other_Activity} />
+                        <Field label="Meeting Participants" value={activiyDetails.meeting_Participant} />
+                        <Field label="Other Meeting Participants" value={activiyDetails.other_MeetingParticipant} />
+                        <Field label="Activity Details" value={activiyDetails.activity_Details} />
+                        <Field label="Image" value={activiyDetails.photo_Path} />
+                        <Field label="Video" value={activiyDetails.video_Path} />
+                    </View>
+                }
             </CustomContent>
         </CustomContainer>
     );

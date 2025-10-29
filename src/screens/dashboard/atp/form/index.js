@@ -18,6 +18,7 @@ import Video from 'react-native-video';
 import CustomMultiSelect from '../../../../components/customMultiselect';
 import moment from 'moment';
 import Toast from 'react-native-toast-message';
+import { useSelector } from 'react-redux';
 const INITIALINPUT = {
   date: '',
   time: '',
@@ -25,7 +26,8 @@ const INITIALINPUT = {
   meetings: [],
   other: '',
   activityDetails: '',
-  visitCompletion: ''
+  visitCompletion: '',
+  other_Activity:''
 };
 
 const errMsg = 'This field is required'
@@ -41,7 +43,19 @@ const ATPForm = ({ navigation, route }) => {
   const [data, setData] = useState([])
 
   const { location, locationArea } = useLocation()
-  const { atP_Id } = route.params || {}
+  const { activiyDetails } = route.params || {}
+
+  const userLogin = useSelector(state => state.login.data);
+
+  console.log({userLogin})
+
+  useEffect(()=>{
+   setInputs({
+    ...inputs,
+     planedActivity:activiyDetails.visit_PurposeId_Id,
+     other_Activity: activiyDetails.other_Activity
+   })
+  },[activiyDetails])
 
   const handleOnchange = useCallback(
     (field) => (value) => {
@@ -115,7 +129,7 @@ const ATPForm = ({ navigation, route }) => {
           {...props}>
           <View style={[st.inputContainer, { borderColor: attachmentErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
             <View style={st.wdh90}>
-              <Text style={st.tx12}>{attachment?.fileName}</Text>
+              <Text style={st.tx12}>{attachment?.name}</Text>
             </View>
             <View style={st.iconLeft}>
               <Icon name={'camera'} size={20} />
@@ -146,7 +160,7 @@ const ATPForm = ({ navigation, route }) => {
           {...props}>
           <View style={[st.inputContainer, { borderColor: attachedVideoErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
             <View style={st.wdh90}>
-              <Text style={st.tx12}>{attachedVideo?.fileName}</Text>
+              <Text style={st.tx12}>{attachedVideo?.name}</Text>
             </View>
             <View style={st.iconLeft}>
               <Icon name={'camera'} size={20} />
@@ -248,21 +262,24 @@ const ATPForm = ({ navigation, route }) => {
 
     try {
       setIsLoading(true);
-      const params = {
-        ActivityDateTime,
-        PlannedActivity: inputs.planedActivity,
-        MeetingParticipant: inputs.meetings?.toString(),
-        ActivityDetails: inputs.activityDetails,
-        VisitCompletion: moment().format('YYYY-MM-DD HH:mm:ss'),
-        Latitude: location.latitude,
-        Longitude: location.longitude,
-        Address: locationArea,
-        Photo: attachment,
-        Video: attachedVideo,
-        ATP_Id: atP_Id,
-        Other_MeetingParticipant: inputs.other
-      }
-      const result = await atpFormRequest(params);
+      
+      const formdata = new FormData();
+      formdata.append("ATP_Id", activiyDetails.atP_Id);
+      formdata.append("ActivityDateTime", ActivityDateTime);
+      formdata.append("ActivityDetails", inputs.activityDetails);
+      formdata.append("Address", locationArea);
+      formdata.append("Latitude", location.latitude);
+      formdata.append("Longitude", location.longitude);
+      formdata.append("MeetingParticipant", inputs.meetings?.toString());
+      formdata.append("Other_MeetingParticipant",inputs.other);
+      formdata.append("Photo", attachment);
+      formdata.append("PlannedActivity", inputs.planedActivity);
+      formdata.append("Video", attachedVideo);
+      formdata.append("VisitCompletion",moment().format('YYYY-MM-DD HH:mm:ss'));
+      formdata.append("Other_Activity", inputs.other_Activity);
+      formdata.append("CreatedBy", userLogin.userId);
+
+      const result = await atpFormRequest(formdata);
       console.log('ATP FORM Result:', result);
       if (result) {
         Toast.show({
@@ -273,7 +290,7 @@ const ATPForm = ({ navigation, route }) => {
           position: 'bottom',
           bottomOffset: 60,
         });
-        navigation.navigate('MainApp')
+        navigation.navigate('MainApp',{ refresh: true })
       } else {
         console.warn('Unexpected data format:', result);
 
@@ -348,9 +365,12 @@ const ATPForm = ({ navigation, route }) => {
             placeholder=""
             fontFamily={family.regular}
             {...pickerFieldProps('planedActivity')}
-            disabled={isLoading}
+            disabled={true}
           />
-
+          
+          {inputs?.other_Activity&&
+         <MyInput label="Other Activity" {...fieldProps('other_Activity')} disabled={true} />
+          }
           <CustomMultiSelect
             label="Meeting Participants"
             items={ParticipantsList}

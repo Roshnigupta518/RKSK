@@ -30,7 +30,7 @@ export const compressMedia = async (file) => {
         text1: 'Image compressed successfully!',
         position: 'bottom',
       });
-      return { uri: compressedUri, type: 'image/jpeg', fileName: file?.fileName || 'image.jpg' };
+      return { uri: compressedUri, type: 'image/jpeg', name: file?.fileName || 'image.jpg' };
     }
 
     if (type.startsWith('video/')) {
@@ -57,7 +57,7 @@ export const compressMedia = async (file) => {
         text1: 'Video compressed successfully!',
         position: 'bottom',
       });
-      return { uri: compressedUri, type: 'video/mp4', fileName: file?.fileName || 'video.mp4' };
+      return { uri: compressedUri, type: 'video/mp4', name: file?.fileName || 'video.mp4' };
     }
 
     console.log('⚠️ Unsupported file type');
