@@ -108,11 +108,11 @@ Madhya Pradesh
  `}
         </Text>
 
-        <Text style={[st.tx14, { color: colors.blue }]}>Disclaimer: </Text>
+        {/* <Text style={[st.tx14, { color: colors.blue }]}>Disclaimer: </Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`The RKSK MP Mobile App is for official use under NHM Madhya Pradesh. While every effort is made to secure and protect your data, NHM MP is not responsible for unauthorized access caused by external factors beyond its control. 
  `}
-        </Text>
+        </Text> */}
         </View>
       </CustomContent>
     </CustomContainer>
