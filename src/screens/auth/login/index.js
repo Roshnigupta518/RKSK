@@ -4,7 +4,7 @@ import {
   View,
   ImageBackground,
   KeyboardAvoidingView,
-  Platform, TouchableWithoutFeedback, Keyboard
+  Platform, TouchableWithoutFeedback, Keyboard, Image
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import ImageConstants from '../../../global/images';
@@ -21,7 +21,7 @@ import CustomPopup from '../../../components/customPopup';
 import { setLogin } from '../../../redux/slices/login';
 import { useDispatch } from 'react-redux';
 import {jwtDecode} from 'jwt-decode';
-
+import { wp } from '../../../global';
 const INITIALINPUT = {
   userName: 'Jhabua#F2',
   password: 'Admin@123',
@@ -179,6 +179,15 @@ const Login = ({ navigation }) => {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}>
+            
+            <View style={[st.align_C,{marginTop:'30%'}]}>
+              <Image source={ImageConstants.round_logo} 
+              style={{width:wp(150), height:wp(150)}} />
+              <Text style={[st.tx14, st.txAlignC, {color:colors.white}]}>
+              {'\n'}RASHTRIYA KISHOR SWASTHYA KARYAKRAM{'\n'}{'\n'}
+              राष्ट्रीय किशोर स्वास्थ्य कार्यक्रम
+              </Text>
+            </View>
 
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 

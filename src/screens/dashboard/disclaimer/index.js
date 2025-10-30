@@ -59,7 +59,7 @@ const Disclaimer = ({ navigation }) => {
        }
 
             <CustomContent>
-                <Text style={[st.tx16, {color:colors.blue}]}>Disclaimer for RKSK MP Mobile App</Text>
+                {/* <Text style={[st.tx16, {color:colors.blue}]}>Disclaimer for RKSK MP Mobile App</Text> */}
                 <Text style={[st.tx12, {lineHeight:30}]}>The RKSK MP Mobile App is for official use under NHM Madhya Pradesh. While every effort is made to secure and protect your data, NHM MP is not responsible for unauthorized access caused by external factors beyond its control.</Text>
             </CustomContent>
             <View style={st.pd20}>

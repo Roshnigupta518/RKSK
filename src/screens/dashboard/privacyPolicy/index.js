@@ -9,7 +9,7 @@ const PrivacyPolicy = () => {
     <CustomContainer>
       <CustomContent>
         <View>
-        <Text style={[st.tx16, { color: colors.blue }]}>Privacy Policy for RKSK MP Mobile App </Text>
+        {/* <Text style={[st.tx16, { color: colors.blue }]}>Privacy Policy for RKSK MP Mobile App </Text> */}
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`The RKSK MP Mobile App is developed under the Rashtriya Kishor Swasthya Karyakram (RKSK) initiative of the National Health Mission (NHM), Madhya Pradesh. 
 
