@@ -4,7 +4,7 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    ScrollView,
+    ScrollView, Image
 } from 'react-native';
 import CustomHeader from '../../../../components/customHeader';
 import { CustomContainer, CustomContent } from '../../../../components/container';
@@ -15,6 +15,9 @@ import Field from '../../../../components/field';
 import { useSelector } from 'react-redux';
 import { timeDifferenceFun, formatTime, formatDate } from '../../../../utils/helper';
 import Icon from 'react-native-vector-icons/Feather';
+import { environment } from '../../../../utils/constant'
+import Video from 'react-native-video';
+import { useIsFocused } from '@react-navigation/native';
 
 const ATPDetailScreen = ({ navigation, route }) => {
     const attendance = useSelector(state => state.clockTime?.loginDetails);
@@ -22,6 +25,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
     const logoutDetails = useSelector(state => state.clockTime?.logoutDetails);
 
     // console.log({attendance})
+    const isFocused = useIsFocused();
 
     const { activiyDetails } = route.params || {}
     const [timeDifference, setTimeDifference] = useState('');
@@ -49,14 +53,18 @@ const ATPDetailScreen = ({ navigation, route }) => {
         }
     }, [attendance]);
 
+    if (!isFocused) return null; 
+
     return (
         <CustomContainer>
             <CustomHeader title="ATP Login" onBackPress={() => navigation.goBack()} />
             <CustomContent>
+                {activiyDetails.activity_Id === null&&
                 <View style={styles.dateCard}>
                     <Text style={[st.tx14, st.txAlignC]}>
                         <Text style={{ color: colors.blue }}>{date}</Text>
                     </Text>
+                    <View>
                     {(!attendance?.loginTime || (attendance?.loginTime && logoutDetails?.logoutTime)) ? (
                         <CustomButton title='LOG IN'
                             onPress={() => navigation.navigate('LoginMap', { activiyDetails })}
@@ -87,18 +95,20 @@ const ATPDetailScreen = ({ navigation, route }) => {
                             </View>
                         </View>
                     )}
-                      {(attendance?.loginTime && activiyDetails.activity_Id === null) &&
-                    <View style={st.mt_5}>
-                    <Text style={[st.tx12,{color:'#ccc'}]}>The Logout button will be enabled once the activity form is filled and submitted successfully</Text>
-                    </View>}
+                    </View>
+                    {(attendance?.loginTime && activiyDetails.activity_Id === null) &&
+                        <View style={st.mt_5}>
+                            <Text style={[st.tx12, { color: '#ccc' }]}>The Logout button will be enabled once the activity form is filled and submitted successfully</Text>
+                        </View>}
 
                     {(activiyDetails.activity_Id == null && attendance?.loginTime) && (
                         <CustomButton title='Proceed to fill activity form'
-                        onPress={() => navigation.navigate('ATPForm', { activiyDetails })}
-                    />)} 
+                            onPress={() => navigation.navigate('ATPForm', { activiyDetails })}
+                        />)}
 
                 </View>
-
+                }
+                 
                 <View style={styles.detailCard}>
                     <Text style={styles.title}>{activiyDetails.visit_Purpose}</Text>
                     <Field label="Visit Start Date and Time" value={activiyDetails.visit_Start_Date} />
@@ -121,7 +131,12 @@ const ATPDetailScreen = ({ navigation, route }) => {
                         <Field label="Other Meeting Participants" value={activiyDetails.other_MeetingParticipant} />
                         <Field label="Activity Details" value={activiyDetails.activity_Details} />
                         <Field label="Image" value={activiyDetails.photo_Path} />
+                        <Image source={{ uri: environment.imageUrl + activiyDetails.photo_Path }} style={st.imageSty} />
                         <Field label="Video" value={activiyDetails.video_Path} />
+                        <Video source={{ uri: environment.imageUrl + activiyDetails.video_Path}}
+                            controls
+                            paused={!isFocused}
+                            style={st.imageSty} />
                     </View>
                 }
             </CustomContent>

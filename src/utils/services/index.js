@@ -27,7 +27,6 @@ export const getATPListRequest = async () => {
 };
   
 export const atpFormRequest = async (data) => {
-  const loginDetails = getLoginDetails()
   try {
     const url = `${API.ATP_POST}`;
     const result = await uploadApi(url, data);
@@ -43,3 +42,37 @@ export const atpFormRequest = async (data) => {
     return [];
   }
 };
+
+export const activityLoginRequest = async (data) => {
+  try {
+    const url = `${API.Activity_Login}`;
+    const result = await postApiWithToken(url, data);
+    
+    if (result?.status === 200) {
+      return result.data; // return only the data
+    } else {
+      console.warn('Unexpected response:', result);
+      return [];
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+    return [];
+  }
+};
+
+export const appUpdateRequest = async() =>{
+  try {
+    const url = `${API.GET_VERSION}`;
+    const result = await getApi(url);
+    
+    if (result?.status === 200) {
+      return result.data; 
+    } else {
+      console.warn('Unexpected response:', result);
+      return [];
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+    return [];
+  }
+} 

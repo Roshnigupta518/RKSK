@@ -8,6 +8,7 @@ import HomeStack from './HomeStack'
 import NetworkStatus from '../components/NetworkStatus'
 import Toast from 'react-native-toast-message';
 import MyToast from '../components/customToast';
+import AppUpdateChecker from '../components/AppUpdater';
 
 const index = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -74,6 +75,7 @@ const index = () => {
     {isLoading ? <Splash /> : !onBoarding ? <AuthStack /> : <HomeStack />}
     <NetworkStatus />
     <Toast config={toastConfig} />
+    {/* <AppUpdateChecker /> */}
   </NavigationContainer>
   )
 }

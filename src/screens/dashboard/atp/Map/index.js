@@ -34,6 +34,7 @@ import { useLocation } from '../../../../hooks/useLocation';
 import CustomHeader from '../../../../components/customHeader';
 import MyInput from '../../../../components/customInput'
 import { handleAPIErrorResponse } from '../../../../utils/validations';
+import { activityLoginRequest } from '../../../../utils/services';
 
 const INITIALINPUT = {
   remark: '',
@@ -51,11 +52,14 @@ const App = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const {activiyDetails} = route.params || {}
 
+  const mode = !activiyDetails.clockinTime ? 1 : 2
+
   const { region, locationArea } = useLocation();
 
   const attendance = useSelector(state => state.clockTime?.loginDetails);
   const loginDetails = useSelector(state => state.login?.data);
   const logoutDetails = useSelector(state => state.clockTime?.logoutDetails);
+  const userLogin = useSelector(state => state.login.data);
 
   const handleOnchange = (text, input) => {
     setInputs(prevState => ({ ...prevState, [input]: text }));
@@ -95,45 +99,38 @@ const App = ({ navigation, route }) => {
     }
   };
 
-  // const handleLogin = async () => {
-  //   const currentDateTime = new Date();
-  //   const url = `${API.ATTENDANCE_LOGIN}`;
-  //   const param = {
-  //     divisionID: loginDetails.data.division.divisionID,
-  //     districtID: loginDetails.data.district.districtID,
-  //     remarks: inputs?.remark,
-  //     attendancedate: currentDateTime,
-  //     loginTime: '',
-  //     loginLocation: locationArea.locality,
-  //     logoutLocation: '',
-  //     logoutTime: '',
-  //     blockID: loginDetails.data.block.blockID,
-  //     ashasahyogiID: loginDetails.data.ashasahyogiID,
-  //     loginlat: region.latitude,
-  //     loginlong: region.longitude,
-  //   };
-  //   try {
-  //     setIsLoading(true);
-  //     const result = await postApi(url, param);
-  //     if (result.status == 200) {
-  //       const data = result.data;
-  //       console.log({data});
-  //       if (data.status == 'Your attendance for today is already logged') {
-  //         setIsLoading(false);
-  //         alert(data.status);
-  //       } else {
-  //         setIsLoading(false);
-  //         // dispatch(setClockIn(data));
-  //         getAttandanceHandle(dispatch);
-  //         navigation.goBack();
-  //       }
-  //     }
-  //   } catch (e) {
-  //     console.log(e);
-  //     setIsLoading(false);
-  //     handleAPIErrorResponse(e);
-  //   }
-  // };
+  const handleLogin = async () => {
+
+   try{
+    const params = {
+      "atP_Id": activiyDetails.atP_Id,
+      "clockinTime": mode === 1 ? new Date() : null,
+      "clockinAddress": mode === 1 ? locationArea : null,
+      "clockin_lat": mode === 1 ? location.latitude : null,
+      "clockin_long": mode === 1 ? location.longitude : null,
+      "clockoutTime":  mode === 2 ? new Date() : null,
+      "clockoutAddress": mode === 2 ? locationArea : null,
+      "clockout_lat":  mode === 2 ? location.latitude : null,
+      "clockout_long":  mode === 2 ? location.longitude : null,
+      "createdBy": userLogin.userId,
+      "updatedBy": userLogin.userId,
+      // "createdOn": "2025-10-31T11:46:02.816Z",
+      // "modifyOn": "2025-10-31T11:46:02.816Z",
+      "mode": mode
+    }
+      const result = await activityLoginRequest(params)
+      if (result) {
+
+        console.log('result clock in', result)
+        // navigation.navigate('ATPForm',{activiyDetails})
+
+      }else{
+
+      }
+   }catch(e){
+
+   }
+  };
 
   // const handleLogOut = async () => {
   //   const currentDateTime = new Date();

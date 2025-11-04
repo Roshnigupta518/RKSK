@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Pressable, Image, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native'
+import { StyleSheet, Text, View, Pressable, Image, TouchableOpacity, KeyboardAvoidingView, Platform, Keyboard } from 'react-native'
 import React, { useState, useCallback, useEffect } from 'react'
 import CustomHeader from '../../../../components/customHeader';
 import { CustomContainer, CustomContent } from '../../../../components/container';
@@ -18,7 +18,9 @@ import Video from 'react-native-video';
 import CustomMultiSelect from '../../../../components/customMultiselect';
 import moment from 'moment';
 import Toast from 'react-native-toast-message';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { clearClock } from '../../../../redux/slices/ClockTime';
+
 const INITIALINPUT = {
   date: '',
   time: '',
@@ -27,7 +29,7 @@ const INITIALINPUT = {
   other: '',
   activityDetails: '',
   visitCompletion: '',
-  other_Activity:''
+  other_Activity: ''
 };
 
 const errMsg = 'This field is required'
@@ -46,16 +48,17 @@ const ATPForm = ({ navigation, route }) => {
   const { activiyDetails } = route.params || {}
 
   const userLogin = useSelector(state => state.login.data);
+  const dispatch = useDispatch()
 
-  console.log({userLogin})
+  console.log({ userLogin })
 
-  useEffect(()=>{
-   setInputs({
-    ...inputs,
-     planedActivity:activiyDetails.visit_PurposeId_Id,
-     other_Activity: activiyDetails.other_Activity
-   })
-  },[activiyDetails])
+  useEffect(() => {
+    setInputs({
+      ...inputs,
+      planedActivity: activiyDetails.visit_PurposeId_Id,
+      other_Activity: activiyDetails.other_Activity
+    })
+  }, [activiyDetails])
 
   const handleOnchange = useCallback(
     (field) => (value) => {
@@ -96,8 +99,6 @@ const ATPForm = ({ navigation, route }) => {
     disabled: isLoading,
   });
 
-
-
   const pickerFieldProps = (field) => ({
     selectedValue: inputs[field],
     error: errors[field],
@@ -110,13 +111,11 @@ const ATPForm = ({ navigation, route }) => {
 
   const uploadProfileToServer = async res => {
     setAttachmentErr('')
-    // const imageResp = getPickerImageResp(res);
     setAttachment(res);
   };
 
   const uploadVideoToServer = async res => {
     setAttachedVideoErr('')
-    // const imageResp = getPickerImageResp(res);
     setAttachedVideo(res);
   };
 
@@ -210,7 +209,7 @@ const ATPForm = ({ navigation, route }) => {
       valid = false;
     }
 
-    if (inputs.meetings.includes(3) && isEmpty(inputs.other)) {
+    if (inputs.meetings.includes('Other') && isEmpty(inputs.other)) {
       tempErrors.other = errMsg;
       valid = false;
     }
@@ -262,7 +261,7 @@ const ATPForm = ({ navigation, route }) => {
 
     try {
       setIsLoading(true);
-      
+
       const formdata = new FormData();
       formdata.append("ATP_Id", activiyDetails.atP_Id);
       formdata.append("ActivityDateTime", ActivityDateTime);
@@ -271,11 +270,11 @@ const ATPForm = ({ navigation, route }) => {
       formdata.append("Latitude", location.latitude);
       formdata.append("Longitude", location.longitude);
       formdata.append("MeetingParticipant", inputs.meetings?.toString());
-      formdata.append("Other_MeetingParticipant",inputs.other);
+      formdata.append("Other_MeetingParticipant", inputs.other);
       formdata.append("Photo", attachment);
       formdata.append("PlannedActivity", inputs.planedActivity);
       formdata.append("Video", attachedVideo);
-      formdata.append("VisitCompletion",moment().format('YYYY-MM-DD HH:mm:ss'));
+      formdata.append("VisitCompletion", moment().format('YYYY-MM-DD HH:mm:ss'));
       formdata.append("Other_Activity", inputs.other_Activity);
       formdata.append("CreatedBy", userLogin.userId);
 
@@ -290,10 +289,10 @@ const ATPForm = ({ navigation, route }) => {
           position: 'bottom',
           bottomOffset: 60,
         });
-        navigation.navigate('MainApp',{ refresh: true })
+        navigation.navigate('MainApp', { refresh: true })
+        dispatch(clearClock())
       } else {
         console.warn('Unexpected data format:', result);
-
       }
     } catch (e) {
       console.log('ATP_FORM', e)
@@ -322,6 +321,16 @@ const ATPForm = ({ navigation, route }) => {
     }
   };
 
+  const handleMeetingChange = useCallback((val) => {
+    Keyboard.dismiss();
+    setInputs((prev) => ({
+      ...prev,
+      meetings: val,
+      other: val.includes('Other') ? prev.other : '',
+    }));
+  }, []);
+
+
   useEffect(() => {
     getATPDataHandle()
   }, [])
@@ -338,71 +347,65 @@ const ATPForm = ({ navigation, route }) => {
     <CustomContainer>
       <CustomHeader title="Field activity form" onBackPress={() => navigation.goBack()} />
       <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}>
-      <CustomContent>
-      
-        <View style={st.flex}>
-          <CustomDatePicker
-            label="Entry Date"
-            placeholder=""
-            minimumDate={new Date(1900, 0, 1)}
-            maximumDate={new Date()}
-            iconName={'calendar'}
-            {...dateFieldProps('date', 'date')}
-          />
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}>
+        <CustomContent>
 
-          <CustomDatePicker
-            label="Entry Time"
-            placeholder=""
-            iconName={'clock'}
-            {...dateFieldProps('time', 'time')}
-          />
+          <View style={st.flex}>
+            <CustomDatePicker
+              label="Entry Date"
+              placeholder=""
+              minimumDate={new Date(1900, 0, 1)}
+              maximumDate={new Date()}
+              iconName={'calendar'}
+              {...dateFieldProps('date', 'date')}
+            />
 
-          <CustomPicker
-            label="Planned Activity"
-            items={data || []}
-            placeholder=""
-            fontFamily={family.regular}
-            {...pickerFieldProps('planedActivity')}
-            disabled={true}
-          />
-          
-          {inputs?.other_Activity&&
-         <MyInput label="Other Activity" {...fieldProps('other_Activity')} disabled={true} />
-          }
-          <CustomMultiSelect
-            label="Meeting Participants"
-            items={ParticipantsList}
-            selectedItems={inputs.meetings}
-            onSelectedItemsChange={(val) => {
-              setInputs({
-                ...inputs,
-                meetings: val,
-                other: val.includes(3) ? inputs.other : '', // clear "other" if deselected
-              });
-            }}
-            required
-            placeholder=""
-            disabled={isLoading}
-            error={errors.meetings}
-          />
+            <CustomDatePicker
+              label="Entry Time"
+              placeholder=""
+              iconName={'clock'}
+              {...dateFieldProps('time', 'time')}
+            />
 
-          {inputs.meetings.includes('Other') && (
-            <MyInput label="Other" {...fieldProps('other')} />
-          )}
+            <CustomPicker
+              label="Planned Activity"
+              items={data || []}
+              placeholder=""
+              fontFamily={family.regular}
+              {...pickerFieldProps('planedActivity')}
+              disabled={true}
+            />
 
-          <MyInput label="Activity Details" {...fieldProps('activityDetails')} />
+            {inputs?.other_Activity &&
+              <MyInput label="Other Activity" {...fieldProps('other_Activity')} disabled={true} />
+            }
+            <CustomMultiSelect
+              label="Meeting Participants"
+              items={ParticipantsList}
+              selectedItems={inputs.meetings}
+              onSelectedItemsChange={handleMeetingChange}
+              required
+              placeholder=""
+              disabled={isLoading}
+              error={errors.meetings}
+            />
 
-          <AvatarPicker />
-          <VideoPicker />
+            {inputs.meetings.includes('Other') && (
+              <MyInput label="Other" {...fieldProps('other')} />
+            )}
 
-          <CustomButton title='Save'
-            onPress={onSave}
-            disabled={isLoading}
-          />
-        </View>
-      </CustomContent>
+            <MyInput label="Activity Details" {...fieldProps('activityDetails')} />
+
+            <AvatarPicker />
+            <VideoPicker />
+
+            <CustomButton title='Save'
+              onPress={onSave}
+              disabled={isLoading}
+            />
+          </View>
+        </CustomContent>
       </KeyboardAvoidingView>
 
     </CustomContainer>

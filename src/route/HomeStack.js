@@ -23,7 +23,7 @@ const HomeStack = () => {
       initialRouteName={'MainApp'}>
         <Stack.Screen name="MainApp" component={DrawerStack} />
       {/* <Stack.Screen name="Home" component={Home} /> */}
-      <Stack.Screen name="ATPListScreen" component={ATPListScreen} />
+      <Stack.Screen name="ATPListScreen" component={ATPListScreen}  options={{ animation: 'none' }} />
       <Stack.Screen name="ATPForm" component={ATPForm} />
       <Stack.Screen name="ATPLogin" component={ATPLogin} />
       <Stack.Screen name="LoginMap" component={LoginMap} />

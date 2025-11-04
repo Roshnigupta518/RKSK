@@ -23,14 +23,14 @@ const CustomMultiSelect = ({
       {label && <Text style={[styles.label]}>{label}</Text>}
 
       <MultiSelect
-        hideTags
+        // hideTags
         items={items}
         uniqueKey={uniqueKey}
         onSelectedItemsChange={onSelectedItemsChange}
         selectedItems={selectedItems}
         selectText={placeholder}
         searchInputPlaceholderText="Search..."
-        tagRemoveIconColor={colors?.red || 'red'}
+        tagRemoveIconColor={colors?.blue || 'red'}
         tagBorderColor={colors?.blue || '#007bff'}
         tagTextColor={colors?.blue || '#007bff'}
         selectedItemTextColor={colors?.blue || '#007bff'}
@@ -44,9 +44,11 @@ const CustomMultiSelect = ({
         styleDropdownMenuSubsection={[styles.dropdown, {borderColor:hasError?colors.red : '#ccc'}]}
         disabled={disable}
         iconColor={colors?.black || '#007bff'} 
+        scrollEnabled={false}
       />
 
       {error ? <Text style={st.error}>{error}</Text> : null}
+
     </View>
   );
 };
@@ -73,4 +75,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CustomMultiSelect;
+// export default CustomMultiSelect;
+export default React.memo(CustomMultiSelect);

@@ -70,7 +70,7 @@ const ATPListScreen = ({ navigation }) => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity 
-      onPress={() => navigation.navigate('ATPLogin',{activiyDetails: item})}
+      onPress={() => navigation.navigate('ATPLogin',{activiyDetails: item, animation: 'none' })}
       style={[st.card,{
         // backgroundColor: item.activity_Id ? colors.lightGrey : colors.white
       }]}>
