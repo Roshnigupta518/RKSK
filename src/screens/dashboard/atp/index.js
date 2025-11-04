@@ -96,6 +96,7 @@ const ATPListScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         ListEmptyComponent={<EmptyItem isLoading={isLoading} />}
+        removeClippedSubviews={false}
       />
     </View>
   );

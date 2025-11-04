@@ -31,6 +31,19 @@ const ATPDetailScreen = ({ navigation, route }) => {
     const [timeDifference, setTimeDifference] = useState('');
     const [date, setDate] = useState(null);
 
+    const [showVideo, setShowVideo] = useState(false);
+
+    useEffect(() => {
+        let timeout;
+        if (isFocused) {
+            timeout = setTimeout(() => setShowVideo(true), 300); // delay video mount
+        } else {
+            setShowVideo(false); // cleanup when leaving
+        }
+        return () => clearTimeout(timeout);
+    }, [isFocused]);
+
+
     useEffect(() => {
         const date = new Date();
         const todayDate = formatDate(date);
@@ -53,62 +66,62 @@ const ATPDetailScreen = ({ navigation, route }) => {
         }
     }, [attendance]);
 
-    if (!isFocused) return null; 
+    // if (!isFocused) return null;
 
     return (
         <CustomContainer>
             <CustomHeader title="ATP Login" onBackPress={() => navigation.goBack()} />
             <CustomContent>
-                {activiyDetails.activity_Id === null&&
-                <View style={styles.dateCard}>
-                    <Text style={[st.tx14, st.txAlignC]}>
-                        <Text style={{ color: colors.blue }}>{date}</Text>
-                    </Text>
-                    <View>
-                    {(!attendance?.loginTime || (attendance?.loginTime && logoutDetails?.logoutTime)) ? (
-                        <CustomButton title='LOG IN'
-                            onPress={() => navigation.navigate('LoginMap', { activiyDetails })}
-                        />
-                    ) : (
-                        <View style={styles.content_logout}>
-                            <TouchableOpacity disabled={(attendance?.loginTime && activiyDetails.activity_Id === null) ? true : false}
-                                style={[styles.logoutcontainer, {
-                                    backgroundColor: (attendance?.loginTime && activiyDetails.activity_Id === null) ? colors.black : colors.blue
-                                }]}
-                                onPress={() => navigation.navigate('LoginMap', { activiyDetails })}>
-                                <Text style={[st.tx16, { color: colors.white }]}>LOG OUT</Text>
-                            </TouchableOpacity>
-                            <View style={st.wdh50}>
-                                <View style={st.center}>
-                                    <Text style={st.tx12}>{timeDifference}</Text>
-                                    <View style={[st.row, st.align_C]}>
-                                        <Icon
-                                            name={'arrow-down-left'}
-                                            size={20}
-                                            color={colors.success}
-                                        />
-                                        <Text style={[st.tx12, { color: colors.grey }]}>
-                                            {formatTime(attendance?.loginTime)}
-                                        </Text>
+                {activiyDetails.activity_Id === null &&
+                    <View style={styles.dateCard}>
+                        <Text style={[st.tx14, st.txAlignC]}>
+                            <Text style={{ color: colors.blue }}>{date}</Text>
+                        </Text>
+                        <View>
+                            {(!attendance?.loginTime || (attendance?.loginTime && logoutDetails?.logoutTime)) ? (
+                                <CustomButton title='LOG IN'
+                                    onPress={() => navigation.navigate('LoginMap', { activiyDetails })}
+                                />
+                            ) : (
+                                <View style={styles.content_logout}>
+                                    <TouchableOpacity disabled={(attendance?.loginTime && activiyDetails.activity_Id === null) ? true : false}
+                                        style={[styles.logoutcontainer, {
+                                            backgroundColor: (attendance?.loginTime && activiyDetails.activity_Id === null) ? colors.black : colors.blue
+                                        }]}
+                                        onPress={() => navigation.navigate('LoginMap', { activiyDetails })}>
+                                        <Text style={[st.tx16, { color: colors.white }]}>LOG OUT</Text>
+                                    </TouchableOpacity>
+                                    <View style={st.wdh50}>
+                                        <View style={st.center}>
+                                            <Text style={st.tx12}>{timeDifference}</Text>
+                                            <View style={[st.row, st.align_C]}>
+                                                <Icon
+                                                    name={'arrow-down-left'}
+                                                    size={20}
+                                                    color={colors.success}
+                                                />
+                                                <Text style={[st.tx12, { color: colors.grey }]}>
+                                                    {formatTime(attendance?.loginTime)}
+                                                </Text>
+                                            </View>
+                                        </View>
                                     </View>
                                 </View>
-                            </View>
+                            )}
                         </View>
-                    )}
+                        {(attendance?.loginTime && activiyDetails.activity_Id === null) &&
+                            <View style={st.mt_5}>
+                                <Text style={[st.tx12, { color: '#ccc' }]}>The Logout button will be enabled once the activity form is filled and submitted successfully</Text>
+                            </View>}
+
+                        {(activiyDetails.activity_Id == null && attendance?.loginTime) && (
+                            <CustomButton title='Proceed to fill activity form'
+                                onPress={() => navigation.navigate('ATPForm', { activiyDetails })}
+                            />)}
+
                     </View>
-                    {(attendance?.loginTime && activiyDetails.activity_Id === null) &&
-                        <View style={st.mt_5}>
-                            <Text style={[st.tx12, { color: '#ccc' }]}>The Logout button will be enabled once the activity form is filled and submitted successfully</Text>
-                        </View>}
-
-                    {(activiyDetails.activity_Id == null && attendance?.loginTime) && (
-                        <CustomButton title='Proceed to fill activity form'
-                            onPress={() => navigation.navigate('ATPForm', { activiyDetails })}
-                        />)}
-
-                </View>
                 }
-                 
+
                 <View style={styles.detailCard}>
                     <Text style={styles.title}>{activiyDetails.visit_Purpose}</Text>
                     <Field label="Visit Start Date and Time" value={activiyDetails.visit_Start_Date} />
@@ -133,10 +146,15 @@ const ATPDetailScreen = ({ navigation, route }) => {
                         <Field label="Image" value={activiyDetails.photo_Path} />
                         <Image source={{ uri: environment.imageUrl + activiyDetails.photo_Path }} style={st.imageSty} />
                         <Field label="Video" value={activiyDetails.video_Path} />
-                        <Video source={{ uri: environment.imageUrl + activiyDetails.video_Path}}
-                            controls
-                            paused={!isFocused}
-                            style={st.imageSty} />
+                        {showVideo && activiyDetails.video_Path && (
+                            <Video
+                                source={{ uri: environment.imageUrl + activiyDetails.video_Path }}
+                                controls
+                                paused={!isFocused}
+                                style={st.imageSty}
+                                resizeMode="cover"
+                            />
+                        )}
                     </View>
                 }
             </CustomContent>

@@ -66,7 +66,7 @@ const index = () => {
   };
 
   return (
-    <NavigationContainer fallback={<ActivityIndicator />}>
+    <NavigationContainer fallback={<ActivityIndicator />} detachInactiveScreens={false} >
     <StatusBar
       translucent
       barStyle={'dark-content'}

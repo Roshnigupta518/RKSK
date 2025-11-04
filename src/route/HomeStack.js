@@ -25,7 +25,7 @@ const HomeStack = () => {
       {/* <Stack.Screen name="Home" component={Home} /> */}
       <Stack.Screen name="ATPListScreen" component={ATPListScreen}  options={{ animation: 'none' }} />
       <Stack.Screen name="ATPForm" component={ATPForm} />
-      <Stack.Screen name="ATPLogin" component={ATPLogin} />
+      <Stack.Screen name="ATPLogin" component={ATPLogin} options={{ animation: 'none' }} />
       <Stack.Screen name="LoginMap" component={LoginMap} />
     </Stack.Navigator>
   )
