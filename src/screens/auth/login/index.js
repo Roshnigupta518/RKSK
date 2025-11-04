@@ -23,8 +23,8 @@ import { useDispatch } from 'react-redux';
 import {jwtDecode} from 'jwt-decode';
 import { wp } from '../../../global';
 const INITIALINPUT = {
-  userName: 'Jhabua#F2',
-  password: 'Admin@123',
+  userName: '', //'Jhabua#F2',
+  password: '', //'Admin@123',
 };
 
 const Login = ({ navigation }) => {

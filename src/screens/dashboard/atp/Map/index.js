@@ -228,8 +228,8 @@ const App = ({ navigation, route }) => {
                   title={
                     !attendance?.loginTime ||
                       (attendance?.loginTime && logoutDetails?.logoutTime)
-                      ? 'Login'
-                      : 'Logout'
+                      ? 'Clock In'
+                      : 'Clock Out'
                   }
                   onPress={() => {
                     console.log({ attendance, logoutDetails });

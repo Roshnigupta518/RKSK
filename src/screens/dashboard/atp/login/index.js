@@ -79,7 +79,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
                         </Text>
                         <View>
                             {(!attendance?.loginTime || (attendance?.loginTime && logoutDetails?.logoutTime)) ? (
-                                <CustomButton title='LOG IN'
+                                <CustomButton title='Clock In'
                                     onPress={() => navigation.navigate('LoginMap', { activiyDetails })}
                                 />
                             ) : (
