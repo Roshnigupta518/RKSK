@@ -1,4 +1,4 @@
-package com.rksk
+package com.rkskmp
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

@@ -1,4 +1,4 @@
-package com.rksk
+package com.rkskmp
 
 import android.app.Application
 import com.facebook.react.PackageList

@@ -33,7 +33,7 @@ const AppUpdateChecker = () => {
               onPress: () => {
                 if (Platform.OS == 'android') {
                   Linking.openURL(
-                    'https://play.google.com/store/apps/details?id=com.rksk',
+                    'https://play.google.com/store/apps/details?id=com.rkskmp',
                   );
                 } 
               },
