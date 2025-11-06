@@ -13,13 +13,12 @@ import { convertToLabelValue, getPickerImageResp } from '../../../../utils/helpe
 import { isEmpty } from '../../../../utils/validations';
 import WithImageUpload from '../../../../HOC/ImageUploader';
 import { useLocation } from '../../../../hooks/useLocation';
-import { atpFormRequest, getATPListRequest } from '../../../../utils/services';
+import { activityLoginRequest, atpFormRequest, getATPListRequest } from '../../../../utils/services';
 import Video from 'react-native-video';
 import CustomMultiSelect from '../../../../components/customMultiselect';
 import moment from 'moment';
 import Toast from 'react-native-toast-message';
 import { useSelector, useDispatch } from 'react-redux';
-import { clearClock } from '../../../../redux/slices/ClockTime';
 
 const INITIALINPUT = {
   date: '',
@@ -48,9 +47,6 @@ const ATPForm = ({ navigation, route }) => {
   const { activiyDetails } = route.params || {}
 
   const userLogin = useSelector(state => state.login.data);
-  const dispatch = useDispatch()
-
-  console.log({ userLogin })
 
   useEffect(() => {
     setInputs({
@@ -289,13 +285,58 @@ const ATPForm = ({ navigation, route }) => {
           position: 'bottom',
           bottomOffset: 60,
         });
-        navigation.navigate('MainApp', { refresh: true })
-        dispatch(clearClock())
+        handleLogOut()
       } else {
         console.warn('Unexpected data format:', result);
       }
     } catch (e) {
       console.log('ATP_FORM', e)
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogOut = async () => {
+    try {
+      setIsLoading(true);
+      const params = {
+        "atP_Id": activiyDetails.atP_Id,
+        "clockinTime":null,
+        "clockinAddress": null,
+        "clockin_lat": null,
+        "clockin_long": null,
+        "clockoutTime":  new Date() ,
+        "clockoutAddress":  locationArea ,
+        "clockout_lat":  location?.latitude ,
+        "clockout_long":  location?.longitude ,
+        "createdBy": userLogin.userId,
+        "updatedBy": userLogin.userId,
+        "mode": 2
+      }
+      const result = await activityLoginRequest(params)
+      if (result) {
+
+        console.log('result clock out', result)
+
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainApp', params: { refresh: true } }],
+        });
+        
+        Toast.show({
+          type: "myCustomType",
+          text1: "Success",
+          text2: "Clock out successfully",
+          props: { key: 'success' },
+          position: 'bottom',
+          bottomOffset: 60,
+        });
+
+      } else {
+
+      }
+    } catch (e) {
+      console.log(e)
     } finally {
       setIsLoading(false);
     }
@@ -403,6 +444,7 @@ const ATPForm = ({ navigation, route }) => {
             <CustomButton title='Save'
               onPress={onSave}
               disabled={isLoading}
+              loading={isLoading}
             />
           </View>
         </CustomContent>

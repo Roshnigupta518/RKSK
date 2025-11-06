@@ -5,14 +5,14 @@ import {
   FlatList,
   StyleSheet,
   RefreshControl,
-  TouchableOpacity,
+  TouchableOpacity,BackHandler, Alert
 } from 'react-native';
 import Field from '../../../components/field';
 import st from '../../../global/styles';
 import { getATPListRequest } from '../../../utils/services';
 import EmptyItem from '../../../components/emptyItem';
 import { colors } from '../../../global';
-import { useIsFocused, useRoute } from '@react-navigation/native';
+import { useIsFocused, useRoute, useFocusEffect } from '@react-navigation/native';
 
 const ATPListScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
@@ -47,10 +47,40 @@ const ATPListScreen = ({ navigation }) => {
       setIsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     getATPDataHandle()
   }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+    const backAction = () => {
+      Alert.alert(
+        'Exit From RKSK',
+        'Are you sure you want to close this application?',
+        [
+          {
+            text: 'Cancel',
+            onPress: () => null,
+            style: 'cancel',
+          },
+          { text: 'YES', onPress: () => BackHandler.exitApp() },
+        ],
+      );
+      return true;
+    };
+
+   
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+
+
+  }, [navigation]) 
+);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -60,26 +90,27 @@ const ATPListScreen = ({ navigation }) => {
     }, 1500);
   }, []);
 
-  const changedBgColor = (activity_Id)=>{
-    if(activity_Id){
+  const changedBgColor = (activity_Id, clockinTime) => {
+    if (activity_Id) {
       return colors.green
-    } else {
+    } else if(clockinTime) {
+      return colors.yellow
+    }else{
       return colors.red
     }
   }
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity 
-      onPress={() => navigation.navigate('ATPLogin',{activiyDetails: item, animation: 'none' })}
-      style={[st.card,{
-        // backgroundColor: item.activity_Id ? colors.lightGrey : colors.white
-      }]}>
-      <Text style={styles.title}>{item.visit_Purpose}</Text>
+    <TouchableOpacity
+      onPress={() => navigation.navigate('ATPLogin', { activiyDetails: item, animation: 'none' })}
+      style={[st.card]}>
+      <View style={st.mt_5} />
+      <Text style={styles.title}>{item.visit_Purpose} Activity plan</Text>
       <Field label="Visit Start Date and Time" value={item.visit_Start_Date} />
       <Field label="Visit End Date and Time" value={item.visit_End_Date} />
-      <View style={[styles.ribbon,{backgroundColor:changedBgColor(item.activity_Id)}]}>
-        <Text style={[st.tx12,{color:colors.white}]}>
-          {item.activity_Id ? 'Completed' : 'Pending'}
+      <View style={[styles.ribbon, { backgroundColor: changedBgColor(item.activity_Id, item.clockinTime) }]}>
+        <Text style={[st.tx12, { color: colors.white }]}>
+          {item.activity_Id? 'Completed': item.clockinTime? 'In Progress': 'Pending'}
         </Text>
       </View>
     </TouchableOpacity>
@@ -118,6 +149,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderTopRightRadius: 10,
-    paddingHorizontal:10,
+    paddingHorizontal: 10,
   },
 });

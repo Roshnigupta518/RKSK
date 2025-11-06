@@ -4,7 +4,7 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    ScrollView, Image
+    Image
 } from 'react-native';
 import CustomHeader from '../../../../components/customHeader';
 import { CustomContainer, CustomContent } from '../../../../components/container';
@@ -12,7 +12,6 @@ import CustomButton from '../../../../components/customButton';
 import st from '../../../../global/styles';
 import { colors } from '../../../../global';
 import Field from '../../../../components/field';
-import { useSelector } from 'react-redux';
 import { timeDifferenceFun, formatTime, formatDate } from '../../../../utils/helper';
 import Icon from 'react-native-vector-icons/Feather';
 import { environment } from '../../../../utils/constant'
@@ -20,11 +19,7 @@ import Video from 'react-native-video';
 import { useIsFocused } from '@react-navigation/native';
 
 const ATPDetailScreen = ({ navigation, route }) => {
-    const attendance = useSelector(state => state.clockTime?.loginDetails);
-    const loginDetails = useSelector(state => state.login?.data);
-    const logoutDetails = useSelector(state => state.clockTime?.logoutDetails);
 
-    // console.log({attendance})
     const isFocused = useIsFocused();
 
     const { activiyDetails } = route.params || {}
@@ -36,9 +31,9 @@ const ATPDetailScreen = ({ navigation, route }) => {
     useEffect(() => {
         let timeout;
         if (isFocused) {
-            timeout = setTimeout(() => setShowVideo(true), 300); // delay video mount
+            timeout = setTimeout(() => setShowVideo(true), 300); 
         } else {
-            setShowVideo(false); // cleanup when leaving
+            setShowVideo(false); 
         }
         return () => clearTimeout(timeout);
     }, [isFocused]);
@@ -51,22 +46,20 @@ const ATPDetailScreen = ({ navigation, route }) => {
     }, []);
 
     useEffect(() => {
-        if (attendance) {
-            const storedTime = new Date(attendance?.loginTime);
+        if (activiyDetails.clockinTime) {
+            const storedTime = new Date(activiyDetails?.clockinTime);
 
             const interval = setInterval(() => {
                 const difference = timeDifferenceFun(
                     storedTime,
-                    attendance?.logoutTime,
+                    activiyDetails?.clockoutTime,
                 );
                 setTimeDifference(difference);
             }, 1000);
 
             return () => clearInterval(interval);
         }
-    }, [attendance]);
-
-    // if (!isFocused) return null;
+    }, [activiyDetails]);
 
     return (
         <CustomContainer>
@@ -78,18 +71,18 @@ const ATPDetailScreen = ({ navigation, route }) => {
                             <Text style={{ color: colors.blue }}>{date}</Text>
                         </Text>
                         <View>
-                            {(!attendance?.loginTime || (attendance?.loginTime && logoutDetails?.logoutTime)) ? (
+                            {(!activiyDetails?.clockinTime || (activiyDetails?.clockinTime && activiyDetails?.clockoutTime)) ? (
                                 <CustomButton title='Clock In'
                                     onPress={() => navigation.navigate('LoginMap', { activiyDetails })}
                                 />
                             ) : (
                                 <View style={styles.content_logout}>
-                                    <TouchableOpacity disabled={(attendance?.loginTime && activiyDetails.activity_Id === null) ? true : false}
+                                    <TouchableOpacity disabled={(activiyDetails?.clockinTime && activiyDetails.activity_Id === null) ? true : false}
                                         style={[styles.logoutcontainer, {
-                                            backgroundColor: (attendance?.loginTime && activiyDetails.activity_Id === null) ? colors.black : colors.blue
+                                            backgroundColor: (activiyDetails?.clockinTime && activiyDetails.activity_Id === null) ? colors.black : colors.blue
                                         }]}
                                         onPress={() => navigation.navigate('LoginMap', { activiyDetails })}>
-                                        <Text style={[st.tx16, { color: colors.white }]}>LOG OUT</Text>
+                                        <Text style={[st.tx16, { color: colors.white }]}>Clock Out</Text>
                                     </TouchableOpacity>
                                     <View style={st.wdh50}>
                                         <View style={st.center}>
@@ -101,7 +94,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
                                                     color={colors.success}
                                                 />
                                                 <Text style={[st.tx12, { color: colors.grey }]}>
-                                                    {formatTime(attendance?.loginTime)}
+                                                    {formatTime(activiyDetails?.clockinTime)}
                                                 </Text>
                                             </View>
                                         </View>
@@ -109,21 +102,20 @@ const ATPDetailScreen = ({ navigation, route }) => {
                                 </View>
                             )}
                         </View>
-                        {(attendance?.loginTime && activiyDetails.activity_Id === null) &&
+                        {(activiyDetails?.clockinTime && activiyDetails.activity_Id === null) &&
                             <View style={st.mt_5}>
-                                <Text style={[st.tx12, { color: '#ccc' }]}>The Logout button will be enabled once the activity form is filled and submitted successfully</Text>
+                                <Text style={[st.tx12, { color: '#ccc' }]}>You will be clocked out automatically after submitting the activity form.</Text>
                             </View>}
 
-                        {(activiyDetails.activity_Id == null && attendance?.loginTime) && (
+                        {(activiyDetails.activity_Id == null && activiyDetails?.clockinTime) && (
                             <CustomButton title='Proceed to fill activity form'
                                 onPress={() => navigation.navigate('ATPForm', { activiyDetails })}
                             />)}
-
                     </View>
                 }
 
                 <View style={styles.detailCard}>
-                    <Text style={styles.title}>{activiyDetails.visit_Purpose}</Text>
+                    <Text style={styles.title}>{activiyDetails.visit_Purpose} Activity plan</Text>
                     <Field label="Visit Start Date and Time" value={activiyDetails.visit_Start_Date} />
                     <Field label="Visit End Date and Time" value={activiyDetails.visit_End_Date} />
                     <Field label="Block" value={activiyDetails.blockNameE} />

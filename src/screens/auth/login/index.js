@@ -22,9 +22,13 @@ import { setLogin } from '../../../redux/slices/login';
 import { useDispatch } from 'react-redux';
 import {jwtDecode} from 'jwt-decode';
 import { wp } from '../../../global';
+
 const INITIALINPUT = {
-  userName: '', //'Jhabua#F2',
-  password: '', //'Admin@123',
+  // userName: '', 
+  // password: '',
+
+  userName: 'Jhabua#F2',
+  password: 'Admin@123',
 };
 
 const Login = ({ navigation }) => {
@@ -220,7 +224,6 @@ const Login = ({ navigation }) => {
                 <Button
                   title="Login"
                   onPress={validation}
-                  // onPress={()=>navigation.navigate('ATPListScreen')}
                   loading={isLoading}
                   disabled={isLoading}
                 />
