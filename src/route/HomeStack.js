@@ -21,8 +21,7 @@ const HomeStack = () => {
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
       initialRouteName={'MainApp'}>
-        <Stack.Screen name="MainApp" component={DrawerStack} />
-      {/* <Stack.Screen name="Home" component={Home} /> */}
+      <Stack.Screen name="MainApp" component={DrawerStack} />
       <Stack.Screen name="ATPListScreen" component={ATPListScreen}  options={{ animation: 'none' }} />
       <Stack.Screen name="ATPForm" component={ATPForm} />
       <Stack.Screen name="ATPLogin" component={ATPLogin} options={{ animation: 'none' }} />
@@ -34,7 +33,7 @@ const HomeStack = () => {
 const DrawerStack = () => {
   return (
     <Drawer.Navigator
-      initialRouteName="ATPListScreen"
+      initialRouteName="Dashboard"
       screenOptions={{
         drawerActiveTintColor: colors.blue,
         drawerInactiveTintColor: colors.black,
@@ -51,6 +50,15 @@ const DrawerStack = () => {
         },
       }}
       drawerContent={props => <CustomeSidebar {...props} />}>
+        <Drawer.Screen
+        name="Dashboard"
+        options={{
+          title:'Dashboard',
+          drawerLabel: 'Dashboard',
+          drawerIcon: ({color}) => <Icon name="home" size={22} color={color} />,
+        }}
+        component={Home}
+      />
       <Drawer.Screen
         name="ATPListScreen"
         options={{

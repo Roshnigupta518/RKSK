@@ -5,14 +5,15 @@ import {Provider} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import {persistStore} from 'redux-persist';
 import {store,persistor} from './redux/store';
+import ErrorBoundary from './components/errorBoundry';
 
 const App = () => {
   return (
     <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
-      {/* <ErrorBoundary> */}
+      <ErrorBoundary>
         <Route />
-      {/* </ErrorBoundary> */}
+      </ErrorBoundary>
     </PersistGate>
   </Provider>
   )

@@ -4,7 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import Login from '../screens/auth/login'
 import Disclaimer from '../screens/dashboard/disclaimer'
 import { useAppSelector } from '../hooks'
+import { onApplicationOpen } from '../utils/bgservices/tiggerfunction'
+
 const Stack = createNativeStackNavigator();
+
+onApplicationOpen()
 
 const AuthStack = () => {
   const disclaimerStatus = useAppSelector(state => state.disclaimerStatus.data); 

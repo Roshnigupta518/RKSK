@@ -22,6 +22,7 @@ import { setLogin } from '../../../redux/slices/login';
 import { useDispatch } from 'react-redux';
 import {jwtDecode} from 'jwt-decode';
 import { wp } from '../../../global';
+import { onLogin } from '../../../utils/bgservices/tiggerfunction';
 
 const INITIALINPUT = {
   // userName: '', 
@@ -151,6 +152,7 @@ const Login = ({ navigation }) => {
         dispatch(setLogin(userData))
         setIsLoading(false);
         setInputs(INITIALINPUT)
+        onLogin()
       } else {
         setIsLoading(false);
         setVisible(true)

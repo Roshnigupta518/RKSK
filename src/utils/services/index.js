@@ -76,3 +76,11 @@ export const appUpdateRequest = async() =>{
     return [];
   }
 } 
+
+export const getDasboardDataHandle = async() => {
+
+}
+
+export const  getProfileDataHandle = async() => {
+
+}
