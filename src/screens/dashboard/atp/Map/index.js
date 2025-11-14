@@ -24,6 +24,7 @@ import { useLocation } from '../../../../hooks/useLocation';
 import CustomHeader from '../../../../components/customHeader';
 import MyInput from '../../../../components/customInput'
 import { activityLoginRequest } from '../../../../utils/services';
+import useNetworkStatus from '../../../../hooks/networkStatus';
 
 const INITIALINPUT = {
   remark: '',
@@ -41,6 +42,7 @@ const App = ({ navigation, route }) => {
   const mode = !activiyDetails.clockinTime ? 1 : 2
 
   const { location, locationArea } = useLocation();
+  const isConnected = useNetworkStatus();
 
   const userLogin = useSelector(state => state.login.data);
 
@@ -185,7 +187,7 @@ const App = ({ navigation, route }) => {
               </View>
               <View style={st.wdh30}>
                 <Button
-                  disabled={locationArea ? false : true}
+                  disabled={(locationArea && isConnected) ? false : true}
                   loading={isLoading}
                   title={
                     !activiyDetails?.clockinTime ||

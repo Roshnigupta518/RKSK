@@ -53,6 +53,7 @@ const DrawerStack = () => {
         <Drawer.Screen
         name="Dashboard"
         options={{
+          headerShown: false,
           title:'Dashboard',
           drawerLabel: 'Dashboard',
           drawerIcon: ({color}) => <Icon name="home" size={22} color={color} />,
