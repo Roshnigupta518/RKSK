@@ -15,6 +15,7 @@ import {
 import loginSlice from '../slices/login';
 import ClockTimeSlice from '../slices/ClockTime';
 import DisclaimerSlice from '../slices/disclaimer';
+import ActivityPlan from '../slices/ActivityPlan';
 
 const authPersistConfig = {
     key: 'Login',
@@ -38,6 +39,7 @@ const authPersistConfig = {
     login: persistReducer(authPersistConfig, loginSlice),
     clockTime: persistReducer(clockPersistConfig, ClockTimeSlice),
     disclaimerStatus: persistReducer(disclaimerPersistConfig, DisclaimerSlice),
+    activityPlan : ActivityPlan
   })
 
 export const store = configureStore({

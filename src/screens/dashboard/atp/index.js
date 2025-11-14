@@ -13,50 +13,55 @@ import { getATPListRequest } from '../../../utils/services';
 import EmptyItem from '../../../components/emptyItem';
 import { colors } from '../../../global';
 import { useIsFocused, useRoute, useFocusEffect } from '@react-navigation/native';
+import { useAppSelector } from '../../../hooks';
 
 const ATPListScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState([])
   const [isLoading, setIsLoading] = useState(false)
 
+  const activityPlanList = useAppSelector(state => state.activityPlan.data);
+
   const isFocused = useIsFocused();
   const route = useRoute();
 
-  useEffect(() => {
-    if (isFocused && route.params?.refresh) {
-      getATPDataHandle(); // your API call
-      // Clear the refresh flag so it doesn’t repeat
-      navigation.setParams({ refresh: false });
-    }
-  }, [isFocused, route.params?.refresh]);
+  // console.log({activityPlanList})
 
-  const getATPDataHandle = async () => {
-    try {
-      setIsLoading(true);
-      const result = await getATPListRequest();
-      console.log('ATP Result:', result);
-      if (Array.isArray(result)) {
-        setData(result);
-      } else {
-        console.warn('Unexpected data format:', result);
-        setData([]);
-      }
-    } catch (e) {
-      console.log('ATP_LIST', e)
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // useEffect(() => {
+  //   if (isFocused && route.params?.refresh) {
+  //     getATPDataHandle(); // your API call
+  //     // Clear the refresh flag so it doesn’t repeat
+  //     navigation.setParams({ refresh: false });
+  //   }
+  // }, [isFocused, route.params?.refresh]);
 
-  useEffect(() => {
-    getATPDataHandle()
-  }, [])
+  // const getATPDataHandle = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const result = await getATPListRequest();
+  //     console.log('ATP Result:', result);
+  //     if (Array.isArray(result)) {
+  //       setData(result);
+  //     } else {
+  //       console.warn('Unexpected data format:', result);
+  //       setData([]);
+  //     }
+  //   } catch (e) {
+  //     console.log('ATP_LIST', e)
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   getATPDataHandle()
+  // }, [])
 
   useFocusEffect(
     useCallback(() => {
     const backAction = () => {
       Alert.alert(
-        'Exit From RKSK',
+        'Exit From RKSK MP',
         'Are you sure you want to close this application?',
         [
           {
@@ -69,7 +74,6 @@ const ATPListScreen = ({ navigation }) => {
       );
       return true;
     };
-
    
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
@@ -77,8 +81,6 @@ const ATPListScreen = ({ navigation }) => {
     );
 
     return () => backHandler.remove();
-
-
   }, [navigation]) 
 );
 
@@ -119,7 +121,7 @@ const ATPListScreen = ({ navigation }) => {
   return (
     <View style={st.container}>
       <FlatList
-        data={data}
+        data={activityPlanList || []}
         keyExtractor={item => item.atP_Id}
         renderItem={renderItem}
         contentContainerStyle={st.pd20}

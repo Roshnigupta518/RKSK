@@ -3,7 +3,7 @@ import {syncTaskName} from './backgroundTaskEnum';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { isUserLoggedIn } from '../../redux/store/getState';
-import {  syncDashboard, syncProfileData } from './syncTask';
+import {  syncATPListData, syncDashboard, syncProfileData } from './syncTask';
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
 const defaultDelay = 1 * 60 * 1000;
@@ -57,21 +57,27 @@ const checkIfTaskNotSyncedToday = async taskName => {
         const netInfoState = await NetInfo.fetch();
         if (netInfoState.isConnected) {
           try {
-            let isSyncDashboard = taskName == syncTaskName.syncDashboard || syncAll;
-            let isSyncProfile = taskName == syncTaskName.syncGetProfile || syncAll;
+            // let isSyncDashboard = taskName == syncTaskName.syncDashboard || syncAll;
+            // let isSyncProfile = taskName == syncTaskName.syncGetProfile || syncAll;
+            let isSyncATPList = taskName == syncTaskName.syncGetAtpList || syncAll;
            
-            if (isAnythingPendingForSync) {
+            // if (isAnythingPendingForSync) {
 
-            }
+            // }
              
-            if (isSyncDashboard) {
-              console.log('executing sync dashboard');
-              await syncDashboard();
-            }
+            // if (isSyncDashboard) {
+            //   console.log('executing sync dashboard');
+            //   await syncDashboard();
+            // }
 
-            if (isSyncProfile) {
-              console.log('executing sync isSyncProfile');
-              await syncProfileData();
+            // if (isSyncProfile) {
+            //   console.log('executing sync isSyncProfile');
+            //   await syncProfileData();
+            // }
+
+            if (isSyncATPList) {
+              console.log('executing sync isSyncATPList');
+              await syncATPListData();
             }
 
             if (await checkIfSyncPending()) {

@@ -1,5 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { images } from '../../global/theme';
 
 const initialState = {
     data: false

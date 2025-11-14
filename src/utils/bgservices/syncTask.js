@@ -1,6 +1,6 @@
 import { syncTaskName } from "./backgroundTaskEnum";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getDasboardDataHandle, getProfileDataHandle } from "../services";
+import { getDasboardDataHandle, getProfileDataHandle, getATPListRequest } from "../services";
 
 const setSyncStatus = async taskName => {
     const status = {lastSyncOn: new Date()};
@@ -15,5 +15,10 @@ export const syncDashboard = async () => {
 export const syncProfileData = async () => {
     getProfileDataHandle();
     await setSyncStatus(syncTaskName.syncGetProfile);
-  };
+};
+
+export const syncATPListData = async () => {
+    getATPListRequest();
+    await setSyncStatus(syncTaskName.syncGetAtpList);
+};
 

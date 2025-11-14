@@ -17,6 +17,10 @@ const Home = () => {
     startSync();
   }, [isConnected]);
 
+  // useEffect(() => {
+  //   startSync()
+  // }, [])
+
   return (
     <View>
       <Text>Home</Text>

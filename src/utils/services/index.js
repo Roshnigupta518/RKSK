@@ -2,6 +2,7 @@ import { API } from "../endpoints";
 import { getApi, postApi, postApiWithToken, uploadApi } from "../apicalls";
 import { handleAPIErrorResponse } from "../validations";
 import { store } from "../../redux/store";
+import { setActivityPlan } from "../../redux/slices/ActivityPlan";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -15,10 +16,11 @@ export const getATPListRequest = async () => {
       const result = await getApi(url);
       
       if (result?.status === 200) {
-        return result.data; // return only the data
+        store.dispatch(setActivityPlan(result.data))
+        // return result.data; // return only the data
       } else {
         console.warn('Unexpected response:', result);
-        return [];
+        // return [];
       }
     } catch (e) {
       handleAPIErrorResponse(e);
