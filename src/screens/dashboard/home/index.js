@@ -1,5 +1,5 @@
-import React,{useEffect} from "react";
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from "react-native";
+import React, { useEffect, useCallback, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, BackHandler, Alert } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Feather";
 import { reStartBackgroundService } from '../../../utils/bgservices/backgroundService'
@@ -7,19 +7,22 @@ import { syncTaskName } from '../../../utils/bgservices/backgroundTaskEnum'
 import useNetworkStatus from '../../../hooks/networkStatus'
 import colors from '../../../global/theme'
 import st from '../../../global/styles'
-import {CustomContainer, CustomContent} from '../../../components/container'
+import { CustomContainer, CustomContent } from '../../../components/container'
+import { useFocusEffect } from '@react-navigation/native';
+import ExitModal from "../../../components/ExitModal";
 
-const Dashboard = ({navigation}) => {
+const Dashboard = ({ navigation }) => {
+  const [exitModal, setExitModal] = useState(false);
 
-    const isConnected = useNetworkStatus();
+  const isConnected = useNetworkStatus();
 
   const startSync = () => {
     if (isConnected) {
       reStartBackgroundService(syncTaskName.all);
-    } 
+    }
   };
 
-   useEffect(() => {
+  useEffect(() => {
     startSync();
   }, [isConnected]);
 
@@ -27,15 +30,31 @@ const Dashboard = ({navigation}) => {
     startSync()
   }, [])
 
+  useFocusEffect(
+    useCallback(() => {
+      const backAction = () => {
+        setExitModal(true);
+        return true;
+      };
+
+      const handler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backAction
+      );
+
+      return () => handler.remove();
+    }, [])
+  );
+
   return (
-   <CustomContainer>
+    <CustomContainer>
       {/* ---------------- Header Section ---------------- */}
       <LinearGradient
         colors={["#0057A3", "#0079C8"]}
         style={styles.header}
       >
         <View style={styles.headerTopRow} >
-          <TouchableOpacity style={styles.menuBtn} onPress={()=> navigation.toggleDrawer()}>
+          <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.toggleDrawer()}>
             <Icon name="menu" size={22} color={colors.white} />
           </TouchableOpacity>
 
@@ -54,20 +73,28 @@ const Dashboard = ({navigation}) => {
       <View style={styles.cardContainer}>
         <View style={styles.row}>
           {renderCard("21", "Activities\nCompleted\nThis Month", colors.orange)}
-          <View style={{marginTop:30, width:'100%', marginLeft:25}}>
-          {renderCard("02", "Activities\nScheduled\nfor Today", colors.skyblue)}
-        </View>
+          <View style={{ marginTop: 30, width: '100%', marginLeft: 25 }}>
+            {renderCard("02", "Activities\nScheduled\nfor Today", colors.skyblue)}
+          </View>
         </View>
 
         <View style={styles.row}>
-          {renderCard("13",`Overdue\nActivities`,colors.blue)}
-          <View style={{marginTop:30, width:'100%', marginLeft:25}}>
-          {renderCard("12", "On-Schedule\nActivities", colors.red)}
+          {renderCard("13", `Overdue\nActivities`, colors.blue)}
+          <View style={{ marginTop: 30, width: '100%', marginLeft: 25 }}>
+            {renderCard("12", "On-Schedule\nActivities", colors.red)}
           </View>
         </View>
       </View>
 
-     
+      <ExitModal
+        visible={exitModal}
+        onCancel={() => setExitModal(false)}
+        onExit={() => {
+          setExitModal(false);
+          BackHandler.exitApp();
+        }}
+      />
+
     </CustomContainer>
   );
 };
@@ -77,13 +104,13 @@ const renderCard = (count, label, bg) => (
     <TouchableOpacity style={styles.cardArrow}>
       <Icon name="arrow-up-right" size={20} color="#fff" />
     </TouchableOpacity>
-    
+
     <View style={st.mt_10}>
-    <Text style={styles.cardNumber}>{count}</Text>
+      <Text style={styles.cardNumber}>{count}</Text>
 
-    <View style={st.bordersty} />
+      <View style={st.bordersty} />
 
-    <Text style={styles.cardLabel}>{label}</Text>
+      <Text style={styles.cardLabel}>{label}</Text>
     </View>
   </View>
 );
@@ -119,7 +146,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...st.tx18,
-    color:colors.white,
+    color: colors.white,
     letterSpacing: 1,
   },
   badge: {
@@ -158,45 +185,27 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 15,
     top: 15,
-    width:40,
-    height:40,
-    borderColor:colors.disabled,
-    borderWidth:1,
-    borderRadius:50,
-    padding:10,
-    justifyContent:'center',
-    alignItems:'center'
+    width: 40,
+    height: 40,
+    borderColor: colors.disabled,
+    borderWidth: 1,
+    borderRadius: 50,
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   cardNumber: {
     fontSize: 36,
     color: "#fff",
-   ...st.txbold
+    ...st.txbold
   },
   cardLabel: {
     marginTop: 4,
     ...st.tx14,
-    color:colors.white,
-    lineHeight:28,
+    color: colors.white,
+    lineHeight: 28,
     ...st.txbold,
-    letterSpacing:1
+    letterSpacing: 1
   },
 
-  /* -------- Bottom Tab -------- */
-  bottomTab: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 10,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderColor: "#eee",
-  },
-  tabItem: { alignItems: "center" },
-  tabText: {
-    fontSize: 12,
-    color: "#808080",
-    marginTop: 4,
-  },
 });

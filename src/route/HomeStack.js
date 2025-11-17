@@ -12,6 +12,7 @@ import CustomeSidebar from './CustomeSidebar';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Disclaimer from '../screens/dashboard/disclaimer';
 import PrivacyPolicy from '../screens/dashboard/privacyPolicy';
+import Profile from '../screens/dashboard/profile';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -22,7 +23,7 @@ const HomeStack = () => {
       screenOptions={{ headerShown: false }}
       initialRouteName={'MainApp'}>
       <Stack.Screen name="MainApp" component={DrawerStack} />
-      <Stack.Screen name="ATPListScreen" component={ATPListScreen}  options={{ animation: 'none' }} />
+      <Stack.Screen name="ATPListScreen" component={ATPListScreen} options={{ animation: 'none' }} />
       <Stack.Screen name="ATPForm" component={ATPForm} />
       <Stack.Screen name="ATPLogin" component={ATPLogin} options={{ animation: 'none' }} />
       <Stack.Screen name="LoginMap" component={LoginMap} />
@@ -39,33 +40,43 @@ const DrawerStack = () => {
         drawerInactiveTintColor: colors.black,
         drawerLabelStyle: {
           fontSize: size.subtitle,
-          textTransform: 'capitalize', 
-          fontFamily: family.medium, 
+          textTransform: 'capitalize',
+          fontFamily: family.medium,
         },
         headerTitleAlign: 'center',
         headerTitleStyle: {
           fontSize: size.title,
-          textTransform: 'capitalize', 
+          textTransform: 'capitalize',
           fontFamily: family.medium,
         },
       }}
       drawerContent={props => <CustomeSidebar {...props} />}>
-        <Drawer.Screen
+
+      <Drawer.Screen
         name="Dashboard"
         options={{
           headerShown: false,
-          title:'Dashboard',
+          title: 'Dashboard',
           drawerLabel: 'Dashboard',
-          drawerIcon: ({color}) => <Icon name="home" size={22} color={color} />,
+          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={Home}
       />
       <Drawer.Screen
+        name="Profile"
+        options={{
+          title: 'Profile',
+          drawerLabel: 'Profile',
+          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
+        }}
+        component={Profile}
+      />
+      <Drawer.Screen
         name="ATPListScreen"
         options={{
-          title:'ATP',
+          title: 'ATP',
           drawerLabel: 'ATP',
-          drawerIcon: ({color}) => <Icon name="home" size={22} color={color} />,
+          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={ATPListScreen}
       />
@@ -73,23 +84,21 @@ const DrawerStack = () => {
         name="Disclaimer"
         options={{
           drawerLabel: 'Disclaimer',
-          drawerIcon: ({color}) => <Icon name="warning" size={22} color={color} />,
+          drawerIcon: ({ color }) => <Icon name="warning" size={22} color={color} />,
         }}
         component={Disclaimer}
       />
-       <Drawer.Screen
+      <Drawer.Screen
         name="PrivacyPolicy"
         options={{
-          title:'Privacy Policy',
+          title: 'Privacy Policy',
           drawerLabel: 'Privacy Policy',
-          drawerIcon: ({color}) => <Icon name="phonelink-lock" size={22} color={color} />,
+          drawerIcon: ({ color }) => <Icon name="phonelink-lock" size={22} color={color} />,
         }}
         component={PrivacyPolicy}
       />
-      </Drawer.Navigator>
+    </Drawer.Navigator>
   );
 };
 
 export default HomeStack
-
-const styles = StyleSheet.create({})
