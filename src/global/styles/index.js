@@ -66,6 +66,11 @@ export default StyleSheet.create({
       color: colors.black,
       fontFamily: family.regular,
     },
+    tx10: {
+      fontSize: 10,
+      color: colors.white,
+      fontFamily: family.regular,
+    },
     error:{
       fontSize: size.label,
       color: colors.red,
@@ -97,6 +102,12 @@ export default StyleSheet.create({
       fontSize: size.extraHead,
       color: colors.secondary,
       fontFamily: family.semiBold,
+    },
+
+    bordersty:{
+      height:1,
+      backgroundColor:colors.disabled,
+      marginVertical:15
     },
 
     inputContainer:{

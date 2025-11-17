@@ -5,6 +5,9 @@ import Icon from "react-native-vector-icons/Feather";
 import { reStartBackgroundService } from '../../../utils/bgservices/backgroundService'
 import { syncTaskName } from '../../../utils/bgservices/backgroundTaskEnum'
 import useNetworkStatus from '../../../hooks/networkStatus'
+import colors from '../../../global/theme'
+import st from '../../../global/styles'
+import {CustomContainer, CustomContent} from '../../../components/container'
 
 const Dashboard = ({navigation}) => {
 
@@ -25,9 +28,7 @@ const Dashboard = ({navigation}) => {
   }, [])
 
   return (
-    <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" />
-
+   <CustomContainer>
       {/* ---------------- Header Section ---------------- */}
       <LinearGradient
         colors={["#0057A3", "#0079C8"]}
@@ -35,15 +36,15 @@ const Dashboard = ({navigation}) => {
       >
         <View style={styles.headerTopRow} >
           <TouchableOpacity style={styles.menuBtn} onPress={()=> navigation.toggleDrawer()}>
-            <Icon name="menu" size={22} color="#fff" />
+            <Icon name="menu" size={22} color={colors.white} />
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>DASHBOARD</Text>
 
           <TouchableOpacity style={styles.bellBtn}>
-            <Icon name="bell" size={22} color="#fff" />
+            <Icon name="bell" size={22} color={colors.white} />
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>2</Text>
+              <Text style={st.tx10}>2</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -52,47 +53,39 @@ const Dashboard = ({navigation}) => {
       {/* ---------------- Cards Section ---------------- */}
       <View style={styles.cardContainer}>
         <View style={styles.row}>
-          {renderCard("21", "Activities Completed This Month", "#F56E2B")}
-          {renderCard("02", "Activities Scheduled for Today", "#009DC4")}
+          {renderCard("21", "Activities\nCompleted\nThis Month", colors.orange)}
+          <View style={{marginTop:30, width:'100%', marginLeft:25}}>
+          {renderCard("02", "Activities\nScheduled\nfor Today", colors.skyblue)}
+        </View>
         </View>
 
         <View style={styles.row}>
-          {renderCard("13", "Overdue Activities", "#073F86")}
-          {renderCard("12", "On-Schedule Activities", "#E54747")}
+          {renderCard("13",`Overdue\nActivities`,colors.blue)}
+          <View style={{marginTop:30, width:'100%', marginLeft:25}}>
+          {renderCard("12", "On-Schedule\nActivities", colors.red)}
+          </View>
         </View>
       </View>
 
-      {/* ---------------- Bottom Tab ---------------- */}
-      <View style={styles.bottomTab}>
-        {renderTab("home", "Home", true)}
-        {renderTab("heart", "Wishlist")}
-        {renderTab("search", "Search")}
-        {renderTab("settings", "Setting")}
-      </View>
-    </View>
+     
+    </CustomContainer>
   );
 };
 
 const renderCard = (count, label, bg) => (
   <View style={[styles.card, { backgroundColor: bg }]}>
     <TouchableOpacity style={styles.cardArrow}>
-      <Icon name="arrow-up-right" size={22} color="#fff" />
+      <Icon name="arrow-up-right" size={20} color="#fff" />
     </TouchableOpacity>
-
+    
+    <View style={st.mt_10}>
     <Text style={styles.cardNumber}>{count}</Text>
-    <Text style={styles.cardLabel}>{label}</Text>
-  </View>
-);
 
-const renderTab = (iconName, title, active = false) => (
-  <TouchableOpacity style={styles.tabItem}>
-    <Icon
-      name={iconName}
-      size={24}
-      color={active ? "#000" : "#808080"}
-    />
-    <Text style={[styles.tabText, active && { color: "#000" }]}>{title}</Text>
-  </TouchableOpacity>
+    <View style={st.bordersty} />
+
+    <Text style={styles.cardLabel}>{label}</Text>
+    </View>
+  </View>
 );
 
 export default Dashboard;
@@ -125,9 +118,8 @@ const styles = StyleSheet.create({
     borderRadius: 40,
   },
   headerTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
+    ...st.tx18,
+    color:colors.white,
     letterSpacing: 1,
   },
   badge: {
@@ -142,9 +134,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   badgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "bold",
+    ...st.tx10
   },
 
   /* -------- Cards -------- */
@@ -159,7 +149,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "47%",
-    height: 170,
+    height: 230,
     borderRadius: 20,
     padding: 15,
     justifyContent: "flex-start",
@@ -168,17 +158,27 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 15,
     top: 15,
+    width:40,
+    height:40,
+    borderColor:colors.disabled,
+    borderWidth:1,
+    borderRadius:50,
+    padding:10,
+    justifyContent:'center',
+    alignItems:'center'
   },
   cardNumber: {
     fontSize: 36,
     color: "#fff",
-    fontWeight: "bold",
+   ...st.txbold
   },
   cardLabel: {
     marginTop: 4,
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "500",
+    ...st.tx14,
+    color:colors.white,
+    lineHeight:28,
+    ...st.txbold,
+    letterSpacing:1
   },
 
   /* -------- Bottom Tab -------- */

@@ -1,8 +1,9 @@
 const colors = {
     blue: '#004999', 
-    red:'#FF0319',
+    skyblue:'#1DAAE0',
+    red:'#FF464C',
     cyan: '#00ADCF',
-    orange:'#FF772A',
+    orange:'#FAAC4A',
     white:'#fff',
     lightGrey : '#E9EDF1',
     disabled : '#eee',
