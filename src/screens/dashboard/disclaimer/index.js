@@ -68,12 +68,16 @@ const Disclaimer = ({ navigation }) => {
       </View>
 
       <ExitModal
-        visible={exitModal}
-        onCancel={() => setExitModal(false)}
-        onExit={() => {
-          setExitModal(false);
-          BackHandler.exitApp();
-        }}
+         visible={exitModal}
+         title="Exit From RKSK MP"
+         message="Are you sure you want to close this application?"
+         confirmText="Exit"
+         cancelText="Cancel"
+         onCancel={() => setExitModal(false)}
+         onConfirm={() => {
+           setExitModal(false);
+           BackHandler.exitApp();
+         }}
       />
 
     </CustomContainer>

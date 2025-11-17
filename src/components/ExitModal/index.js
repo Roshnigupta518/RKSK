@@ -4,7 +4,15 @@ import Icon from 'react-native-vector-icons/Feather';
 import st from '../../global/styles';
 import { colors } from '../../global';
 
-const ExitModal = ({ visible, onCancel, onExit }) => {
+const ConfirmModal = ({
+  visible,
+  title = "Are you sure?",
+  message = "",
+  confirmText = "Yes",
+  cancelText = "Cancel",
+  onCancel,
+  onConfirm
+}) => {
   return (
     <Modal
       transparent
@@ -16,25 +24,23 @@ const ExitModal = ({ visible, onCancel, onExit }) => {
 
           <Icon name="alert-triangle" size={45} color="#FF3B30" style={{ marginBottom: 10 }} />
 
-          <Text style={styles.modalTitle}>Exit From RKSK MP</Text>
+          <Text style={styles.modalTitle}>{title}</Text>
 
-          <Text style={styles.modalMessage}>
-            Are you sure you want to close this application?
-          </Text>
+          <Text style={styles.modalMessage}>{message}</Text>
 
           <View style={styles.modalBtnRow}>
             <TouchableOpacity
               style={styles.cancelBtn}
               onPress={onCancel}
             >
-              <Text style={st.tx14}>Cancel</Text>
+              <Text style={st.tx14}>{cancelText}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.exitBtn}
-              onPress={onExit}
+              onPress={onConfirm}
             >
-              <Text style={[st.tx14,{color:colors.white}]}>Exit</Text>
+              <Text style={[st.tx14, { color: colors.white }]}>{confirmText}</Text>
             </TouchableOpacity>
           </View>
 
@@ -44,7 +50,7 @@ const ExitModal = ({ visible, onCancel, onExit }) => {
   );
 };
 
-export default ExitModal;
+export default ConfirmModal;
 
 const styles = StyleSheet.create({
   modalOverlay: {
@@ -61,14 +67,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalTitle: {
-   ...st.tx20,
+    ...st.tx20,
     textAlign: 'center',
     marginBottom: 10,
   },
   modalMessage: {
-   ...st.tx14,
+    ...st.tx14,
     textAlign: 'center',
-   
     marginBottom: 25,
     lineHeight: 22,
   },
@@ -86,7 +91,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
     alignItems: 'center',
   },
-  cancelText: { fontSize: 16, fontWeight: '600', color: '#444' },
   exitBtn: {
     flex: 1,
     padding: 12,
@@ -94,5 +98,4 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  exitText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

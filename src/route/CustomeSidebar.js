@@ -8,9 +8,12 @@ import { useDispatch } from 'react-redux';
 import { clearLogin } from '../redux/slices/login';
 import { colors, size, family } from '../global';
 import st from '../global/styles'
+import ConfirmPopup from '../components/ExitModal';
+import { useState } from 'react';
 
 const CustomSidebar = (props) => {
   const dispatch = useDispatch();
+  const [logoutModal, setLogoutModal] = useState(false);
 
   const renderMenuItem = (label, icon, navigateTo, color) => (
     <TouchableOpacity
@@ -33,9 +36,9 @@ const CustomSidebar = (props) => {
         <View style={styles.profileAvatar}>
           <Icon name="user" size={32} color={'#FB6F3D'} />
         </View>
-        <View style={{marginLeft:10}}>
-        <Text style={st.tx16}>Vinayak Mishra</Text>
-        <Text style={st.tx14}>Male</Text>
+        <View style={{ marginLeft: 10 }}>
+          <Text style={st.tx16}>Vinayak Mishra</Text>
+          <Text style={st.tx14}>Male</Text>
         </View>
       </View>
 
@@ -57,7 +60,7 @@ const CustomSidebar = (props) => {
       <View style={styles.card}>
         <TouchableOpacity
           style={styles.menuRow}
-          onPress={() => dispatch(clearLogin())}
+          onPress={() => setLogoutModal(true)}
         >
           <View style={styles.iconBox}>
             <Icon name="log-out" size={20} color={'#FB4A59'} />
@@ -66,6 +69,21 @@ const CustomSidebar = (props) => {
           <Icon name="chevron-right" size={20} color={colors.gray} />
         </TouchableOpacity>
       </View>
+
+      <ConfirmPopup
+        visible={logoutModal}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        onCancel={() => setLogoutModal(false)}
+        onConfirm={() => {
+          setLogoutModal(false);
+          dispatch(clearLogin());
+          props.navigation.closeDrawer();
+        }}
+      />
+
 
     </DrawerContentScrollView>
   );
@@ -77,7 +95,7 @@ const styles = StyleSheet.create({
   profileBox: {
     padding: 18,
     alignItems: 'flex-start',
-    flexDirection:'row'
+    flexDirection: 'row'
   },
   profileAvatar: {
     width: 55,
