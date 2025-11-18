@@ -5,7 +5,7 @@ import {
   FlatList,
   StyleSheet,
   RefreshControl,
-  TouchableOpacity,BackHandler, Alert
+  TouchableOpacity
 } from 'react-native';
 import Field from '../../../components/field';
 import st from '../../../global/styles';
@@ -25,7 +25,7 @@ const ATPListScreen = ({ navigation }) => {
   const isFocused = useIsFocused();
   const route = useRoute();
 
-  // console.log({activityPlanList})
+  console.log({activityPlanList})
 
   // useEffect(() => {
   //   if (isFocused && route.params?.refresh) {
@@ -56,33 +56,6 @@ const ATPListScreen = ({ navigation }) => {
   // useEffect(() => {
   //   getATPDataHandle()
   // }, [])
-
-  useFocusEffect(
-    useCallback(() => {
-    const backAction = () => {
-      Alert.alert(
-        'Exit From RKSK MP',
-        'Are you sure you want to close this application?',
-        [
-          {
-            text: 'Cancel',
-            onPress: () => null,
-            style: 'cancel',
-          },
-          { text: 'YES', onPress: () => BackHandler.exitApp() },
-        ],
-      );
-      return true;
-    };
-   
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-
-    return () => backHandler.remove();
-  }, [navigation]) 
-);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

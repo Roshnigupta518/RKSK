@@ -9,7 +9,7 @@ import CustomPicker from '../../../../components/customPicker';
 import { family, colors } from '../../../../global';
 import st from '../../../../global/styles';
 import Icon from 'react-native-vector-icons/Feather'
-import { convertToLabelValue, getPickerImageResp } from '../../../../utils/helper';
+import { convertToLabelValue, generateclientID, getPickerImageResp } from '../../../../utils/helper';
 import { isEmpty } from '../../../../utils/validations';
 import WithImageUpload from '../../../../HOC/ImageUploader';
 import { useLocation } from '../../../../hooks/useLocation';
@@ -19,6 +19,8 @@ import CustomMultiSelect from '../../../../components/customMultiselect';
 import moment from 'moment';
 import Toast from 'react-native-toast-message';
 import { useSelector, useDispatch } from 'react-redux';
+import { updateActivityPlanItem } from '../../../../redux/slices/ActivityPlan';
+import { ENUM } from '../../../../utils/bgservices/enum';
 
 const INITIALINPUT = {
   date: '',
@@ -43,10 +45,12 @@ const ATPForm = ({ navigation, route }) => {
   const [attachedVideoErr, setAttachedVideoErr] = useState();
   const [data, setData] = useState([])
 
-  const { location, locationArea } = useLocation()
+  const { location, error, locationArea, openLocationSettings, getLocation, permissionHandle } = useLocation();
   const { activiyDetails } = route.params || {}
+  const dispatch = useDispatch()
 
   const userLogin = useSelector(state => state.login.data);
+  const activityPlanList = useSelector(state => state.activityPlan.data);
 
   useEffect(() => {
     setInputs({
@@ -238,6 +242,26 @@ const ATPForm = ({ navigation, route }) => {
     return valid;
   };
 
+  const locationHandle = () => {
+    if (error == 'gps-off') {
+      Alert.alert(
+        'Location Required',
+        'Location permission is required to submit the form. Please enable location access in your device settings.',
+        [
+          {
+            text: 'OK',
+            onPress: async () => {
+              openLocationSettings();
+            },
+          },
+        ]
+      );
+
+    } else if (error == 'permissionDenied') {
+      permissionHandle()
+    }
+  }
+
   const onSave = async () => {
     const isValid = validateForm();
     if (!isValid) return;
@@ -255,45 +279,78 @@ const ATPForm = ({ navigation, route }) => {
 
     const ActivityDateTime = combined.format('YYYY-MM-DD HH:mm:ss');
 
-    try {
-      setIsLoading(true);
-
-      const formdata = new FormData();
-      formdata.append("ATP_Id", activiyDetails.atP_Id);
-      formdata.append("ActivityDateTime", ActivityDateTime);
-      formdata.append("ActivityDetails", inputs.activityDetails);
-      formdata.append("Address", locationArea);
-      formdata.append("Latitude", location.latitude);
-      formdata.append("Longitude", location.longitude);
-      formdata.append("MeetingParticipant", inputs.meetings?.toString());
-      formdata.append("Other_MeetingParticipant", inputs.other);
-      formdata.append("Photo", attachment);
-      formdata.append("PlannedActivity", inputs.planedActivity);
-      formdata.append("Video", attachedVideo);
-      formdata.append("VisitCompletion", moment().format('YYYY-MM-DD HH:mm:ss'));
-      formdata.append("Other_Activity", inputs.other_Activity);
-      formdata.append("CreatedBy", userLogin.userId);
-
-      const result = await atpFormRequest(formdata);
-      console.log('ATP FORM Result:', result);
-      if (result) {
-        Toast.show({
-          type: "myCustomType",
-          text1: "Success",
-          text2: result.message,
-          props: { key: 'success' },
-          position: 'bottom',
-          bottomOffset: 60,
-        });
-        handleLogOut()
-      } else {
-        console.warn('Unexpected data format:', result);
-      }
-    } catch (e) {
-      console.log('ATP_FORM', e)
-    } finally {
-      setIsLoading(false);
+    if (!location?.latitude && !location?.longitude) {
+      locationHandle()
+      return;
     }
+
+    dispatch(updateActivityPlanItem({
+      atP_Id: activiyDetails.atP_Id,
+      newData: {
+        activity_DateTime: ActivityDateTime,
+        activity_Details: inputs.activityDetails,
+        Address: locationArea,
+        Latitude: location.latitude,
+        Longitude: location.longitude,
+        meeting_Participant: inputs.meetings?.toString(),
+        other_MeetingParticipant: inputs.other,
+        photo_Path: attachment,
+        PlannedActivity: inputs.planedActivity,
+        video_Path: attachedVideo,
+        visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
+        other_Activity: inputs.other_Activity,
+        CreatedBy: userLogin.userId,
+        clockoutTime: new Date().toISOString(),
+        clockoutAddress: locationArea,
+        clockout_lat: location.latitude,
+        clockout_long: location.longitude,
+        status: ENUM.SERVERSTATUS.NOTSTARTED,
+        clientId: generateclientID(userLogin.userId)
+      }
+    }));
+
+    console.log({ activityPlanList })
+
+
+    // try {
+    //   setIsLoading(true);
+
+    //   const formdata = new FormData();
+    //   formdata.append("ATP_Id", activiyDetails.atP_Id);
+    //   formdata.append("ActivityDateTime", ActivityDateTime);
+    //   formdata.append("ActivityDetails", inputs.activityDetails);
+    //   formdata.append("Address", locationArea);
+    //   formdata.append("Latitude", location.latitude);
+    //   formdata.append("Longitude", location.longitude);
+    //   formdata.append("MeetingParticipant", inputs.meetings?.toString());
+    //   formdata.append("Other_MeetingParticipant", inputs.other);
+    //   formdata.append("Photo", attachment);
+    //   formdata.append("PlannedActivity", inputs.planedActivity);
+    //   formdata.append("Video", attachedVideo);
+    //   formdata.append("VisitCompletion", moment().format('YYYY-MM-DD HH:mm:ss'));
+    //   formdata.append("Other_Activity", inputs.other_Activity);
+    //   formdata.append("CreatedBy", userLogin.userId);
+
+    //   const result = await atpFormRequest(formdata);
+    //   console.log('ATP FORM Result:', result);
+    //   if (result) {
+    //     Toast.show({
+    //       type: "myCustomType",
+    //       text1: "Success",
+    //       text2: result.message,
+    //       props: { key: 'success' },
+    //       position: 'bottom',
+    //       bottomOffset: 60,
+    //     });
+    //     handleLogOut()
+    //   } else {
+    //     console.warn('Unexpected data format:', result);
+    //   }
+    // } catch (e) {
+    //   console.log('ATP_FORM', e)
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   const handleLogOut = async () => {
@@ -301,14 +358,14 @@ const ATPForm = ({ navigation, route }) => {
       setIsLoading(true);
       const params = {
         "atP_Id": activiyDetails.atP_Id,
-        "clockinTime":null,
+        "clockinTime": null,
         "clockinAddress": null,
         "clockin_lat": null,
         "clockin_long": null,
-        "clockoutTime":  new Date() ,
-        "clockoutAddress":  locationArea ,
-        "clockout_lat":  location?.latitude ,
-        "clockout_long":  location?.longitude ,
+        "clockoutTime": new Date(),
+        "clockoutAddress": locationArea,
+        "clockout_lat": location?.latitude,
+        "clockout_long": location?.longitude,
         "createdBy": userLogin.userId,
         "updatedBy": userLogin.userId,
         "mode": 2
@@ -322,7 +379,7 @@ const ATPForm = ({ navigation, route }) => {
           index: 0,
           routes: [{ name: 'MainApp', params: { refresh: true } }],
         });
-        
+
         Toast.show({
           type: "myCustomType",
           text1: "Success",

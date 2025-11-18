@@ -2,7 +2,7 @@ export const syncTaskName = {
     all: 'All',
     syncDashboard : 'dashboard',
     syncGetProfile : 'getProfile',
-    syncGetAtpList : 'getAtpList'
-   
+    syncGetAtpList : 'getAtpList',
+    syncActivityForm : 'syncActivityForm',
   };
   

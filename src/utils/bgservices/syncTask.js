@@ -22,3 +22,8 @@ export const syncATPListData = async () => {
     await setSyncStatus(syncTaskName.syncGetAtpList);
 };
 
+export const syncATPFormData = async () => {
+    saveATPForm();
+    await setSyncStatus(syncTaskName.syncActivityForm);
+};
+

@@ -60,12 +60,14 @@ const Dashboard = ({ navigation }) => {
 
           <Text style={styles.headerTitle}>DASHBOARD</Text>
 
-          <TouchableOpacity style={styles.bellBtn}>
-            <Icon name="bell" size={22} color={colors.white} />
+          <View 
+          // style={styles.bellBtn}
+          >
+            {/* <Icon name="bell" size={22} color={colors.white} />
             <View style={styles.badge}>
               <Text style={st.tx10}>2</Text>
-            </View>
-          </TouchableOpacity>
+            </View> */}
+          </View>
         </View>
       </LinearGradient>
 

@@ -19,7 +19,6 @@ import Video from 'react-native-video';
 import { useIsFocused } from '@react-navigation/native';
 
 const ATPDetailScreen = ({ navigation, route }) => {
-
     const isFocused = useIsFocused();
 
     const { activiyDetails } = route.params || {}
@@ -37,7 +36,6 @@ const ATPDetailScreen = ({ navigation, route }) => {
         }
         return () => clearTimeout(timeout);
     }, [isFocused]);
-
 
     useEffect(() => {
         const date = new Date();
@@ -135,12 +133,12 @@ const ATPDetailScreen = ({ navigation, route }) => {
                         <Field label="Meeting Participants" value={activiyDetails.meeting_Participant} />
                         <Field label="Other Meeting Participants" value={activiyDetails.other_MeetingParticipant} />
                         <Field label="Activity Details" value={activiyDetails.activity_Details} />
-                        <Field label="Image" value={activiyDetails.photo_Path} />
-                        <Image source={{ uri: environment.imageUrl + activiyDetails.photo_Path }} style={st.imageSty} />
-                        <Field label="Video" value={activiyDetails.video_Path} />
+                        <Field label="Image" value={activiyDetails.photo_Path?.name} />
+                        <Image source={{ uri: environment.imageUrl + activiyDetails.photo_Path?.uri }} style={st.imageSty} />
+                        <Field label="Video" value={activiyDetails.video_Path?.name} />
                         {showVideo && activiyDetails.video_Path && (
                             <Video
-                                source={{ uri: environment.imageUrl + activiyDetails.video_Path }}
+                                source={{ uri: environment.imageUrl + activiyDetails.video_Path?.uri }}
                                 controls
                                 paused={!isFocused}
                                 style={st.imageSty}

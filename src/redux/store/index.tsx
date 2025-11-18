@@ -35,11 +35,17 @@ const authPersistConfig = {
     whitelist: ['loginDetails','logoutDetails'],
   };
 
+  const atpPersistConfig = {
+    key: 'activityPlan',
+    storage: AsyncStorage,
+    whitelist: ['data'],
+  };
+
   const appReducer = combineReducers({
     login: persistReducer(authPersistConfig, loginSlice),
     clockTime: persistReducer(clockPersistConfig, ClockTimeSlice),
     disclaimerStatus: persistReducer(disclaimerPersistConfig, DisclaimerSlice),
-    activityPlan : ActivityPlan
+    activityPlan : persistReducer(atpPersistConfig, ActivityPlan), 
   })
 
 export const store = configureStore({

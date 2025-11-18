@@ -25,6 +25,7 @@ import CustomHeader from '../../../../components/customHeader';
 import MyInput from '../../../../components/customInput'
 import { activityLoginRequest } from '../../../../utils/services';
 import useNetworkStatus from '../../../../hooks/networkStatus';
+import { updateActivityPlanItem } from '../../../../redux/slices/ActivityPlan';
 
 const INITIALINPUT = {
   remark: '',
@@ -43,6 +44,7 @@ const App = ({ navigation, route }) => {
 
   const { location, locationArea } = useLocation();
   const isConnected = useNetworkStatus();
+  const dispatch = useDispatch()
 
   const userLogin = useSelector(state => state.login.data);
 
@@ -79,26 +81,19 @@ const App = ({ navigation, route }) => {
   };
 
   const handleLogin = async () => {
-    try {
-      setIsLoading(true);
-      const params = {
-        "atP_Id": activiyDetails.atP_Id,
-        "clockinTime": mode === 1 ? new Date() : null,
-        "clockinAddress": mode === 1 ? locationArea : null,
-        "clockin_lat": mode === 1 ? location?.latitude : null,
-        "clockin_long": mode === 1 ? location?.longitude : null,
-        "clockoutTime": mode === 2 ? new Date() : null,
-        "clockoutAddress": mode === 2 ? locationArea : null,
-        "clockout_lat": mode === 2 ? location?.latitude : null,
-        "clockout_long": mode === 2 ? location?.longitude : null,
-        "createdBy": userLogin.userId,
-        "updatedBy": userLogin.userId,
-        "mode": mode
+
+    dispatch(updateActivityPlanItem({
+      atP_Id: activiyDetails.atP_Id,
+      newData: {
+        clockinTime: new Date().toISOString(),
+        clockinAddress: locationArea,
+        clockin_lat: location.latitude,
+        clockin_long: location.longitude,
+        updatedBy: userLogin.userId
       }
-      const result = await activityLoginRequest(params)
-      if (result) {
-        console.log('result clock in', result)
-        navigation.navigate({
+    }));
+
+          navigation.navigate({
           name: 'MainApp',
           params: { refresh: true },
           merge: true,
@@ -111,15 +106,49 @@ const App = ({ navigation, route }) => {
             { name: 'ATPForm', params: { activiyDetails } },
           ],
         });
+    
 
-      } else {
+    // try {
+    //   setIsLoading(true);
+    //   const params = {
+    //     "atP_Id": activiyDetails.atP_Id,
+    //     "clockinTime": mode === 1 ? new Date() : null,
+    //     "clockinAddress": mode === 1 ? locationArea : null,
+    //     "clockin_lat": mode === 1 ? location?.latitude : null,
+    //     "clockin_long": mode === 1 ? location?.longitude : null,
+    //     "clockoutTime": mode === 2 ? new Date() : null,
+    //     "clockoutAddress": mode === 2 ? locationArea : null,
+    //     "clockout_lat": mode === 2 ? location?.latitude : null,
+    //     "clockout_long": mode === 2 ? location?.longitude : null,
+    //     "createdBy": userLogin.userId,
+    //     "updatedBy": userLogin.userId,
+    //     "mode": mode
+    //   }
+    //   const result = await activityLoginRequest(params)
+    //   if (result) {
+    //     console.log('result clock in', result)
+    //     navigation.navigate({
+    //       name: 'MainApp',
+    //       params: { refresh: true },
+    //       merge: true,
+    //     });
 
-      }
-    } catch (e) {
-      console.log(e)
-    } finally {
-      setIsLoading(false);
-    }
+    //     navigation.reset({
+    //       index: 1,
+    //       routes: [
+    //         { name: 'MainApp', params: { refresh: true } },
+    //         { name: 'ATPForm', params: { activiyDetails } },
+    //       ],
+    //     });
+
+    //   } else {
+
+    //   }
+    // } catch (e) {
+    //   console.log(e)
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   useEffect(() => {

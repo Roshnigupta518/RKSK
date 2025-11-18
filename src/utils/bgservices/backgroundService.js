@@ -3,7 +3,7 @@ import {syncTaskName} from './backgroundTaskEnum';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { isUserLoggedIn } from '../../redux/store/getState';
-import {  syncATPListData, syncDashboard, syncProfileData } from './syncTask';
+import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData } from './syncTask';
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
 const defaultDelay = 1 * 60 * 1000;
@@ -60,6 +60,7 @@ const checkIfTaskNotSyncedToday = async taskName => {
             // let isSyncDashboard = taskName == syncTaskName.syncDashboard || syncAll;
             // let isSyncProfile = taskName == syncTaskName.syncGetProfile || syncAll;
             let isSyncATPList = taskName == syncTaskName.syncGetAtpList || syncAll;
+            let isSyncATPForm = taskName == syncTaskName.syncActivityForm || syncAll;
            
             // if (isAnythingPendingForSync) {
 
