@@ -4,7 +4,7 @@ import {
 } from '@react-navigation/drawer';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { clearLogin } from '../redux/slices/login';
 import { colors, size, family } from '../global';
 import st from '../global/styles'
@@ -14,6 +14,7 @@ import { useState } from 'react';
 const CustomSidebar = (props) => {
   const dispatch = useDispatch();
   const [logoutModal, setLogoutModal] = useState(false);
+  const onBoarding = useSelector(state => state.login.data);
 
   const renderMenuItem = (label, icon, navigateTo, color) => (
     <TouchableOpacity
@@ -33,12 +34,14 @@ const CustomSidebar = (props) => {
 
       {/* -------- Profile Section -------- */}
       <View style={styles.profileBox}>
+        <View style={st.wdh25}>
         <View style={styles.profileAvatar}>
-          <Icon name="user" size={32} color={'#FB6F3D'} />
+          <Icon name="user" size={34} color={'#FB6F3D'} />
         </View>
-        <View style={{ marginLeft: 10 }}>
-          <Text style={st.tx16}>Vinayak Mishra</Text>
-          <Text style={st.tx14}>Male</Text>
+        </View>
+        <View style={st.wdh75}>
+          <Text style={st.tx16} numberOfLines={1}>{onBoarding.email}tgffhgfghfghfghfhgfghfhfgtfggcfgcgfcgfcgfcfg</Text>
+          <Text style={st.tx14}>{onBoarding.role}</Text>
         </View>
       </View>
 
@@ -94,12 +97,12 @@ export default CustomSidebar;
 const styles = StyleSheet.create({
   profileBox: {
     padding: 18,
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row'
   },
   profileAvatar: {
-    width: 55,
-    height: 55,
+    width: 65,
+    height: 65,
     borderRadius: 50,
     backgroundColor: '#FFE5D2',
     alignItems: 'center',

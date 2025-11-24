@@ -47,6 +47,7 @@ export default StyleSheet.create({
     wdh60: {width: '60%'},
     wdh40: {width: '40%'},
     wdh20: {width: '20%'},
+    wdh25: {width: '25%'},
     wdh30: {width: '30%'},
     wdh10: {width: '10%'},
     wdh15: {width: '15%'},
