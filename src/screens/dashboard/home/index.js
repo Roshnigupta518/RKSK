@@ -58,7 +58,7 @@ const Dashboard = ({ navigation }) => {
             <Icon name="menu" size={22} color={colors.white} />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>DASHBOARD</Text>
+          <Text style={styles.headerTitle}>Dashboard</Text>
 
           <View 
           // style={styles.bellBtn}

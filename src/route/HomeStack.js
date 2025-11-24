@@ -49,6 +49,10 @@ const DrawerStack = () => {
           textTransform: 'capitalize',
           fontFamily: family.medium,
         },
+        headerStyle: {
+          backgroundColor: colors.blue, 
+        },
+        headerTintColor: colors.white,
       }}
       drawerContent={props => <CustomeSidebar {...props} />}>
 

@@ -40,7 +40,7 @@ const CustomSidebar = (props) => {
         </View>
         </View>
         <View style={st.wdh75}>
-          <Text style={st.tx16} numberOfLines={1}>{onBoarding.email}tgffhgfghfghfghfhgfghfhfgtfggcfgcgfcgfcgfcfg</Text>
+          <Text style={st.tx16} numberOfLines={1}>{onBoarding.email}</Text>
           <Text style={st.tx14}>{onBoarding.role}</Text>
         </View>
       </View>
