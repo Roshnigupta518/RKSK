@@ -85,6 +85,20 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    splits {
+    abi {
+        enable true
+        reset()
+        include "armeabi-v7a", "arm64-v8a"
+        universalApk false // don’t include all ABIs in one fat APK
+    }
+}
+
+packagingOptions {
+    jniLibs {
+        excludes += ["lib/x86/**", "lib/x86_64/**"]
+    }
+}
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
