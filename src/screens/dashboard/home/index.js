@@ -16,19 +16,19 @@ const Dashboard = ({ navigation }) => {
 
   const isConnected = useNetworkStatus();
 
-  const startSync = () => {
-    if (isConnected) {
-      reStartBackgroundService(syncTaskName.all);
-    }
-  };
+  // const startSync = () => {
+  //   if (isConnected) {
+  //     reStartBackgroundService(syncTaskName.all);
+  //   }
+  // };
 
-  useEffect(() => {
-    startSync();
-  }, [isConnected]);
+  // useEffect(() => {
+  //   startSync();
+  // }, [isConnected]);
 
-  useEffect(() => {
-    startSync()
-  }, [])
+  // useEffect(() => {
+  //   startSync()
+  // }, [])
 
   useFocusEffect(
     useCallback(() => {

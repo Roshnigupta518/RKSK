@@ -16,6 +16,7 @@ import loginSlice from '../slices/login';
 import ClockTimeSlice from '../slices/ClockTime';
 import DisclaimerSlice from '../slices/disclaimer';
 import ActivityPlan from '../slices/ActivityPlan';
+import QueueSlice from '../slices/queueSlice';
 
 const authPersistConfig = {
     key: 'Login',
@@ -41,11 +42,18 @@ const authPersistConfig = {
     whitelist: ['data'],
   };
 
+  const atpQueueConfig = {
+    key: 'queue',
+    storage: AsyncStorage,
+    whitelist: ['pending'],
+  };
+
   const appReducer = combineReducers({
     login: persistReducer(authPersistConfig, loginSlice),
     clockTime: persistReducer(clockPersistConfig, ClockTimeSlice),
     disclaimerStatus: persistReducer(disclaimerPersistConfig, DisclaimerSlice),
     activityPlan : persistReducer(atpPersistConfig, ActivityPlan), 
+    queue: persistReducer(atpQueueConfig, QueueSlice), 
   })
 
 export const store = configureStore({

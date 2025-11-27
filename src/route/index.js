@@ -9,10 +9,21 @@ import NetworkStatus from '../components/NetworkStatus'
 import Toast from 'react-native-toast-message';
 import MyToast from '../components/customToast';
 import AppUpdateChecker from '../components/AppUpdater';
-
+import useLocationStatus from '../hooks/useLocationStatus';
+import st from '../global/styles';
+import { colors } from '../global';
+import LocationBanner from '../components/LocationBanner';
 const index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const onBoarding = useAppSelector(state => state.login.data);
+  // const locationEnabled = useLocationStatus();
+
+  const {
+    hasPermission,
+    gpsEnabled,
+    openGPSSettings,
+    openAppSettings,
+  } = useLocationStatus();
 
   const GetRequiredPermissions = async () => {
     try {
@@ -69,12 +80,30 @@ const index = () => {
     <NavigationContainer fallback={<ActivityIndicator />} detachInactiveScreens={false} >
     <StatusBar
       translucent
-      barStyle={'dark-content'}
+      barStyle={'light-content'}
       backgroundColor={'transparent'}
     />
     {isLoading ? <Splash /> : !onBoarding ? <AuthStack /> : <HomeStack />}
     <NetworkStatus />
     <Toast config={toastConfig} />
+
+       {/* Permission Banner */}
+       {!hasPermission && (
+        <LocationBanner
+          message="Location permission is denied."
+          buttonText="Give Permission"
+          onPress={openAppSettings}
+        />
+      )}
+
+      {/* GPS Banner */}
+      {hasPermission && !gpsEnabled && (
+        <LocationBanner
+          message="GPS is OFF."
+          buttonText="Turn ON GPS"
+          onPress={openGPSSettings}
+        />
+      )}
     {/* <AppUpdateChecker /> */}
   </NavigationContainer>
   )

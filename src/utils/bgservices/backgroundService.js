@@ -3,7 +3,8 @@ import {syncTaskName} from './backgroundTaskEnum';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { isUserLoggedIn } from '../../redux/store/getState';
-import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData } from './syncTask';
+import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn } from './syncTask';
+import { processQueue } from './queueProcessor';
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
 const defaultDelay = 1 * 60 * 1000;
@@ -32,7 +33,12 @@ const checkIfTaskNotSyncedToday = async taskName => {
   };
 
   const checkIfSyncPending = async () => {
-    return ;
+    const isSyncAcitivityQueue = await checkIfTaskNotSyncedToday(
+      syncTaskName.syncAcitivityQueue,
+    );
+    const isSyncPending = isSyncAcitivityQueue
+    
+    return isSyncPending
   };
 
   const executeTask = async taskDataArguments => {
@@ -60,11 +66,13 @@ const checkIfTaskNotSyncedToday = async taskName => {
             // let isSyncDashboard = taskName == syncTaskName.syncDashboard || syncAll;
             // let isSyncProfile = taskName == syncTaskName.syncGetProfile || syncAll;
             let isSyncATPList = taskName == syncTaskName.syncGetAtpList || syncAll;
-            let isSyncATPForm = taskName == syncTaskName.syncActivityForm || syncAll;
+            let isSyncActivityQueue = taskName == syncTaskName.syncAcitivityQueue || syncAll;
            
-            // if (isAnythingPendingForSync) {
-
-            // }
+            if (isAnythingPendingForSync) {
+              isSyncActivityQueue = await checkIfTaskNotSyncedToday(
+                syncTaskName.syncAcitivityQueue
+              );
+            }
              
             // if (isSyncDashboard) {
             //   console.log('executing sync dashboard');
@@ -80,6 +88,23 @@ const checkIfTaskNotSyncedToday = async taskName => {
               console.log('executing sync isSyncATPList');
               await syncATPListData();
             }
+
+            // if(isSyncActivityQueue){
+            //   console.log("Processing Queue...");
+            //   await processQueue();
+            // }
+
+            if (isSyncActivityQueue) {
+              const isSyncInProgress =
+              taskName == syncTaskName.syncAcitivityQueue || isAnythingPendingForSync;
+              console.log('excuting acitivty queue', isSyncInProgress)
+
+              console.log('executing sync isSyncActivityQueue');
+              await updateSyncNotification("Syncing atp form data...");
+              await syncATPFormData(isSyncInProgress)
+              console.log('completed sync isSyncActivityQueue');
+            }
+            
 
             if (await checkIfSyncPending()) {
               console.log('sync pending--------------');

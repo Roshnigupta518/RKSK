@@ -9,7 +9,14 @@ const colors = {
     disabled : '#eee',
     black:'#000',
     green : 'green',
-    yellow : '#FFBF00'
+    yellow : '#FFBF00',
+
+    //status color
+    completed:'#28A745',
+    pending:'#007BFF',
+    inprogress:'#FFC107',
+    overdue:'#DC3545',
+    schedule:'#004999'
 }
 
 export default colors;

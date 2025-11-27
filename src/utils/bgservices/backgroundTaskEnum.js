@@ -3,6 +3,6 @@ export const syncTaskName = {
     syncDashboard : 'dashboard',
     syncGetProfile : 'getProfile',
     syncGetAtpList : 'getAtpList',
-    syncActivityForm : 'syncActivityForm',
+    syncAcitivityQueue : 'syncAcitivityQueue'
   };
   

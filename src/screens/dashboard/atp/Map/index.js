@@ -26,6 +26,10 @@ import MyInput from '../../../../components/customInput'
 import { activityLoginRequest } from '../../../../utils/services';
 import useNetworkStatus from '../../../../hooks/networkStatus';
 import { updateActivityPlanItem } from '../../../../redux/slices/ActivityPlan';
+import { reStartBackgroundService } from '../../../../utils/bgservices/backgroundService';
+import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum';
+import { addToQueue } from '../../../../redux/slices/queueSlice';
+import Toast from 'react-native-toast-message';
 
 const INITIALINPUT = {
   remark: '',
@@ -82,73 +86,82 @@ const App = ({ navigation, route }) => {
 
   const handleLogin = async () => {
 
+    const params = {
+      clockinTime: new Date().toISOString(),
+      clockinAddress: locationArea,
+      clockin_lat: location.latitude,
+      clockin_long: location.longitude,
+      updatedBy: userLogin.userId,
+      mode: 1
+    }
+
     dispatch(updateActivityPlanItem({
       atP_Id: activiyDetails.atP_Id,
-      newData: {
-        clockinTime: new Date().toISOString(),
-        clockinAddress: locationArea,
-        clockin_lat: location.latitude,
-        clockin_long: location.longitude,
-        updatedBy: userLogin.userId
+      newData: params
+    }));
+
+    dispatch(addToQueue({
+      type: "CLOCK_IN",
+      payload: {
+        atP_Id: activiyDetails.atP_Id,
+        ...params
       }
     }));
 
-          navigation.navigate({
-          name: 'MainApp',
-          params: { refresh: true },
-          merge: true,
-        });
-
-        navigation.reset({
-          index: 1,
-          routes: [
-            { name: 'MainApp', params: { refresh: true } },
-            { name: 'ATPForm', params: { activiyDetails } },
-          ],
-        });
+    navigation.reset({
+      index: 1,
+      routes: [
+        { name: 'MainApp', params: { refresh: true } },
+        { name: 'ATPForm', params: { atP_Id: activiyDetails.atP_Id } },
+      ],
+    });
     
 
-    // try {
-    //   setIsLoading(true);
-    //   const params = {
-    //     "atP_Id": activiyDetails.atP_Id,
-    //     "clockinTime": mode === 1 ? new Date() : null,
-    //     "clockinAddress": mode === 1 ? locationArea : null,
-    //     "clockin_lat": mode === 1 ? location?.latitude : null,
-    //     "clockin_long": mode === 1 ? location?.longitude : null,
-    //     "clockoutTime": mode === 2 ? new Date() : null,
-    //     "clockoutAddress": mode === 2 ? locationArea : null,
-    //     "clockout_lat": mode === 2 ? location?.latitude : null,
-    //     "clockout_long": mode === 2 ? location?.longitude : null,
-    //     "createdBy": userLogin.userId,
-    //     "updatedBy": userLogin.userId,
-    //     "mode": mode
-    //   }
-    //   const result = await activityLoginRequest(params)
-    //   if (result) {
-    //     console.log('result clock in', result)
-    //     navigation.navigate({
-    //       name: 'MainApp',
-    //       params: { refresh: true },
-    //       merge: true,
-    //     });
+    await reStartBackgroundService(syncTaskName.syncAcitivityQueue)
+  };
 
-    //     navigation.reset({
-    //       index: 1,
-    //       routes: [
-    //         { name: 'MainApp', params: { refresh: true } },
-    //         { name: 'ATPForm', params: { activiyDetails } },
-    //       ],
-    //     });
+  const handleLogOut = async () => {
+    
+      const params = {
+        "atP_Id": activiyDetails.atP_Id,
+        "clockoutTime": new Date(),
+        "clockoutAddress": locationArea,
+        "clockout_lat": location?.latitude,
+        "clockout_long": location?.longitude,
+        "createdBy": userLogin.userId,
+        "updatedBy": userLogin.userId,
+        "mode": 2
+      }
 
-    //   } else {
+      dispatch(updateActivityPlanItem({
+        atP_Id: activiyDetails.atP_Id,
+        newData: params
+      }));
 
-    //   }
-    // } catch (e) {
-    //   console.log(e)
-    // } finally {
-    //   setIsLoading(false);
-    // }
+      dispatch(addToQueue({
+        type: "CLOCK_OUT",
+        payload: {
+          atP_Id: activiyDetails.atP_Id,
+          ...params
+        }
+      }));
+
+      await reStartBackgroundService(syncTaskName.syncAcitivityQueue);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainApp', params: { refresh: true } }],
+      });
+
+      Toast.show({
+        type: "myCustomType",
+        text1: "Success",
+        text2: "Clock out successfully",
+        props: { key: 'success' },
+        position: 'bottom',
+        bottomOffset: 60,
+      });
+      
   };
 
   useEffect(() => {
@@ -179,7 +192,7 @@ const App = ({ navigation, route }) => {
               latitudeDelta: 0.0922,
               longitudeDelta: 0.0421,
             }}
-            >
+          >
             {location && (
               <Marker
                 coordinate={{
@@ -216,7 +229,7 @@ const App = ({ navigation, route }) => {
               </View>
               <View style={st.wdh30}>
                 <Button
-                  disabled={(locationArea && isConnected) ? false : true}
+                  disabled={(locationArea) ? false : true}
                   loading={isLoading}
                   title={
                     !activiyDetails?.clockinTime ||
@@ -229,7 +242,8 @@ const App = ({ navigation, route }) => {
                       activiyDetails?.clockoutTime))) {
                       validation();
                     } else {
-                      // alert('logout')
+                      alert('logout')
+                      // handleLogOut()
                     }
                   }}
                 />

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import st from '../../global/styles';
+import { colors } from '../../global';
 
 const NetworkStatus: React.FC = () => {
   const [isConnected, setIsConnected] = useState<boolean>(true);
@@ -34,9 +36,11 @@ const styles = StyleSheet.create({
     padding: 5,
     alignItems: 'center',
     justifyContent: 'center',
+    height:50,
   },
   text: {
-    // color: 'white',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    ...st.tx14,
+    color:colors.white
   },
 });

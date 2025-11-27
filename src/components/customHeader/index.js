@@ -11,7 +11,7 @@ const CustomHeader = ({ title, onBackPress, rightIcon, onRightPress, primaryScre
       {/* Back Button */}
       <TouchableOpacity onPress={onBackPress} disabled={!onBackPress} style={st.wdh10}>
         {onBackPress ? (
-          <Icon name="chevron-left" size={28} color={colors.black} />
+          <Icon name="chevron-left" size={28} color={colors.white} />
         ) : (
           <View /> // placeholder
         )}
@@ -19,7 +19,7 @@ const CustomHeader = ({ title, onBackPress, rightIcon, onRightPress, primaryScre
 
       {/* Title */}
       <View style={[st.wdh70, st.align_C]}>
-      <Text style={st.tx16}numberOfLines={1} adjustsFontSizeToFit>{title}</Text>
+      <Text style={[st.tx16,{color:colors.white}]}numberOfLines={1} adjustsFontSizeToFit>{title}</Text>
       </View>
 
       {/* Right Icon/Action */}
@@ -48,10 +48,10 @@ export default CustomHeader;
 
 const styles = StyleSheet.create({
   container: {
-    height: 80,
+    height: 90,
     paddingHorizontal: 16,
     flexDirection: 'row',
-    backgroundColor:colors.white,
+    backgroundColor:colors.blue,
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop:20,

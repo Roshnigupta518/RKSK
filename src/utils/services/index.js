@@ -3,6 +3,7 @@ import { getApi, postApi, postApiWithToken, uploadApi } from "../apicalls";
 import { handleAPIErrorResponse } from "../validations";
 import { store } from "../../redux/store";
 import { setActivityPlan } from "../../redux/slices/ActivityPlan";
+import { getSavedAtpListNotStarted } from "../../redux/store/getState";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -17,10 +18,8 @@ export const getATPListRequest = async () => {
       
       if (result?.status === 200) {
         store.dispatch(setActivityPlan(result.data))
-        // return result.data; // return only the data
       } else {
         console.warn('Unexpected response:', result);
-        // return [];
       }
     } catch (e) {
       handleAPIErrorResponse(e);
@@ -34,14 +33,14 @@ export const atpFormRequest = async (data) => {
     const result = await uploadApi(url, data);
     
     if (result?.status === 200) {
-      return result.data; // return only the data
+      return result.data; 
     } else {
       console.warn('Unexpected response:', result);
-      return [];
+      throw new Error("Unexpected response");
     }
   } catch (e) {
     handleAPIErrorResponse(e);
-    return [];
+    throw e; 
   }
 };
 
@@ -54,11 +53,11 @@ export const activityLoginRequest = async (data) => {
       return result.data; // return only the data
     } else {
       console.warn('Unexpected response:', result);
-      return [];
+      throw new Error("Unexpected response");
     }
   } catch (e) {
     handleAPIErrorResponse(e);
-    return [];
+    throw e;
   }
 };
 
@@ -86,3 +85,4 @@ export const getDasboardDataHandle = async() => {
 export const  getProfileDataHandle = async() => {
 
 }
+

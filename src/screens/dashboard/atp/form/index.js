@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Pressable, Image, TouchableOpacity, KeyboardAvoidingView, Platform, Keyboard } from 'react-native'
+import { StyleSheet, Text, View, Pressable, Image, TouchableOpacity, KeyboardAvoidingView, Platform, Keyboard, Alert } from 'react-native'
 import React, { useState, useCallback, useEffect } from 'react'
 import CustomHeader from '../../../../components/customHeader';
 import { CustomContainer, CustomContent } from '../../../../components/container';
@@ -21,6 +21,9 @@ import Toast from 'react-native-toast-message';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateActivityPlanItem } from '../../../../redux/slices/ActivityPlan';
 import { ENUM } from '../../../../utils/bgservices/enum';
+import { addToQueue } from '../../../../redux/slices/queueSlice';
+import { reStartBackgroundService } from '../../../../utils/bgservices/backgroundService';
+import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum';
 
 const INITIALINPUT = {
   date: '',
@@ -46,17 +49,25 @@ const ATPForm = ({ navigation, route }) => {
   const [data, setData] = useState([])
 
   const { location, error, locationArea, openLocationSettings, getLocation, permissionHandle } = useLocation();
-  const { activiyDetails } = route.params || {}
+  // const { activiyDetails } = route.params || {}
+  const { atP_Id } = route.params;
+
+  const activiyDetails = useSelector(
+    state => state.activityPlan.data.find(item => item.atP_Id == atP_Id)
+  );
+
   const dispatch = useDispatch()
 
   const userLogin = useSelector(state => state.login.data);
   const activityPlanList = useSelector(state => state.activityPlan.data);
 
+  // console.log({activityPlanList})
+
   useEffect(() => {
     setInputs({
       ...inputs,
-      planedActivity: activiyDetails.visit_PurposeId_Id,
-      other_Activity: activiyDetails.other_Activity
+      planedActivity: activiyDetails?.visit_PurposeId_Id,
+      other_Activity: activiyDetails?.other_Activity
     })
   }, [activiyDetails])
 
@@ -284,9 +295,7 @@ const ATPForm = ({ navigation, route }) => {
       return;
     }
 
-    dispatch(updateActivityPlanItem({
-      atP_Id: activiyDetails.atP_Id,
-      newData: {
+    const params = {
         activity_DateTime: ActivityDateTime,
         activity_Details: inputs.activityDetails,
         Address: locationArea,
@@ -300,57 +309,24 @@ const ATPForm = ({ navigation, route }) => {
         visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
         other_Activity: inputs.other_Activity,
         CreatedBy: userLogin.userId,
-        clockoutTime: new Date().toISOString(),
-        clockoutAddress: locationArea,
-        clockout_lat: location.latitude,
-        clockout_long: location.longitude,
-        status: ENUM.SERVERSTATUS.NOTSTARTED,
-        clientId: generateclientID(userLogin.userId)
+    }
+
+    dispatch(updateActivityPlanItem({
+      atP_Id: activiyDetails.atP_Id,
+      newData: params
+    }));
+
+    dispatch(addToQueue({
+      type: "FORM",
+      payload: {
+        atP_Id: activiyDetails.atP_Id,
+        ...params
       }
     }));
 
-    console.log({ activityPlanList })
+    // console.log({ activityPlanList })
 
-
-    // try {
-    //   setIsLoading(true);
-
-    //   const formdata = new FormData();
-    //   formdata.append("ATP_Id", activiyDetails.atP_Id);
-    //   formdata.append("ActivityDateTime", ActivityDateTime);
-    //   formdata.append("ActivityDetails", inputs.activityDetails);
-    //   formdata.append("Address", locationArea);
-    //   formdata.append("Latitude", location.latitude);
-    //   formdata.append("Longitude", location.longitude);
-    //   formdata.append("MeetingParticipant", inputs.meetings?.toString());
-    //   formdata.append("Other_MeetingParticipant", inputs.other);
-    //   formdata.append("Photo", attachment);
-    //   formdata.append("PlannedActivity", inputs.planedActivity);
-    //   formdata.append("Video", attachedVideo);
-    //   formdata.append("VisitCompletion", moment().format('YYYY-MM-DD HH:mm:ss'));
-    //   formdata.append("Other_Activity", inputs.other_Activity);
-    //   formdata.append("CreatedBy", userLogin.userId);
-
-    //   const result = await atpFormRequest(formdata);
-    //   console.log('ATP FORM Result:', result);
-    //   if (result) {
-    //     Toast.show({
-    //       type: "myCustomType",
-    //       text1: "Success",
-    //       text2: result.message,
-    //       props: { key: 'success' },
-    //       position: 'bottom',
-    //       bottomOffset: 60,
-    //     });
-    //     handleLogOut()
-    //   } else {
-    //     console.warn('Unexpected data format:', result);
-    //   }
-    // } catch (e) {
-    //   console.log('ATP_FORM', e)
-    // } finally {
-    //   setIsLoading(false);
-    // }
+    await reStartBackgroundService(syncTaskName.syncAcitivityQueue);
   };
 
   const handleLogOut = async () => {

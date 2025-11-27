@@ -6,7 +6,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearLogin } from '../redux/slices/login';
-import { colors, size, family } from '../global';
+import { colors, size, family, wp, hp } from '../global';
 import st from '../global/styles'
 import ConfirmPopup from '../components/ExitModal';
 import { useState } from 'react';
@@ -36,7 +36,7 @@ const CustomSidebar = (props) => {
       <View style={styles.profileBox}>
         <View style={st.wdh25}>
         <View style={styles.profileAvatar}>
-          <Icon name="user" size={34} color={'#FB6F3D'} />
+          <Icon name="user" size={30} color={'#FB6F3D'} />
         </View>
         </View>
         <View style={st.wdh75}>
@@ -101,8 +101,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row'
   },
   profileAvatar: {
-    width: 65,
-    height: 65,
+    width: wp(55),
+    height: wp(55),
     borderRadius: 50,
     backgroundColor: '#FFE5D2',
     alignItems: 'center',
