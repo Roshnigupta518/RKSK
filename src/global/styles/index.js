@@ -39,6 +39,9 @@ export default StyleSheet.create({
     mt_10 : {
       marginTop:'10%'
     },
+    mb_10:{
+     marginBottom:'10%'
+    },
 
     mt_5 : {
       marginTop:'5%'

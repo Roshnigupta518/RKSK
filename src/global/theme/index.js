@@ -16,7 +16,7 @@ const colors = {
     pending:'#007BFF',
     inprogress:'#FFC107',
     overdue:'#DC3545',
-    schedule:'#004999'
+    schedule:'#FF772A'
 }
 
 export default colors;

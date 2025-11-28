@@ -14,22 +14,6 @@ import ExitModal from "../../../components/ExitModal";
 const Dashboard = ({ navigation }) => {
   const [exitModal, setExitModal] = useState(false);
 
-  const isConnected = useNetworkStatus();
-
-  // const startSync = () => {
-  //   if (isConnected) {
-  //     reStartBackgroundService(syncTaskName.all);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   startSync();
-  // }, [isConnected]);
-
-  // useEffect(() => {
-  //   startSync()
-  // }, [])
-
   useFocusEffect(
     useCallback(() => {
       const backAction = () => {

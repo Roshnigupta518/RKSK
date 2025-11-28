@@ -82,7 +82,7 @@ export default function useLocationStatus() {
           // Error code 2 → GPS off
           setGpsEnabled(false);
         },
-        { enableHighAccuracy: true, timeout: 3000 }
+        // { enableHighAccuracy: true, timeout: 3000 }
       );
     } catch (error) {
       setGpsEnabled(false);

@@ -17,15 +17,21 @@ import Icon from 'react-native-vector-icons/Feather';
 import { environment } from '../../../../utils/constant'
 import Video from 'react-native-video';
 import { useIsFocused } from '@react-navigation/native';
-
+import { useSelector } from 'react-redux';
 const ATPDetailScreen = ({ navigation, route }) => {
   const isFocused = useIsFocused();
 
-  const { activiyDetails } = route.params || {}
+  const { atP_Id } = route.params || {}
   const [timeDifference, setTimeDifference] = useState('');
   const [date, setDate] = useState(null);
 
   const [showVideo, setShowVideo] = useState(false);
+
+  const activiyDetails = useSelector(
+    state => state.activityPlan.data.find(item => item.atP_Id == atP_Id)
+  );
+
+  const isFormFilled = activiyDetails.activity_Id || activiyDetails.clientId;
 
   useEffect(() => {
     let timeout;
@@ -88,12 +94,12 @@ const ATPDetailScreen = ({ navigation, route }) => {
                     {/* CASE 2 + CASE 3 → Show Clock Out + Timer */}
                     <View style={styles.content_logout}>
                       <TouchableOpacity
-                        disabled={activiyDetails.activity_Id === null}   // Disable if form not submitted
+                        disabled={!isFormFilled}   // Disable if form not submitted
                         style={[
                           styles.logoutcontainer,
                           {
                             backgroundColor:
-                              activiyDetails.activity_Id === null
+                            !isFormFilled 
                                 ? colors.black        // Disabled color
                                 : colors.blue         // Enabled color
                           }
@@ -124,18 +130,18 @@ const ATPDetailScreen = ({ navigation, route }) => {
                     </View>
 
                     {/* CASE 2: Clockin done but form not filled → Show message */}
-                    {activiyDetails.activity_Id === null && (
+                    {!isFormFilled && (
                       <Text style={[st.tx12, { color: "#ccc", marginTop: 5 }]}>
                         The Clock Out button will be enabled once the activity form is filled and submitted successfully.
                       </Text>
                     )}
 
                     {/* CASE 2: Proceed Button */}
-                    {activiyDetails.activity_Id === null && (
+                    {!isFormFilled && (
                       <CustomButton
                         title="Proceed to fill activity form"
                         onPress={() =>
-                          navigation.navigate("ATPForm", { activiyDetails })
+                          navigation.navigate("ATPForm", { atP_Id })
                         }
                       />
                     )}

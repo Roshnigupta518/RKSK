@@ -3,10 +3,7 @@ import {
   StyleSheet,
   View,
   Platform,
-  PermissionsAndroid,
   Text,
-  Linking,
-  Alert,
   Keyboard,
   KeyboardAvoidingView
 } from 'react-native';
@@ -23,13 +20,10 @@ import { isEmpty } from '../../../../utils/validations';
 import { useLocation } from '../../../../hooks/useLocation';
 import CustomHeader from '../../../../components/customHeader';
 import MyInput from '../../../../components/customInput'
-import { activityLoginRequest } from '../../../../utils/services';
-import useNetworkStatus from '../../../../hooks/networkStatus';
 import { updateActivityPlanItem } from '../../../../redux/slices/ActivityPlan';
 import { reStartBackgroundService } from '../../../../utils/bgservices/backgroundService';
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum';
 import { addToQueue } from '../../../../redux/slices/queueSlice';
-import Toast from 'react-native-toast-message';
 
 const INITIALINPUT = {
   remark: '',
@@ -44,10 +38,7 @@ const App = ({ navigation, route }) => {
 
   const { activiyDetails } = route.params || {}
 
-  const mode = !activiyDetails.clockinTime ? 1 : 2
-
   const { location, locationArea } = useLocation();
-  const isConnected = useNetworkStatus();
   const dispatch = useDispatch()
 
   const userLogin = useSelector(state => state.login.data);
@@ -85,7 +76,7 @@ const App = ({ navigation, route }) => {
   };
 
   const handleLogin = async () => {
-
+    setIsLoading(true)
     const params = {
       clockinTime: new Date().toISOString(),
       clockinAddress: locationArea,
@@ -111,20 +102,28 @@ const App = ({ navigation, route }) => {
     navigation.reset({
       index: 1,
       routes: [
-        { name: 'MainApp', params: { refresh: true } },
-        { name: 'ATPForm', params: { atP_Id: activiyDetails.atP_Id } },
+        {
+          name: 'MainApp', 
+          state: {
+            routes: [{ name: 'ATPListScreen' }],
+          },
+        },
+        {
+          name: 'ATPForm',
+          params: { atP_Id: activiyDetails.atP_Id },
+        },
       ],
     });
-    
 
     await reStartBackgroundService(syncTaskName.syncAcitivityQueue)
+    setIsLoading(false)
   };
 
   const handleLogOut = async () => {
-    
+    setIsLoading(true)
       const params = {
         "atP_Id": activiyDetails.atP_Id,
-        "clockoutTime": new Date(),
+        "clockoutTime": new Date().toISOString(),
         "clockoutAddress": locationArea,
         "clockout_lat": location?.latitude,
         "clockout_long": location?.longitude,
@@ -149,19 +148,18 @@ const App = ({ navigation, route }) => {
       await reStartBackgroundService(syncTaskName.syncAcitivityQueue);
 
       navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainApp', params: { refresh: true } }],
+        index: 1,
+        routes: [
+          {
+            name: 'MainApp', 
+            state: {
+              routes: [{ name: 'ATPListScreen' }],
+            },
+          },
+        ],
       });
 
-      Toast.show({
-        type: "myCustomType",
-        text1: "Success",
-        text2: "Clock out successfully",
-        props: { key: 'success' },
-        position: 'bottom',
-        bottomOffset: 60,
-      });
-      
+      setIsLoading(false)
   };
 
   useEffect(() => {
@@ -221,7 +219,7 @@ const App = ({ navigation, route }) => {
             </View>
           )}
 
-          <View>
+          <View style={st.mb_10}>
             <View style={[st.row, st.align_C, st.justify_S]}>
               <View style={st.wdh70}>
                 <Text style={st.tx16}>{time}</Text>
@@ -242,8 +240,7 @@ const App = ({ navigation, route }) => {
                       activiyDetails?.clockoutTime))) {
                       validation();
                     } else {
-                      alert('logout')
-                      // handleLogOut()
+                      handleLogOut()
                     }
                   }}
                 />

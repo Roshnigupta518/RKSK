@@ -23,6 +23,7 @@ import { useDispatch } from 'react-redux';
 import {jwtDecode} from 'jwt-decode';
 import { wp } from '../../../global';
 import { onLogin } from '../../../utils/bgservices/tiggerfunction';
+import useNetworkStatus from '../../../hooks/networkStatus';
 
 const INITIALINPUT = {
   // userName: '', 
@@ -41,6 +42,7 @@ const Login = ({ navigation }) => {
   const [message, setMessage] = useState('')
 
   const dispatch = useDispatch()
+  const isConnected = useNetworkStatus();
 
   const handleOnchange = (text, input) => {
     setInputs(prevState => ({ ...prevState, [input]: text }));
@@ -50,7 +52,7 @@ const Login = ({ navigation }) => {
     setErrors(prevState => ({ ...prevState, [input]: error }));
   };
 
-
+console.log({isConnected})
   const decodeToken = async(token) => {
     try {
       const decoded = jwtDecode(token);
@@ -227,7 +229,7 @@ const Login = ({ navigation }) => {
                   title="Login"
                   onPress={validation}
                   loading={isLoading}
-                  disabled={isLoading}
+                  disabled={!isConnected || isLoading}
                 />
               </View>
             </View>

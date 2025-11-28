@@ -5,25 +5,21 @@ import { CustomContainer, CustomContent } from '../../../../components/container
 import MyInput from '../../../../components/customInput';
 import CustomButton from '../../../../components/customButton';
 import CustomDatePicker from '../../../../components/CustomDatePicker';
-import CustomPicker from '../../../../components/customPicker';
 import { family, colors } from '../../../../global';
 import st from '../../../../global/styles';
 import Icon from 'react-native-vector-icons/Feather'
-import { convertToLabelValue, generateclientID, getPickerImageResp } from '../../../../utils/helper';
 import { isEmpty } from '../../../../utils/validations';
 import WithImageUpload from '../../../../HOC/ImageUploader';
 import { useLocation } from '../../../../hooks/useLocation';
-import { activityLoginRequest, atpFormRequest, getATPListRequest } from '../../../../utils/services';
 import Video from 'react-native-video';
 import CustomMultiSelect from '../../../../components/customMultiselect';
 import moment from 'moment';
-import Toast from 'react-native-toast-message';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateActivityPlanItem } from '../../../../redux/slices/ActivityPlan';
-import { ENUM } from '../../../../utils/bgservices/enum';
 import { addToQueue } from '../../../../redux/slices/queueSlice';
 import { reStartBackgroundService } from '../../../../utils/bgservices/backgroundService';
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum';
+import { generateclientID } from '../../../../utils/helper';
 
 const INITIALINPUT = {
   date: '',
@@ -33,7 +29,8 @@ const INITIALINPUT = {
   other: '',
   activityDetails: '',
   visitCompletion: '',
-  other_Activity: ''
+  other_Activity: '',
+  visit_Purpose:''
 };
 
 const errMsg = 'This field is required'
@@ -46,10 +43,8 @@ const ATPForm = ({ navigation, route }) => {
   const [attachedVideo, setAttachedVideo] = useState(null)
   const [attachmentErr, setAttachmentErr] = useState();
   const [attachedVideoErr, setAttachedVideoErr] = useState();
-  const [data, setData] = useState([])
 
   const { location, error, locationArea, openLocationSettings, getLocation, permissionHandle } = useLocation();
-  // const { activiyDetails } = route.params || {}
   const { atP_Id } = route.params;
 
   const activiyDetails = useSelector(
@@ -57,16 +52,13 @@ const ATPForm = ({ navigation, route }) => {
   );
 
   const dispatch = useDispatch()
-
   const userLogin = useSelector(state => state.login.data);
-  const activityPlanList = useSelector(state => state.activityPlan.data);
-
-  // console.log({activityPlanList})
 
   useEffect(() => {
     setInputs({
       ...inputs,
       planedActivity: activiyDetails?.visit_PurposeId_Id,
+      visit_Purpose:activiyDetails?.visit_Purpose,
       other_Activity: activiyDetails?.other_Activity
     })
   }, [activiyDetails])
@@ -105,16 +97,6 @@ const ATPForm = ({ navigation, route }) => {
     onChange: (val) => {
       // ✅ store as ISO string to preserve the actual time
       handleOnchange(field)(val.toISOString());
-      if (errors[field]) handleError('', field);
-    },
-    disabled: isLoading,
-  });
-
-  const pickerFieldProps = (field) => ({
-    selectedValue: inputs[field],
-    error: errors[field],
-    onValueChange: (val) => {
-      handleOnchange(field)(val);
       if (errors[field]) handleError('', field);
     },
     disabled: isLoading,
@@ -274,8 +256,15 @@ const ATPForm = ({ navigation, route }) => {
   }
 
   const onSave = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true)
+    
     const isValid = validateForm();
-    if (!isValid) return;
+    if (!isValid) {
+      setIsLoading(false);   // 🔥 important
+      return;
+    }
 
     console.log('Form data is valid:', inputs, attachment, attachedVideo);
     const datePart = moment(inputs.date);
@@ -291,10 +280,11 @@ const ATPForm = ({ navigation, route }) => {
     const ActivityDateTime = combined.format('YYYY-MM-DD HH:mm:ss');
 
     if (!location?.latitude && !location?.longitude) {
-      locationHandle()
+      locationHandle();
+      setIsLoading(false);   // 🔥 important
       return;
     }
-
+    
     const params = {
         activity_DateTime: ActivityDateTime,
         activity_Details: inputs.activityDetails,
@@ -309,6 +299,7 @@ const ATPForm = ({ navigation, route }) => {
         visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
         other_Activity: inputs.other_Activity,
         CreatedBy: userLogin.userId,
+        clientId : generateclientID(userLogin.userId)
     }
 
     dispatch(updateActivityPlanItem({
@@ -324,75 +315,10 @@ const ATPForm = ({ navigation, route }) => {
       }
     }));
 
-    // console.log({ activityPlanList })
-
     await reStartBackgroundService(syncTaskName.syncAcitivityQueue);
-  };
 
-  const handleLogOut = async () => {
-    try {
-      setIsLoading(true);
-      const params = {
-        "atP_Id": activiyDetails.atP_Id,
-        "clockinTime": null,
-        "clockinAddress": null,
-        "clockin_lat": null,
-        "clockin_long": null,
-        "clockoutTime": new Date(),
-        "clockoutAddress": locationArea,
-        "clockout_lat": location?.latitude,
-        "clockout_long": location?.longitude,
-        "createdBy": userLogin.userId,
-        "updatedBy": userLogin.userId,
-        "mode": 2
-      }
-      const result = await activityLoginRequest(params)
-      if (result) {
-
-        console.log('result clock out', result)
-
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainApp', params: { refresh: true } }],
-        });
-
-        Toast.show({
-          type: "myCustomType",
-          text1: "Success",
-          text2: "Clock out successfully",
-          props: { key: 'success' },
-          position: 'bottom',
-          bottomOffset: 60,
-        });
-
-      } else {
-
-      }
-    } catch (e) {
-      console.log(e)
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getATPDataHandle = async () => {
-    try {
-      setIsLoading(true);
-      const result = await getATPListRequest();
-      console.log('ATP Result:', result);
-      if (Array.isArray(result)) {
-        const tempData = convertToLabelValue(result, 'visit_Purpose', 'visit_PurposeId_Id')
-        console.log({ tempData })
-        setData(tempData);
-      } else {
-        console.warn('Unexpected data format:', result);
-        setData([]);
-      }
-    } catch (e) {
-      console.log('ATP_LIST', e)
-    } finally {
-      setIsLoading(false);
-    }
+    navigation.navigate('ATPLogin',{atP_Id: activiyDetails.atP_Id})
+    setIsLoading(false)
   };
 
   const handleMeetingChange = useCallback((val) => {
@@ -402,12 +328,13 @@ const ATPForm = ({ navigation, route }) => {
       meetings: val,
       other: val.includes('Other') ? prev.other : '',
     }));
+
+     // ✅ error clear jab user koi item select kare
+    if (val.length > 0) {
+      handleError('', 'meetings');
+    }
+
   }, []);
-
-
-  useEffect(() => {
-    getATPDataHandle()
-  }, [])
 
   useEffect(() => {
     setInputs(prev => ({
@@ -442,13 +369,9 @@ const ATPForm = ({ navigation, route }) => {
               {...dateFieldProps('time', 'time')}
             />
 
-            <CustomPicker
-              label="Planned Activity"
-              items={data || []}
-              placeholder=""
-              fontFamily={family.regular}
-              {...pickerFieldProps('planedActivity')}
-              disabled={true}
+           <MyInput label="Planned Activity" 
+           {...fieldProps('visit_Purpose')} 
+           disabled={true}
             />
 
             {inputs?.other_Activity &&

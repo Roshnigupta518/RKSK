@@ -1,106 +1,70 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
-  RefreshControl,
   TouchableOpacity
 } from 'react-native';
 import Field from '../../../components/field';
 import st from '../../../global/styles';
-import { getATPListRequest } from '../../../utils/services';
 import EmptyItem from '../../../components/emptyItem';
 import { colors } from '../../../global';
-import { useIsFocused, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useAppSelector } from '../../../hooks';
 
 const ATPListScreen = ({ navigation }) => {
-  const [refreshing, setRefreshing] = useState(false);
-  const [data, setData] = useState([])
   const [isLoading, setIsLoading] = useState(false)
 
   const activityPlanList = useAppSelector(state => state.activityPlan.data);
 
-  const isFocused = useIsFocused();
-  const route = useRoute();
+  const uniqueList = useMemo(() => {
+    const map = new Map();
+  
+    (activityPlanList || []).forEach(item => {
+      map.set(item.atP_Id, item);
+    });
+  
+    const list = [...map.values()];
+  
+    // 🔥 SORTING LOGIC (newest first)
+    list.sort((a, b) => {
+      const getDate = (obj) =>
+        new Date(
+          obj.clockoutTime ||
+          obj.clockinTime ||
+          obj.visit_Start_Date ||
+          obj.createdDate ||
+          0
+        ).getTime();
+  
+      return getDate(b) - getDate(a); // Descending
+    });
+  
+    return list;
+  }, [activityPlanList]);
+  
 
-  console.log({activityPlanList})
-
-  // useEffect(() => {
-  //   if (isFocused && route.params?.refresh) {
-  //     getATPDataHandle(); // your API call
-  //     // Clear the refresh flag so it doesn’t repeat
-  //     navigation.setParams({ refresh: false });
-  //   }
-  // }, [isFocused, route.params?.refresh]);
-
-  // const getATPDataHandle = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const result = await getATPListRequest();
-  //     console.log('ATP Result:', result);
-  //     if (Array.isArray(result)) {
-  //       setData(result);
-  //     } else {
-  //       console.warn('Unexpected data format:', result);
-  //       setData([]);
-  //     }
-  //   } catch (e) {
-  //     console.log('ATP_LIST', e)
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   getATPDataHandle()
-  // }, [])
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      getATPDataHandle()
-      setRefreshing(false);
-    }, 1500);
-  }, []);
-
-  const changedBgColor = (activity_Id, clockinTime) => {
-    if (activity_Id) {
-      return colors.green
-    } else if(clockinTime) {
-      return colors.yellow
-    }else{
-      return colors.red
+  useEffect(() => {
+    if (activityPlanList) {
+      setTimeout(() => setIsLoading(false), 500);
     }
-  }
+  }, [activityPlanList]);
+
+  console.log({uniqueList})
 
   const getPlanStatus = (item) => {
-    const today = new Date().toISOString().split("T")[0];  // YYYY-MM-DD
+    const today = new Date().toISOString().split("T")[0];
     const visitDate = item?.visit_Start_Date?.split("T")[0];
-  
     if (!visitDate) return "Pending";
-  
     const visit = new Date(visitDate);
     const current = new Date(today);
-  
-    // Completed
-    if (item.activity_Id) return "Completed";
-  
-    // In progress
+    if (item.clockoutTime) return "Completed";
     if (item.clockinTime) return "In Progress";
-  
-    // Date checks
     if (visitDate === today) return "Pending";
-  
     if (visit > current) return "Scheduled";
-  
-    // visit < today
     if (visit < current) return "Overdue";
-  
     return "Pending";
   };
-  
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -113,7 +77,7 @@ const ATPListScreen = ({ navigation }) => {
       case "Scheduled":
         return colors.schedule;
       case "Overdue":
-        return colors.overdue; 
+        return colors.overdue;
       default:
         return colors.grey;
     }
@@ -121,42 +85,61 @@ const ATPListScreen = ({ navigation }) => {
 
   const renderItem = ({ item }) => {
     const status = getPlanStatus(item);
-    return(
-    <TouchableOpacity
-      onPress={() => navigation.navigate('ATPLogin', { activiyDetails: item, animation: 'none' })}
-      style={[st.card]}>
-      <View style={st.mt_5} />
-      <Text style={styles.title}>{item.visit_Purpose} Activity plan</Text>
-      <Field label="Visit Start Date and Time" value={item.visit_Start_Date} />
-      <Field label="Visit End Date and Time" value={item.visit_End_Date} />
-      <Field label="Asha" value={item.ashaNameEnglish} />
-      <Field label="Village" value={item.villageName} />
+    return (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('ATPLogin', { atP_Id: item.atP_Id, animation: 'none' })}
+        style={[st.card]}>
+        <View style={st.mt_5} />
+        <Text style={styles.title}>{item.visit_Purpose} Activity plan</Text>
+        <Field label="Visit Start Date and Time" value={item.visit_Start_Date} />
+        <Field label="Visit End Date and Time" value={item.visit_End_Date} />
+        <Field label="Asha" value={item.ashaNameEnglish} />
+        <Field label="Village" value={item.villageName} />
+        <View style={[styles.ribbon, { backgroundColor: getStatusColor(status) }]}>
+          <Text style={[st.tx12, { color: colors.white }]}>
+            {status}
+          </Text>
+        </View>
 
-      {/* <View style={[styles.ribbon, { backgroundColor: changedBgColor(item.activity_Id, item.clockinTime) }]}>
-        <Text style={[st.tx12, { color: colors.white }]}>
-          {item.activity_Id? 'Completed': item.clockinTime? 'In Progress': 'Pending'}
-        </Text>
-      </View> */}
+        {(item.clockinTime || item.clockoutTime || item.activity_Id) && (
+          <View style={styles.syncContainer}>
+            <View style={styles.syncRow}>
+              <Text style={styles.syncLabel}>Clock-In:</Text>
+              <Text style={[styles.syncStatus, { color: item.clockinSynced ? colors.green : colors.red }]}>
+                {item.clockinSynced ? "✔" : "⟳"}
+              </Text>
+            </View>
 
-     <View style={[styles.ribbon, { backgroundColor: getStatusColor(status) }]}>
-        <Text style={[st.tx12, { color: colors.white }]}>
-          {status}
-        </Text>
-      </View>
+            {(item.activity_Id || item.clientId) && (
+              <View style={styles.syncRow}>
+                <Text style={styles.syncLabel}>Form:</Text>
+                <Text style={[styles.syncStatus, { color: item.formSynced ? colors.green : colors.red }]}>
+                  {item.formSynced ? "✔" : "⟳"}
+                </Text>
+              </View>
+            )}
 
-    </TouchableOpacity>
-  )};
+            {item.clockoutTime && (
+              <View style={styles.syncRow}>
+                <Text style={styles.syncLabel}>Clock-Out:</Text>
+                <Text style={[styles.syncStatus, { color: item.clockoutSynced ? colors.green : colors.red }]}>
+                  {item.clockoutSynced ? "✔" : "⟳"}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+      </TouchableOpacity>
+    )
+  };
 
   return (
     <View style={st.container}>
       <FlatList
-        data={activityPlanList || []}
+        data={uniqueList || []}
         keyExtractor={item => item.atP_Id}
         renderItem={renderItem}
         contentContainerStyle={st.pd20}
-        // refreshControl={
-        //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        // }
         ListEmptyComponent={<EmptyItem isLoading={isLoading} />}
         removeClippedSubviews={false}
       />
@@ -180,7 +163,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderTopRightRadius: 10,
-    borderBottomLeftRadius:10,
+    borderBottomLeftRadius: 10,
     paddingHorizontal: 10,
+  },
+  syncContainer: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
+    flexDirection:'row',
+    justifyContent:'space-between'
+  },
+
+  syncRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 2,
+  },
+
+  syncLabel: {
+    ...st.tx12,
+    marginRight:5
+  },
+
+  syncStatus: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

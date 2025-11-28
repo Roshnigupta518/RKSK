@@ -3,7 +3,6 @@ import { getApi, postApi, postApiWithToken, uploadApi } from "../apicalls";
 import { handleAPIErrorResponse } from "../validations";
 import { store } from "../../redux/store";
 import { setActivityPlan } from "../../redux/slices/ActivityPlan";
-import { getSavedAtpListNotStarted } from "../../redux/store/getState";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;

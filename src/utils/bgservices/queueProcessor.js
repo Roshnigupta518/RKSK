@@ -2,6 +2,8 @@ import { atpFormRequest, activityLoginRequest } from "../services";
 import { updateActivityPlanItem } from "../../redux/slices/ActivityPlan";
 import { store } from "../../redux/store";
 import { removeFromQueue } from "../../redux/slices/queueSlice";
+import { reStartBackgroundService } from "./backgroundService";
+import { syncTaskName } from "./backgroundTaskEnum";
 
 export const processQueueItem = async (item) => {
   try {
@@ -19,6 +21,7 @@ export const processQueueItem = async (item) => {
           }
         })
       );
+      reStartBackgroundService(syncTaskName.syncGetAtpList)
     }
 
     if (item.type === "FORM") {
@@ -43,10 +46,12 @@ export const processQueueItem = async (item) => {
         updateActivityPlanItem({
           atP_Id: item.payload.atP_Id,
           newData: {
-            formSynced: true
+            formSynced: true,
+            // activity_Id : response?.activity_Id
           }
         })
       );
+      reStartBackgroundService(syncTaskName.syncGetAtpList)
     }
 
     if (item.type === "CLOCK_OUT") {
@@ -56,11 +61,11 @@ export const processQueueItem = async (item) => {
         updateActivityPlanItem({
           atP_Id: item.payload.atP_Id,
           newData: {
-            activity_Id: response.data.activity_Id,
-            clockoutSynced: true
+            clockoutSynced: true,
           }
         })
       );
+      reStartBackgroundService(syncTaskName.syncGetAtpList)
     }
 
     // remove processed item
@@ -73,22 +78,17 @@ export const processQueueItem = async (item) => {
 
 
 export const processQueue = async (isGetInProgress) => {
-  console.log({isGetInProgress})
   const state = store.getState();
   const queue = state.queue.pending;
-
   console.log("Queue size:", queue.length);
-  if(isGetInProgress){
-
+  // if(isGetInProgress){
   if (!queue || queue.length === 0) {
     console.log("Queue empty, nothing to process");
-    return "EMPTY";   // 👈 return indicator
+    return "EMPTY";  
   }
-
   for (const item of queue) {
     await processQueueItem(item);
   }
-
   return "DONE";
-}
+// }
 };

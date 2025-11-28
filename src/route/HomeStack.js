@@ -20,10 +20,9 @@ const Drawer = createDrawerNavigator();
 const HomeStack = () => {
   return (
     <Stack.Navigator
-      screenOptions={{ headerShown: false }}
+      screenOptions={{ headerShown: false,  animation: 'none', }}
       initialRouteName={'MainApp'}>
       <Stack.Screen name="MainApp" component={DrawerStack} />
-      <Stack.Screen name="ATPListScreen" component={ATPListScreen} options={{ animation: 'none' }} />
       <Stack.Screen name="ATPForm" component={ATPForm} />
       <Stack.Screen name="ATPLogin" component={ATPLogin} options={{ animation: 'none' }} />
       <Stack.Screen name="LoginMap" component={LoginMap} />
