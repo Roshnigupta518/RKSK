@@ -77,7 +77,7 @@ const DrawerStack = () => {
       <Drawer.Screen
         name="ATPListScreen"
         options={{
-          title: 'ATP',
+          title: 'Activity tool plan',
           drawerLabel: 'ATP',
           drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}

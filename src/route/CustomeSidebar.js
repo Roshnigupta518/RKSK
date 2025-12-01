@@ -53,7 +53,7 @@ const CustomSidebar = (props) => {
 
       {/* -------- Menu Group 2 -------- */}
       <View style={styles.card}>
-        {renderMenuItem("Scheduled Activity", "calendar", "ATPListScreen", "#369BFF")}
+        {renderMenuItem("Manage Activity", "calendar", "ATPListScreen", "#369BFF")}
         {renderMenuItem("Disclaimer", "alert-triangle", "Disclaimer", "#2AE1E1")}
         {renderMenuItem("Privacy Policy", "lock", "PrivacyPolicy", "#FB6D3A")}
         {/* {renderMenuItem("Notifications", "bell", "Notifications", "#413DFB")} */}

@@ -125,6 +125,15 @@ export default StyleSheet.create({
       height: 48,
       backgroundColor: colors.white
     },
+    photoContainer:{
+      borderRadius: 5,
+      marginVertical: 10,
+      borderWidth: 1,
+      borderColor: 'rgba(200, 200, 200, 1)',
+      height: 120,
+      backgroundColor: colors.white,
+      width:'100%'
+    },
     iconLeft:{position:'absolute', right:15},
     card: {
       backgroundColor: '#fff',
@@ -138,8 +147,8 @@ export default StyleSheet.create({
       elevation: 2,
     },
     imageSty:{
-      width:100,
-      height:100, 
-      marginBottom:10
+      width:'100%',
+      height:120, 
+      borderRadius:5
     }
 })

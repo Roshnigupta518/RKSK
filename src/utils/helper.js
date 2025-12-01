@@ -61,6 +61,29 @@ export const formatTime = mydate => {
   return formattedTime;
 };
 
+export const formatClockInDisplay = (clockinTime) => {
+  if (!clockinTime) return "-";
+
+  const clockInDate = new Date(clockinTime);
+  const today = new Date();
+
+  // Remove time parts (compare only date)
+  const isToday =
+    clockInDate.getDate() === today.getDate() &&
+    clockInDate.getMonth() === today.getMonth() &&
+    clockInDate.getFullYear() === today.getFullYear();
+
+  if (isToday) {
+    // Only TIME
+    return formatTime(clockinTime); // example: "08:30 AM"
+  } else {
+    // DATE + TIME
+    return `${formatDate(clockinTime)} ${formatTime(clockinTime)}`;
+    // example: "22/09/2025 08:30 AM"
+  }
+};
+
+
 export const convertToLabelValue = (arr, labelKey, valueKey) => {
   return (arr || []).map(item => ({
     label: item[labelKey] || '',

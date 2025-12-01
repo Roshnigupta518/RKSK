@@ -30,7 +30,7 @@ const INITIALINPUT = {
   activityDetails: '',
   visitCompletion: '',
   other_Activity: '',
-  visit_Purpose:''
+  visit_Purpose: ''
 };
 
 const errMsg = 'This field is required'
@@ -58,7 +58,7 @@ const ATPForm = ({ navigation, route }) => {
     setInputs({
       ...inputs,
       planedActivity: activiyDetails?.visit_PurposeId_Id,
-      visit_Purpose:activiyDetails?.visit_Purpose,
+      visit_Purpose: activiyDetails?.visit_Purpose,
       other_Activity: activiyDetails?.other_Activity
     })
   }, [activiyDetails])
@@ -115,26 +115,25 @@ const ATPForm = ({ navigation, route }) => {
   const AvatarPicker = WithImageUpload(
     ({ handleMediaUpload, ...props }) => (
       <View>
-        <Text style={st.tx12}>Photo Capture</Text>
+        <Text style={st.tx12}>Photo Capture *</Text>
         <Pressable
           onPress={handleMediaUpload}
           {...props}>
-          <View style={[st.inputContainer, { borderColor: attachmentErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
-            <View style={st.wdh90}>
-              <Text style={st.tx12}>{attachment?.name}</Text>
-            </View>
-            <View style={st.iconLeft}>
-              <Icon name={'camera'} size={20} />
-            </View>
+          <View style={[st.photoContainer, { borderColor: attachmentErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
+
+            {attachment ?
+              <Image source={{ uri: attachment?.uri }} style={st.imageSty}
+                resizeMode='cover'
+              />
+              :
+              <View style={st.center}>
+                <Icon name={'camera'} size={20} color={colors.lightGrey} />
+                <Text style={[st.tx12, { color: colors.lightGrey }]}>Tap to Capture Photo</Text>
+              </View>
+            }
           </View>
         </Pressable>
-        {attachment &&
-          <View style={st.row}>
-            <Image source={{ uri: attachment?.uri }} style={st.imageSty} resizeMode='contain' />
-            <TouchableOpacity onPress={() => setAttachment(null)}>
-              <Icon name={'x'} size={20} />
-            </TouchableOpacity>
-          </View>}
+
         {attachmentErr && <Text style={st.error}>{attachmentErr}</Text>}
 
       </View>
@@ -146,29 +145,24 @@ const ATPForm = ({ navigation, route }) => {
   const VideoPicker = WithImageUpload(
     ({ handleMediaUpload, props }) => (
       <View>
-        <Text style={st.tx12}>Video Capture</Text>
+        <Text style={st.tx12} numberOfLines={1} adjustsFontSizeToFit>Video Capture (max 30 sec) *</Text>
         <Pressable
           onPress={handleMediaUpload}
           {...props}>
-          <View style={[st.inputContainer, { borderColor: attachedVideoErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
-            <View style={st.wdh90}>
-              <Text style={st.tx12}>{attachedVideo?.name}</Text>
-            </View>
-            <View style={st.iconLeft}>
-              <Icon name={'camera'} size={20} />
-            </View>
+          <View style={[st.photoContainer, { borderColor: attachedVideoErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
+            {attachedVideo ?
+              <Video source={{ uri: attachedVideo?.uri }}
+                controls
+                style={st.imageSty} />
+              :
+              <View style={st.center}>
+                <Icon name={'camera'} size={20} color={colors.lightGrey} />
+                <Text style={[st.tx12, { color: colors.lightGrey }]}>Tap to Capture Video</Text>
+              </View>
+            }
           </View>
         </Pressable>
 
-        {attachedVideo &&
-          <View style={st.row}>
-            <Video source={{ uri: attachedVideo?.uri }}
-              controls
-              style={st.imageSty} />
-            <TouchableOpacity onPress={() => setAttachedVideo(null)}>
-              <Icon name={'x'} size={20} />
-            </TouchableOpacity>
-          </View>}
         {attachedVideoErr && <Text style={st.error}>{attachedVideoErr}</Text>}
 
       </View>
@@ -259,7 +253,7 @@ const ATPForm = ({ navigation, route }) => {
     if (isLoading) return;
 
     setIsLoading(true)
-    
+
     const isValid = validateForm();
     if (!isValid) {
       setIsLoading(false);   // 🔥 important
@@ -284,22 +278,22 @@ const ATPForm = ({ navigation, route }) => {
       setIsLoading(false);   // 🔥 important
       return;
     }
-    
+
     const params = {
-        activity_DateTime: ActivityDateTime,
-        activity_Details: inputs.activityDetails,
-        Address: locationArea,
-        Latitude: location.latitude,
-        Longitude: location.longitude,
-        meeting_Participant: inputs.meetings?.toString(),
-        other_MeetingParticipant: inputs.other,
-        photo_Path: attachment,
-        PlannedActivity: inputs.planedActivity,
-        video_Path: attachedVideo,
-        visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
-        other_Activity: inputs.other_Activity,
-        CreatedBy: userLogin.userId,
-        clientId : generateclientID(userLogin.userId)
+      activity_DateTime: ActivityDateTime,
+      activity_Details: inputs.activityDetails,
+      Address: locationArea,
+      Latitude: location.latitude,
+      Longitude: location.longitude,
+      meeting_Participant: inputs.meetings?.toString(),
+      other_MeetingParticipant: inputs.other,
+      photo_Path: attachment,
+      PlannedActivity: inputs.planedActivity,
+      video_Path: attachedVideo,
+      visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
+      other_Activity: inputs.other_Activity,
+      CreatedBy: userLogin.userId,
+      clientId: generateclientID(userLogin.userId)
     }
 
     dispatch(updateActivityPlanItem({
@@ -317,7 +311,11 @@ const ATPForm = ({ navigation, route }) => {
 
     await reStartBackgroundService(syncTaskName.syncAcitivityQueue);
 
-    navigation.navigate('ATPLogin',{atP_Id: activiyDetails.atP_Id})
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'ATPLogin', params: { atP_Id: activiyDetails.atP_Id }, }],
+    });
+
     setIsLoading(false)
   };
 
@@ -329,7 +327,7 @@ const ATPForm = ({ navigation, route }) => {
       other: val.includes('Other') ? prev.other : '',
     }));
 
-     // ✅ error clear jab user koi item select kare
+    // ✅ error clear jab user koi item select kare
     if (val.length > 0) {
       handleError('', 'meetings');
     }
@@ -354,7 +352,7 @@ const ATPForm = ({ navigation, route }) => {
 
           <View style={st.flex}>
             <CustomDatePicker
-              label="Entry Date"
+              label="Entry Date *"
               placeholder=""
               minimumDate={new Date(1900, 0, 1)}
               maximumDate={new Date()}
@@ -363,22 +361,22 @@ const ATPForm = ({ navigation, route }) => {
             />
 
             <CustomDatePicker
-              label="Entry Time"
+              label="Entry Time *"
               placeholder=""
               iconName={'clock'}
               {...dateFieldProps('time', 'time')}
             />
 
-           <MyInput label="Planned Activity" 
-           {...fieldProps('visit_Purpose')} 
-           disabled={true}
+            <MyInput label="Planned Activity"
+              {...fieldProps('visit_Purpose')}
+              disabled={true}
             />
 
             {inputs?.other_Activity &&
-              <MyInput label="Other Activity" {...fieldProps('other_Activity')} disabled={true} />
+              <MyInput label="Other Activity *" {...fieldProps('other_Activity')} disabled={true} />
             }
             <CustomMultiSelect
-              label="Meeting Participants"
+              label="Meeting Participants *"
               items={ParticipantsList}
               selectedItems={inputs.meetings}
               onSelectedItemsChange={handleMeetingChange}
@@ -389,13 +387,20 @@ const ATPForm = ({ navigation, route }) => {
             />
 
             {inputs.meetings.includes('Other') && (
-              <MyInput label="Other" {...fieldProps('other')} />
+              <MyInput label="Other *" {...fieldProps('other')} />
             )}
 
-            <MyInput label="Activity Details" {...fieldProps('activityDetails')} />
+            <MyInput label="Activity Details *" {...fieldProps('activityDetails')} />
 
-            <AvatarPicker />
-            <VideoPicker />
+            <View style={st.row}>
+              <View style={st.wdh48}>
+                <AvatarPicker />
+
+              </View>
+              <View style={[st.wdh48, { marginLeft: "2%" }]}>
+                <VideoPicker />
+              </View>
+            </View>
 
             <CustomButton title='Save'
               onPress={onSave}

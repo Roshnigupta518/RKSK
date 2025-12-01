@@ -236,11 +236,12 @@ const App = ({ navigation, route }) => {
                       : 'Clock Out'
                   }
                   onPress={() => {
+                    Keyboard.dismiss()
                     if ((!activiyDetails?.clockinTime || (activiyDetails?.clockinTime &&
                       activiyDetails?.clockoutTime))) {
                       validation();
                     } else {
-                      handleLogOut()
+                      handleLogOut();
                     }
                   }}
                 />

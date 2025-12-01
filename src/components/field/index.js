@@ -1,32 +1,39 @@
+// Field.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import st from '../../global/styles';
 
-const Field = ({ label, value, txColor }) => {
+const Field = ({ label, value, txColor, alignRight }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={[styles.value,{color:txColor}]}>{value || '-'}</Text>
+      <Text style={[styles.label, alignRight && { textAlign: 'right' }, ]} numberOfLines={1} alignRight>{label}</Text>
+
+      <Text
+        style={[
+          styles.value,
+          alignRight && { textAlign: 'right' }, //this aligns fully right
+          { color: txColor },
+        ]}
+      >
+        {value || '-'}
+      </Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
+    width: '48%', // 2 columns
     marginBottom: 10,
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
   },
   label: {
-    flex: 1,
-   ...st.tx12,
+    ...st.tx12,
+    color: '#6C6C6C',
   },
   value: {
-    flex: 1,
     ...st.tx12,
     ...st.txbold,
-    ...st.txAlignR
+    marginTop: 3,
   },
 });
 

@@ -8,7 +8,7 @@ import { useAppSelector, useAppDispatch } from '../../../hooks';
 import { setDisClaimerStatus } from '../../../redux/slices/disclaimer';
 import { useFocusEffect } from '@react-navigation/native';
 import Button from '../../../components/customButton';
-import ExitModal from '../../../components/ExitModal';
+import ExitModal from '../../../components/ExitModal'
 
 const Disclaimer = ({ navigation }) => {
   const onBoarding = useAppSelector(state => state.login.data);
@@ -55,14 +55,16 @@ const Disclaimer = ({ navigation }) => {
       }
 
       <CustomContent>
-        {/* <Text style={[st.tx16, {color:colors.blue}]}>Disclaimer for RKSK MP Mobile App</Text> */}
+      <View style={st.card}>
         <Text style={[st.tx12, { lineHeight: 30 }]}>The RKSK MP Mobile App is for official use under NHM Madhya Pradesh. While every effort is made to secure and protect your data, NHM MP is not responsible for unauthorized access caused by external factors beyond its control.</Text>
+        </View>
       </CustomContent>
       <View style={st.pd20}>
         {!onBoarding &&
           <Button
             title={'I Accept'}
             onPress={() => handlePress()}
+            backgroundColor={colors.orange}
           />}
       </View>
 

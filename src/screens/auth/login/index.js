@@ -192,7 +192,7 @@ console.log({isConnected})
               <Image source={ImageConstants.round_logo} 
               style={{width:wp(150), height:wp(150)}} />
               <Text style={[st.tx14, st.txAlignC, {color:colors.white}]}>
-              {'\n'}RASHTRIYA KISHOR SWASTHYA KARYAKRAM MP{'\n'}{'\n'}
+              {'\n'}RASHTRIYA KISHOR SWASTHYA KARYAKRAM,{'\n'} Madhya Pradesh{'\n'}{'\n'}
               राष्ट्रीय किशोर स्वास्थ्य कार्यक्रम मध्य प्रदेश
               </Text>
             </View>

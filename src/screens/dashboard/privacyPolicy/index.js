@@ -8,8 +8,7 @@ const PrivacyPolicy = () => {
   return (
     <CustomContainer>
       <CustomContent>
-        <View>
-        {/* <Text style={[st.tx16, { color: colors.blue }]}>Privacy Policy for RKSK MP Mobile App </Text> */}
+        <View style={st.card}>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`The RKSK MP Mobile App is developed under the Rashtriya Kishor Swasthya Karyakram (RKSK) initiative of the National Health Mission (NHM), Madhya Pradesh. 
 
@@ -18,7 +17,7 @@ This app supports the management, reporting, and monitoring of adolescent health
 Your privacy is important to us. This policy explains what information we collect, how we use it, and how we protect it. `}
         </Text>
         </View>
-        <View style={st.mt_5}>
+        <View style={[st.mt_5, st.card]}>
         <Text style={[st.tx14, { color: colors.blue }]}>1. Information We Collect</Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`We collect only the information needed to manage health program activities effectively:  
@@ -32,7 +31,7 @@ The app does not collect or store personal data of adolescents. All beneficiary 
         </Text>
         </View>
 
-        <View>
+        <View style={st.card}>
         <Text style={[st.tx14, { color: colors.blue }]}>2. How We Use the Information</Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`The collected data is used only for: 
@@ -44,7 +43,8 @@ The app does not collect or store personal data of adolescents. All beneficiary 
 We do not sell, rent, or use your information for advertising or commercial purposes. 
  `}
         </Text>
-
+        </View>
+        <View style={st.card}>
 
         <Text style={[st.tx14, { color: colors.blue }]}>3. Data Security </Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
@@ -55,8 +55,9 @@ We do not sell, rent, or use your information for advertising or commercial purp
 •	Regular audits are conducted to ensure compliance with NHM data-protection guidelines.  
  `}
         </Text>
+        </View>
 
-
+        <View style={st.card}>
         <Text style={[st.tx14, { color: colors.blue }]}>4. Data Sharing </Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`Data is shared only with authorized NHM MP officials and approved program partners for official monitoring and evaluation. 
@@ -64,6 +65,9 @@ Information may also be used in aggregated or anonymized form for research and r
 We never share your personal data with third parties for marketing or profit.   
  `}
         </Text>
+        </View>
+
+        <View style={st.card}>
 
         <Text style={[st.tx14, { color: colors.blue }]}>5. Your Responsibilities </Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
@@ -73,25 +77,28 @@ We never share your personal data with third parties for marketing or profit.
 •	Reporting any suspected misuse or security issue to the NHM MP technical team.  
  `}
         </Text>
+        </View>
 
 
-
+        <View style={st.card}>
         <Text style={[st.tx14, { color: colors.blue }]}>6. Data Retention </Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`Your data is retained only as long as needed for program monitoring and reporting. 
 When no longer required, it will be securely archived or deleted according to NHM data-retention guidelines.  
  `}
         </Text>
+        </View>
 
-
+        <View style={st.card}>
         <Text style={[st.tx14, { color: colors.blue }]}>7. Children’s Privacy </Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`This app does not collect personal information directly from children or adolescents. 
 All adolescent-related data is recorded only by authorized health workers in anonymized formats. 
  `}
         </Text>
+        </View>
 
-
+        <View style={st.card}>
         <Text style={[st.tx14, { color: colors.blue }]}>8. Policy Updates </Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`We may update this Privacy Policy from time to time. 
@@ -99,7 +106,8 @@ Any updates will be shown within the app and on the official NHM Madhya Pradesh 
 By continuing to use the app, you agree to the updated policy. 
  `}
         </Text>
-
+        </View>
+        <View style={st.card}>
         <Text style={[st.tx14, { color: colors.blue }]}>9. Contact Us  </Text>
         <Text style={[st.tx12, { lineHeight: 30 }]}>
          {`If you have any questions or concerns about this Privacy Policy, please contact:  

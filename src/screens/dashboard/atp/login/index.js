@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image
+  Image, BackHandler
 } from 'react-native';
 import CustomHeader from '../../../../components/customHeader';
 import { CustomContainer, CustomContent } from '../../../../components/container';
@@ -12,12 +12,14 @@ import CustomButton from '../../../../components/customButton';
 import st from '../../../../global/styles';
 import { colors } from '../../../../global';
 import Field from '../../../../components/field';
-import { timeDifferenceFun, formatTime, formatDate } from '../../../../utils/helper';
+import { timeDifferenceFun, formatTime, formatDate,formatClockInDisplay } from '../../../../utils/helper';
 import Icon from 'react-native-vector-icons/Feather';
 import { environment } from '../../../../utils/constant'
 import Video from 'react-native-video';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
+import FieldRow from '../../../../components/FieldRow';
+
 const ATPDetailScreen = ({ navigation, route }) => {
   const isFocused = useIsFocused();
 
@@ -32,6 +34,26 @@ const ATPDetailScreen = ({ navigation, route }) => {
   );
 
   const isFormFilled = activiyDetails.activity_Id || activiyDetails.clientId;
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const backAction = () => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainApp', state: { routes: [{ name: 'ATPListScreen' }] } }],
+        });
+        return true; // default back रोक देता है
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+
+      return () => backHandler.remove();
+    }, [])
+  );
+
 
   useEffect(() => {
     let timeout;
@@ -67,7 +89,11 @@ const ATPDetailScreen = ({ navigation, route }) => {
 
   return (
     <CustomContainer>
-      <CustomHeader title="ATP Login" onBackPress={() => navigation.goBack()} />
+      <CustomHeader title="ATP Login"
+        onBackPress={() => navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainApp', state: { routes: [{ name: 'ATPListScreen' }] } }],
+        })} />
       <CustomContent>
 
         {!(activiyDetails.clockinTime && activiyDetails.clockoutTime && activiyDetails.activity_Id) && (
@@ -99,7 +125,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
                           styles.logoutcontainer,
                           {
                             backgroundColor:
-                            !isFormFilled 
+                              !isFormFilled
                                 ? colors.black        // Disabled color
                                 : colors.blue         // Enabled color
                           }
@@ -122,7 +148,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
                               color={colors.success}
                             />
                             <Text style={[st.tx12, { color: colors.grey }]}>
-                              {formatTime(activiyDetails.clockinTime)}
+                              {formatClockInDisplay(activiyDetails.clockinTime)}
                             </Text>
                           </View>
                         </View>
@@ -151,40 +177,66 @@ const ATPDetailScreen = ({ navigation, route }) => {
             )}
           </View>
         )}
-        
+
         <View style={styles.detailCard}>
-          <Text style={styles.title}>{activiyDetails.visit_Purpose} Activity plan</Text>
-          <Field label="Visit Start Date and Time" value={activiyDetails.visit_Start_Date} />
-          <Field label="Visit End Date and Time" value={activiyDetails.visit_End_Date} />
-          <Field label="Block" value={activiyDetails.blockNameE} />
-          <Field label="ASHA Facilitator (AF)" value={activiyDetails.ashaSahyogi_Name} />
-          <Field label="ASHA Name" value={activiyDetails.ashaNameEnglish} />
-          <Field label="Village" value={activiyDetails.villageName} />
-          <Field label="Other Activity" value={activiyDetails.other_Activity} />
-          <Field label="Duration" value={activiyDetails.duration} />
+          <Text style={[styles.title, { color: colors.blue }]}>{activiyDetails.visit_Purpose} Activity plan</Text>
+          <FieldRow>
+            <Field label="Start Date and Time" value={activiyDetails.visit_Start_Date} />
+            <Field label="End Date and Time" value={activiyDetails.visit_End_Date} />
+          </FieldRow>
+
+          <FieldRow>
+            <Field label="Block" value={activiyDetails.blockNameE} />
+            <Field label="ASHA Facilitator (AF)" value={activiyDetails.ashaSahyogi_Name} />
+          </FieldRow>
+
+          <FieldRow>
+            <Field label="ASHA Name" value={activiyDetails.ashaNameEnglish} />
+            <Field label="Village" value={activiyDetails.villageName} />
+          </FieldRow>
+
+          <FieldRow>
+            <Field label="Other Activity" value={activiyDetails.other_Activity} />
+            <Field label="Duration" value={activiyDetails.duration} />
+          </FieldRow>
+
         </View>
         {activiyDetails.activity_DateTime &&
           <View style={styles.detailCard}>
             <Text style={styles.title}>Activity Details</Text>
-            <Field label="Entry Date and Time" value={activiyDetails.activity_DateTime} />
-            <Field label="Entry End Date and Time" value={activiyDetails.visit_Completion} />
-            <Field label="Planned Activity" value={activiyDetails.planned_Activity} />
-            <Field label="Other Planned Activity" value={activiyDetails.other_Activity} />
-            <Field label="Meeting Participants" value={activiyDetails.meeting_Participant} />
-            <Field label="Other Meeting Participants" value={activiyDetails.other_MeetingParticipant} />
+            <FieldRow>
+              <Field label="Entry Date and Time" value={activiyDetails.activity_DateTime} />
+              <Field label="Entry End Date and Time" value={activiyDetails.visit_Completion} />
+            </FieldRow>
+            <FieldRow>
+              <Field label="Planned Activity" value={activiyDetails.planned_Activity} />
+              <Field label="Other Planned Activity" value={activiyDetails.other_Activity} />
+            </FieldRow>
+            <FieldRow>
+              <Field label="Meeting Participants" value={activiyDetails.meeting_Participant} />
+              <Field label="Other Meeting Participants" value={activiyDetails.other_MeetingParticipant} />
+            </FieldRow>
+
             <Field label="Activity Details" value={activiyDetails.activity_Details} />
-            <Field label="Image" value={activiyDetails.photo_Path?.name} />
-            <Image source={{ uri: environment.imageUrl + activiyDetails.photo_Path?.uri }} style={st.imageSty} />
-            <Field label="Video" value={activiyDetails.video_Path?.name} />
-            {showVideo && activiyDetails.video_Path && (
-              <Video
-                source={{ uri: environment.imageUrl + activiyDetails.video_Path?.uri }}
-                controls
-                paused={!isFocused}
-                style={st.imageSty}
-                resizeMode="cover"
-              />
-            )}
+
+            <View style={st.row}>
+              <View style={st.wdh48}>
+                <Text style={st.tx12}>Image</Text>
+                <Image source={{ uri: environment.imageUrl + (activiyDetails.photo_Path?.uri || activiyDetails.photo_Path) }} style={st.imageSty} />
+              </View>
+              <View style={[st.wdh48, { marginLeft: '2%' }]}>
+                <Text style={st.tx12}>Video</Text>
+                {showVideo && activiyDetails.video_Path && (
+                  <Video
+                    source={{ uri: environment.imageUrl + (activiyDetails.video_Path?.uri || activiyDetails.video_Path) }}
+                    controls
+                    paused={!isFocused}
+                    style={st.imageSty}
+                    resizeMode="cover"
+                  />
+                )}
+              </View>
+            </View>
           </View>
         }
       </CustomContent>
