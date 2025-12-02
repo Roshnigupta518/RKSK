@@ -12,7 +12,7 @@ import CustomButton from '../../../../components/customButton';
 import st from '../../../../global/styles';
 import { colors } from '../../../../global';
 import Field from '../../../../components/field';
-import { timeDifferenceFun, formatTime, formatDate,formatClockInDisplay } from '../../../../utils/helper';
+import { timeDifferenceFun, formatTime, formatDate,formatClockInDisplay, parseAnyDate } from '../../../../utils/helper';
 import Icon from 'react-native-vector-icons/Feather';
 import { environment } from '../../../../utils/constant'
 import Video from 'react-native-video';
@@ -34,6 +34,8 @@ const ATPDetailScreen = ({ navigation, route }) => {
   );
 
   const isFormFilled = activiyDetails.activity_Id || activiyDetails.clientId;
+
+  // console.log({activiyDetails})
 
   useFocusEffect(
     React.useCallback(() => {
@@ -73,7 +75,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     if (activiyDetails.clockinTime) {
-      const storedTime = new Date(activiyDetails?.clockinTime);
+      const storedTime = parseAnyDate(activiyDetails?.clockinTime);
 
       const interval = setInterval(() => {
         const difference = timeDifferenceFun(
@@ -148,7 +150,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
                               color={colors.success}
                             />
                             <Text style={[st.tx12, { color: colors.grey }]}>
-                              {formatClockInDisplay(activiyDetails.clockinTime)}
+                              {formatClockInDisplay(activiyDetails?.clockinTime)}
                             </Text>
                           </View>
                         </View>

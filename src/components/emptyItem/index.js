@@ -3,13 +3,13 @@ import React from 'react'
 import st from '../../global/styles'
 import { colors } from '../../global'
 
-const EmptyItem = ({ isLoading }) => {
+const EmptyItem = ({ isLoading, message }) => {
     return (
         <View style={[st.center, { marginTop: '50%' }]}>
             {isLoading ? (
                 <ActivityIndicator size={'large'} color={colors.blue} />
             ) :
-                <Text style={st.tx14}>Data not found</Text>
+                <Text style={st.tx14}>{message?message:'Data not found'}</Text>
             }
         </View>
     )

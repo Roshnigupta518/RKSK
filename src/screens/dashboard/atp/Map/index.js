@@ -77,8 +77,12 @@ const App = ({ navigation, route }) => {
 
   const handleLogin = async () => {
     setIsLoading(true)
+    const now = new Date();
+    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const clockinTime = istTime.toISOString().split(".")[0]; // removes milliseconds & Z
+
     const params = {
-      clockinTime: new Date().toISOString(),
+      clockinTime: clockinTime,
       clockinAddress: locationArea,
       clockin_lat: location.latitude,
       clockin_long: location.longitude,
@@ -121,9 +125,14 @@ const App = ({ navigation, route }) => {
 
   const handleLogOut = async () => {
     setIsLoading(true)
+
+      const now = new Date();
+      const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    
+      const clockoutTime = istTime.toISOString().split(".")[0]; // removes milliseconds & Z
       const params = {
         "atP_Id": activiyDetails.atP_Id,
-        "clockoutTime": new Date().toISOString(),
+        "clockoutTime": clockoutTime,
         "clockoutAddress": locationArea,
         "clockout_lat": location?.latitude,
         "clockout_long": location?.longitude,

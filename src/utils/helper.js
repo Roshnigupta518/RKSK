@@ -64,23 +64,104 @@ export const formatTime = mydate => {
 export const formatClockInDisplay = (clockinTime) => {
   if (!clockinTime) return "-";
 
-  const clockInDate = new Date(clockinTime);
-  const today = new Date();
+  const date = new Date(clockinTime);
+  if (isNaN(date)) return "-";
 
-  // Remove time parts (compare only date)
+  const now = new Date();
+
+  // TODAY check
   const isToday =
-    clockInDate.getDate() === today.getDate() &&
-    clockInDate.getMonth() === today.getMonth() &&
-    clockInDate.getFullYear() === today.getFullYear();
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  // YESTERDAY check
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  const formatted = formatISTDate(date);
 
   if (isToday) {
-    // Only TIME
-    return formatTime(clockinTime); // example: "08:30 AM"
-  } else {
-    // DATE + TIME
-    return `${formatDate(clockinTime)} ${formatTime(clockinTime)}`;
-    // example: "22/09/2025 08:30 AM"
+    // only time
+    return formatted.time12;
   }
+
+  if (isYesterday) {
+    // Yesterday + time
+    return `Yesterday, ${formatted.time12}`;
+  }
+
+  // old date → full date + time
+  return `${formatted.fullDate} ${formatted.time12}`;
+};
+
+export const formatISTDate = (date) => {
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  const hh = String(hours).padStart(2, "0");
+
+  return {
+    fullDate: `${dd}-${mm}-${yyyy}`,
+    time12: `${hh}:${minutes}:${seconds} ${ampm}`,
+  };
+};
+
+
+export const formatFullDateTime = (date) => {
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  const hh = String(hours).padStart(2, "0");
+
+  return {
+    fullDate: `${dd}-${mm}-${yyyy}\n`,
+    time12: `${hh}:${minutes}:${seconds} ${ampm}`
+  };
+};
+
+export const parseAnyDate = (dateStr) => {
+  if (!dateStr) return null;
+
+  // 1) If ISO → return directly
+  if (dateStr.includes("T")) {
+    const d = new Date(dateStr);
+    return isNaN(d) ? null : d;
+  }
+
+  // 2) If DD-MM-YYYY HH:mm:ss
+  const [datePart, timePart] = dateStr.split(" ");
+  const [dd, mm, yyyy] = datePart.split("-");
+
+  return new Date(`${yyyy}-${mm}-${dd}T${timePart || "00:00:00"}`);
+};
+
+export const convertToISODate = (dateString) => {
+  if (!dateString) return "";
+
+  const [datePart] = dateString.split(" ");
+  const [dd, mm, yyyy] = datePart.split("-");
+
+  return `${yyyy}-${mm}-${dd}`;
 };
 
 
@@ -92,28 +173,20 @@ export const convertToLabelValue = (arr, labelKey, valueKey) => {
   }));
 };
 
-export function timeDifferenceFun(storedTime, logoutTime) {
-  // console.log({storedTime, logoutTime});
-  let currentTime = (logoutTime && new Date(logoutTime)) || new Date();
-  let timeDiff = currentTime - storedTime; // Difference in milliseconds
+export const timeDifferenceFun = (clockin, clockout) => {
+  const start = new Date(clockin);
+  const end = clockout ? new Date(clockout) : new Date(); // if not clocked out → now
 
-  // Convert milliseconds to different time units
-  let seconds = Math.floor((timeDiff / 1000) % 60)
-    .toString()
-    .padStart(2, '0');
-  let minutes = Math.floor((timeDiff / (1000 * 60)) % 60)
-    .toString()
-    .padStart(2, '0');
-  let hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
-  let days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-  // console.log(`Difference:
-  //   ${days} days,
-  //   ${hours} hours,
-  //   ${minutes} minutes,
-  //   ${seconds} seconds.`);
+  let diffMs = end - start;
+  if (diffMs < 0) diffMs = 0;
 
-  return hours + ':' + minutes + ':' + seconds;
-}
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+  return `${hours}h ${minutes}m ${seconds}s`;
+};
+
 
 export const generateclientID = userId => {
   const currentDate = new Date();

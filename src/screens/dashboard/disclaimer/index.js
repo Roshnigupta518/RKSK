@@ -64,7 +64,6 @@ const Disclaimer = ({ navigation }) => {
           <Button
             title={'I Accept'}
             onPress={() => handlePress()}
-            backgroundColor={colors.orange}
           />}
       </View>
 
