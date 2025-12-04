@@ -23,7 +23,7 @@ import FieldRow from '../../../../components/FieldRow';
 const ATPDetailScreen = ({ navigation, route }) => {
   const isFocused = useIsFocused();
 
-  const { atP_Id } = route.params || {}
+  const { atP_Id, filterType } = route.params || {}
   const [timeDifference, setTimeDifference] = useState('');
   const [date, setDate] = useState(null);
 
@@ -37,13 +37,24 @@ const ATPDetailScreen = ({ navigation, route }) => {
 
   // console.log({activiyDetails})
 
+  const navigationAction = () => {
+    if(filterType){
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainApp', state: { routes: [{ name: 'FilteredList' }] } }],
+      });
+    }else{
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'MainApp', state: { routes: [{ name: 'ATPListScreen' }] } }],
+    });
+  }
+  }
+
   useFocusEffect(
     React.useCallback(() => {
       const backAction = () => {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainApp', state: { routes: [{ name: 'ATPListScreen' }] } }],
-        });
+        navigationAction()
         return true; // default back रोक देता है
       };
 
@@ -92,10 +103,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
   return (
     <CustomContainer>
       <CustomHeader title="ATP Login"
-        onBackPress={() => navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainApp', state: { routes: [{ name: 'ATPListScreen' }] } }],
-        })} />
+        onBackPress={() => navigationAction()}/>
       <CustomContent>
 
         {!(activiyDetails.clockinTime && activiyDetails.clockoutTime && activiyDetails.activity_Id) && (

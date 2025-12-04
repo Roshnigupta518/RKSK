@@ -1,4 +1,3 @@
-import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import Home from '../screens/dashboard/home';
@@ -13,6 +12,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Disclaimer from '../screens/dashboard/disclaimer';
 import PrivacyPolicy from '../screens/dashboard/privacyPolicy';
 import Profile from '../screens/dashboard/profile';
+import FilteredList from '../screens/dashboard/atp/FilteredList';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -26,6 +26,7 @@ const HomeStack = () => {
       <Stack.Screen name="ATPForm" component={ATPForm} />
       <Stack.Screen name="ATPLogin" component={ATPLogin} options={{ animation: 'none' }} />
       <Stack.Screen name="LoginMap" component={LoginMap} />
+      <Stack.Screen name="FilteredList" component={FilteredList} />
     </Stack.Navigator>
   )
 }

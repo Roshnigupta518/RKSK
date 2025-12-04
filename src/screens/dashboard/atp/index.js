@@ -10,7 +10,7 @@ import ReusableBottomSheet from '../../../components/filterSheet';
 import CustomDatePicker from '../../../components/CustomDatePicker';
 import MyInput from '../../../components/customInput'
 import CustomPicker from '../../../components/customPicker';
-import { convertToISODate } from '../../../utils/helper';
+import { convertToISODate, getPlanStatus } from '../../../utils/helper';
 
 const INITIALINPUT = {
   date: '',
@@ -124,20 +124,6 @@ const ATPListScreen = ({ navigation }) => {
     return filtered;
   };
 
-  const getPlanStatus = (item) => {
-    const today = new Date().toISOString().split("T")[0];
-    const visitDate = item?.visit_Start_Date?.split("T")[0];
-    if (!visitDate) return "Pending";
-    const visit = new Date(visitDate);
-    const current = new Date(today);
-    if (item.clockoutTime) return "Completed";
-    if (item.clockinTime) return "In Progress";
-    if (visitDate === today) return "Pending";
-    if (visit > current) return "Scheduled";
-    if (visit < current) return "Overdue";
-    return "Pending";
-  };
-
   const clearFilters = () => {
     setInputs(INITIALINPUT);
     setFilteredList([]);
@@ -200,20 +186,13 @@ const ATPListScreen = ({ navigation }) => {
     )
   };
 
-  const isFilterApplied =
-  inputs.date !== "" ||
-  inputs.activityName.trim() !== "" ||
-  inputs.status !== "";
-
   return (
     <View style={st.container}>
       <FlatList
-        // data={uniqueList || []}
         data={isFilterPressed ? filteredList : uniqueList}
         keyExtractor={item => item.atP_Id}
         renderItem={renderItem}
         contentContainerStyle={st.pd20}
-        // ListEmptyComponent={<EmptyItem isLoading={isLoading} />}
         ListEmptyComponent={() => {
           if (isLoading) return <EmptyItem isLoading={true} />;
         

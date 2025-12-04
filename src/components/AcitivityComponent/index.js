@@ -4,21 +4,9 @@ import Field from '../field'
 import st from '../../global/styles'
 import { colors } from '../../global'
 import FieldRow from '../FieldRow'
+import { getPlanStatus } from '../../utils/helper'
 
 const AcitivityComponent = ({item, onPress}) => {
-  const getPlanStatus = (item) => {
-    const today = new Date().toISOString().split("T")[0];
-    const visitDate = item?.visit_Start_Date?.split("T")[0];
-    if (!visitDate) return "Pending";
-    const visit = new Date(visitDate);
-    const current = new Date(today);
-    if (item.clockoutTime) return "Completed";
-    if (item.clockinTime) return "In Progress";
-    if (visitDate === today) return "Pending";
-    if (visit > current) return "Scheduled";
-    if (visit < current) return "Overdue";
-    return "Pending";
-  };
 
   const getStatusColor = (status) => {
     switch (status) {

@@ -1,18 +1,23 @@
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState, useMemo } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, BackHandler, Alert } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Feather";
-import { reStartBackgroundService } from '../../../utils/bgservices/backgroundService'
-import { syncTaskName } from '../../../utils/bgservices/backgroundTaskEnum'
-import useNetworkStatus from '../../../hooks/networkStatus'
 import colors from '../../../global/theme'
 import st from '../../../global/styles'
-import { CustomContainer, CustomContent } from '../../../components/container'
+import { CustomContainer } from '../../../components/container'
 import { useFocusEffect } from '@react-navigation/native';
 import ExitModal from "../../../components/ExitModal";
+import { useAppSelector } from "../../../hooks";
+import { calculateDashboardCounts } from "../../../utils/helper";
 
 const Dashboard = ({ navigation }) => {
   const [exitModal, setExitModal] = useState(false);
+
+  const activityPlanList = useAppSelector(state => state.activityPlan.data);
+
+  const dashboardCounts = useMemo(() => {
+    return calculateDashboardCounts(activityPlanList);
+  }, [activityPlanList]);
 
   useFocusEffect(
     useCallback(() => {
@@ -29,6 +34,27 @@ const Dashboard = ({ navigation }) => {
       return () => handler.remove();
     }, [])
   );
+
+  const renderCard = (count, label, bg, onPress) => (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={onPress}
+      style={[styles.card, { backgroundColor: bg }]}
+    >
+      <View style={styles.cardArrow}>
+        <Icon name="arrow-up-right" size={20} color="#fff" />
+      </View>
+  
+      <View style={st.mt_10}>
+        <Text style={styles.cardNumber}>{count}</Text>
+  
+        <View style={st.bordersty} />
+  
+        <Text style={styles.cardLabel}>{label}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+  
 
   return (
     <CustomContainer>
@@ -58,16 +84,26 @@ const Dashboard = ({ navigation }) => {
       {/* ---------------- Cards Section ---------------- */}
       <View style={styles.cardContainer}>
         <View style={styles.row}>
-          {renderCard("21", "Activities\nCompleted\nThis Month", colors.orange)}
+          {renderCard(dashboardCounts?.completedThisMonth, 
+            "Activities\nCompleted\nThis Month", 
+            colors.orange,
+            () => navigation.navigate("FilteredList", { filterType: "COMPLETED" })
+            )}
           <View style={{ marginTop: 30, width: '100%', marginLeft: 25 }}>
-            {renderCard("02", "Activities\nScheduled\nfor Today", colors.skyblue)}
+            {renderCard(dashboardCounts?.scheduledToday, "Activities\nScheduled\nfor Today", colors.skyblue,
+              () => navigation.navigate("FilteredList", { filterType: "TODAY" })
+            )}
           </View>
         </View>
 
         <View style={styles.row}>
-          {renderCard("13", `Overdue\nActivities`, colors.blue)}
+          {renderCard(dashboardCounts?.overdue, `Overdue\nActivities`, colors.blue,
+            () => navigation.navigate("FilteredList", { filterType: "OVERDUE" })
+          )}
           <View style={{ marginTop: 30, width: '100%', marginLeft: 25 }}>
-            {renderCard("12", "On-Schedule\nActivities", colors.red)}
+            {renderCard(dashboardCounts?.onSchedule, "On-Schedule\nActivities", colors.red,
+                () => navigation.navigate("FilteredList", { filterType: "SCHEDULED" })
+            )}
           </View>
         </View>
       </View>
@@ -88,22 +124,6 @@ const Dashboard = ({ navigation }) => {
     </CustomContainer>
   );
 };
-
-const renderCard = (count, label, bg) => (
-  <View style={[styles.card, { backgroundColor: bg }]}>
-    <TouchableOpacity style={styles.cardArrow}>
-      <Icon name="arrow-up-right" size={20} color="#fff" />
-    </TouchableOpacity>
-
-    <View style={st.mt_10}>
-      <Text style={styles.cardNumber}>{count}</Text>
-
-      <View style={st.bordersty} />
-
-      <Text style={styles.cardLabel}>{label}</Text>
-    </View>
-  </View>
-);
 
 export default Dashboard;
 

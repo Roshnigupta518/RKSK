@@ -119,7 +119,6 @@ export const formatISTDate = (date) => {
   };
 };
 
-
 export const formatFullDateTime = (date) => {
   const dd = String(date.getDate()).padStart(2, "0");
   const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -164,7 +163,6 @@ export const convertToISODate = (dateString) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-
 export const convertToLabelValue = (arr, labelKey, valueKey) => {
   return (arr || []).map(item => ({
     label: item[labelKey] || '',
@@ -187,7 +185,6 @@ export const timeDifferenceFun = (clockin, clockout) => {
   return `${hours}h ${minutes}m ${seconds}s`;
 };
 
-
 export const generateclientID = userId => {
   const currentDate = new Date();
   const year = currentDate.getFullYear();
@@ -203,4 +200,90 @@ export const generateclientID = userId => {
 
   return `${userId}_${year}${month}${day}_${hours}${minutes}${seconds}_${randomTwoDigit}`;
 };
+
+export const getPlanStatus = (item) => {
+  // ✅ Local Date (NOT UTC)
+  const now = new Date();
+
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
+  // ✅ API Date: "30-10-2025 15:30:00"
+  if (!item?.visit_Start_Date) return "Pending";
+
+  const [datePart] = item.visit_Start_Date.split(" ");
+  const [day, month, year] = datePart.split("-");
+
+  const visit = new Date(year, month - 1, day);
+
+  // ✅ Status Priority (Correct Order)
+  if (item.clockoutTime) return "Completed";
+  if (item.clockinTime) return "In Progress";
+
+  if (visit.getTime() === today.getTime()) return "Pending";
+  if (visit > today) return "Scheduled";
+  if (visit < today) return "Overdue";
+
+  return "Pending";
+};
+
+export const calculateDashboardCounts = (activityList = []) => {
+  let completedThisMonth = 0;
+  let scheduledToday = 0;
+  let overdue = 0;
+  let onSchedule = 0;
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  activityList.forEach(item => {
+    const status = getPlanStatus(item);
+
+    // ✅ COMPLETED THIS MONTH
+    if (status === "Completed" && item.clockoutTime) {
+      const completedDate = new Date(item.clockoutTime);
+
+      if (
+        completedDate.getMonth() === currentMonth &&
+        completedDate.getFullYear() === currentYear
+      ) {
+        completedThisMonth++;
+      }
+    }
+
+    // ✅ SCHEDULED TODAY
+    if (status === "Pending") {
+      const [datePart] = item.visit_Start_Date.split(" ");
+      const [day, month, year] = datePart.split("-");
+      const visitDate = new Date(year, month - 1, day);
+
+      if (
+        visitDate.getDate() === now.getDate() &&
+        visitDate.getMonth() === now.getMonth() &&
+        visitDate.getFullYear() === now.getFullYear()
+      ) {
+        scheduledToday++;
+      }
+    }
+
+    // ✅ OVERDUE
+    if (status === "Overdue") overdue++;
+
+    // ✅ ON SCHEDULE
+    if (status === "Scheduled") onSchedule++;
+  });
+
+  return {
+    completedThisMonth,
+    scheduledToday,
+    overdue,
+    onSchedule,
+  };
+};
+
+
 
