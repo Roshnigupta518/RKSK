@@ -150,5 +150,11 @@ export default StyleSheet.create({
       width:'100%',
       height:120, 
       borderRadius:5
+    },
+    warningBox:{
+      padding:10, 
+      flexDirection:'row',
+      backgroundColor:'#FFF8E5',
+      marginVertical:10
     }
 })

@@ -20,6 +20,7 @@ import { addToQueue } from '../../../../redux/slices/queueSlice';
 import { reStartBackgroundService } from '../../../../utils/bgservices/backgroundService';
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum';
 import { generateclientID } from '../../../../utils/helper';
+import CustomPicker from '../../../../components/customPicker';
 
 const INITIALINPUT = {
   date: '',
@@ -30,7 +31,9 @@ const INITIALINPUT = {
   activityDetails: '',
   visitCompletion: '',
   other_Activity: '',
-  visit_Purpose: ''
+  visit_Purpose: '',
+  selectedSubActivity: '',
+  other_subActivity: ''
 };
 
 const errMsg = 'This field is required'
@@ -43,6 +46,8 @@ const ATPForm = ({ navigation, route }) => {
   const [attachedVideo, setAttachedVideo] = useState(null)
   const [attachmentErr, setAttachmentErr] = useState();
   const [attachedVideoErr, setAttachedVideoErr] = useState();
+  const [subActivity, setSubActivity] = useState([])
+  const [paused, setPaused] = React.useState(true);
 
   const { location, error, locationArea, openLocationSettings, getLocation, permissionHandle } = useLocation();
   const { atP_Id } = route.params;
@@ -51,17 +56,58 @@ const ATPForm = ({ navigation, route }) => {
     state => state.activityPlan.data.find(item => item.atP_Id == atP_Id)
   );
 
+  // console.log({ activiyDetails })
+
   const dispatch = useDispatch()
   const userLogin = useSelector(state => state.login.data);
 
   useEffect(() => {
-    setInputs({
-      ...inputs,
-      planedActivity: activiyDetails?.visit_PurposeId_Id,
-      visit_Purpose: activiyDetails?.visit_Purpose,
-      other_Activity: activiyDetails?.other_Activity
-    })
-  }, [activiyDetails])
+    if (activiyDetails) {
+
+           setInputs({
+        ...inputs,
+        planedActivity: activiyDetails?.visit_PurposeId_Id,
+        visit_Purpose: activiyDetails?.visit_Purpose,
+        other_Activity: activiyDetails?.other_Activity,
+      });
+      
+      // 1️⃣ Identify FILLED subactivities
+      const filledSubs =
+        activiyDetails?.subacitivity
+          ?.filter(item =>
+            item.photo_Path &&
+            item.video_Path &&
+            item.meeting_Participant &&
+            item.activity_Details &&
+            item.activity_DateTime &&
+            item.visit_Completion,
+          )
+          ?.map(item => item.name) || [];
+  
+      // 2️⃣ Convert subActivities into dropdown format
+      let tempSubAct =
+        activiyDetails?.subacitivity?.map(item => ({
+          label: item.name,
+          value: item.name,
+        })) || [];
+  
+      // 3️⃣ Remove FILLED subactivities from dropdown
+      tempSubAct = tempSubAct.filter(
+        item => !filledSubs.includes(item.value)
+      );
+  
+      // 4️⃣ Always include "Other" if not already filled
+      const isOtherFilled = filledSubs.includes("Other");
+      if (!isOtherFilled) {
+        const exists = tempSubAct.some(i => i.value === "Other");
+        if (!exists) {
+          tempSubAct.push({ label: "Other", value: "Other" });
+        }
+      }
+       console.log({tempSubAct})
+      setSubActivity(tempSubAct);
+    }
+  }, [activiyDetails]);  
 
   const handleOnchange = useCallback(
     (field) => (value) => {
@@ -75,7 +121,6 @@ const ATPForm = ({ navigation, route }) => {
   const handleError = useCallback((errorMsg, field) => {
     setErrors(prev => ({ ...prev, [field]: errorMsg }));
   }, []);
-
 
   const fieldProps = (field) => ({
     value: inputs[field],
@@ -102,6 +147,22 @@ const ATPForm = ({ navigation, route }) => {
     disabled: isLoading,
   });
 
+  const pickerFieldProps = (field) => ({
+    selectedValue: inputs[field],
+    error: errors[field],
+    onValueChange: (val) => {
+      handleOnchange(field)(val);
+      handleError('', field);
+  
+      // ✅ Other se kisi aur pe gaye to text clear
+      if (val !== 'Other') {
+        handleOnchange('other_subActivity')('');
+        handleError('', 'other_subActivity');
+      }
+    },
+    disabled: isLoading,
+  });
+  
   const uploadProfileToServer = async res => {
     setAttachmentErr('')
     setAttachment(res);
@@ -113,61 +174,54 @@ const ATPForm = ({ navigation, route }) => {
   };
 
   const AvatarPicker = WithImageUpload(
-    ({ handleMediaUpload, ...props }) => (
+    ({ handleMediaUpload, value, error }) => (
       <View>
         <Text style={st.tx12}>Photo Capture *</Text>
-        <Pressable
-          onPress={handleMediaUpload}
-          {...props}>
-          <View style={[st.photoContainer, { borderColor: attachmentErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
 
-            {attachment ?
-              <Image source={{ uri: attachment?.uri }} style={st.imageSty}
-                resizeMode='cover'
-              />
-              :
+        <Pressable onPress={handleMediaUpload}>
+          <View style={[st.photoContainer, { borderColor: error ? colors.red : '#ccc' }]}>
+            {value ? (
+              <Image source={{ uri: value.uri }} style={st.imageSty} />
+            ) : (
               <View style={st.center}>
                 <Icon name={'camera'} size={20} color={colors.lightGrey} />
                 <Text style={[st.tx12, { color: colors.lightGrey }]}>Tap to Capture Photo</Text>
               </View>
-            }
+            )}
           </View>
         </Pressable>
 
-        {attachmentErr && <Text style={st.error}>{attachmentErr}</Text>}
-
+        {error && <Text style={st.error}>{error}</Text>}
       </View>
     ),
-    uploadProfileToServer,
     'image'
   );
 
   const VideoPicker = WithImageUpload(
-    ({ handleMediaUpload, props }) => (
+    ({ handleMediaUpload, value, error }) => (
       <View>
-        <Text style={st.tx12} numberOfLines={1} adjustsFontSizeToFit>Video Capture (max 30 sec) *</Text>
-        <Pressable
-          onPress={handleMediaUpload}
-          {...props}>
-          <View style={[st.photoContainer, { borderColor: attachedVideoErr ? colors.red : 'rgba(200, 200, 200, 1)' }]}>
-            {attachedVideo ?
-              <Video source={{ uri: attachedVideo?.uri }}
-                controls
-                style={st.imageSty} />
-              :
+        <Text style={st.tx12} numberOfLines={1}>Video Capture(max 30 sec) *</Text>
+
+        <Pressable onPress={handleMediaUpload}>
+          <View style={[st.photoContainer, { borderColor: error ? colors.red : '#ccc' }]}>
+            {value ? (
+              <Video source={{ uri: value.uri }} 
+              style={st.imageSty} 
+              controls 
+              paused={paused}
+              />
+            ) : (
               <View style={st.center}>
                 <Icon name={'camera'} size={20} color={colors.lightGrey} />
                 <Text style={[st.tx12, { color: colors.lightGrey }]}>Tap to Capture Video</Text>
               </View>
-            }
+            )}
           </View>
         </Pressable>
 
-        {attachedVideoErr && <Text style={st.error}>{attachedVideoErr}</Text>}
-
+        {error && <Text style={st.error}>{error}</Text>}
       </View>
     ),
-    uploadVideoToServer,
     'video'
   );
 
@@ -225,6 +279,22 @@ const ATPForm = ({ navigation, route }) => {
       setAttachedVideoErr('');
     }
 
+    // ✅ Activity picker required jab planedActivity == 2 ho
+    if (inputs.planedActivity == 2 && isEmpty(inputs.selectedSubActivity)) {
+      tempErrors.selectedSubActivity = errMsg;
+      valid = false;
+    }
+
+    // ✅ Agar Activity me "Other" select hai → input bhi required
+    if (
+      inputs.planedActivity == 2 &&
+      inputs.selectedSubActivity === 'Other' &&
+      isEmpty(inputs.other_subActivity)
+    ) {
+      tempErrors.other_subActivity = errMsg;
+      valid = false;
+    }
+
     setErrors(tempErrors);
     return valid;
   };
@@ -256,7 +326,7 @@ const ATPForm = ({ navigation, route }) => {
 
     const isValid = validateForm();
     if (!isValid) {
-      setIsLoading(false);   // 🔥 important
+      setIsLoading(false);  
       return;
     }
 
@@ -279,6 +349,48 @@ const ATPForm = ({ navigation, route }) => {
       return;
     }
 
+   // 👇 Get existing subacitivity array (preserve others)
+  const existingSubs = activiyDetails?.subacitivity || [];
+
+  // 👇 Create subactivity array only if visit_Purpose == 2
+  let subactivityArray = [...existingSubs];  // Start with existing to preserve unfilled ones
+
+    if (inputs.planedActivity == 2) {
+
+      let subObj = {
+        name: inputs.selectedSubActivity,           // Always store selected name
+        photo_Path: attachment,
+        video_Path: attachedVideo,
+        meeting_Participant: inputs.meetings?.toString(),
+        activity_Details: inputs.activityDetails,
+        other_MeetingParticipant: inputs.other
+      };
+
+      // If selected subactivity is OTHER → add this extra key
+      if (inputs.selectedSubActivity === "Other") {
+        subObj.SubActivity_Other = inputs.other_subActivity;   // <-- ADD
+      }
+
+      // If Meeting Participant includes Other
+      if (inputs.meetings?.includes("Other")) {
+        subObj.other_MeetingParticipant = inputs.other;        // <-- Already correct
+      }
+
+      // 🔥 MERGE LOGIC: Update existing or append new
+        const selectedIndex = existingSubs.findIndex(sub => sub.name?.trim() == inputs.selectedSubActivity?.trim());
+        console.log({selectedIndex})
+        if (selectedIndex !== -1) {
+          // Update existing subactivity (e.g., Activity1)
+          subactivityArray[selectedIndex] = { 
+            ...existingSubs[selectedIndex],  // Preserve any other fields if needed
+            ...subObj 
+          };
+        } else {
+          // Append new (e.g., "Other" if not exists)
+          subactivityArray.push(subObj);
+        }
+    }
+
     const params = {
       activity_DateTime: ActivityDateTime,
       activity_Details: inputs.activityDetails,
@@ -293,7 +405,11 @@ const ATPForm = ({ navigation, route }) => {
       visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
       other_Activity: inputs.other_Activity,
       CreatedBy: userLogin.userId,
-      clientId: generateclientID(userLogin.userId)
+      clientId: generateclientID(userLogin.userId),
+      selectedSubActivity: inputs.selectedSubActivity,
+      Subactivity_Other: inputs.other_subActivity,
+      // ADD THIS
+      subacitivity: subactivityArray
     }
 
     dispatch(updateActivityPlanItem({
@@ -358,6 +474,7 @@ const ATPForm = ({ navigation, route }) => {
               maximumDate={new Date()}
               iconName={'calendar'}
               {...dateFieldProps('date', 'date')}
+              disabled={true}
             />
 
             <CustomDatePicker
@@ -365,6 +482,7 @@ const ATPForm = ({ navigation, route }) => {
               placeholder=""
               iconName={'clock'}
               {...dateFieldProps('time', 'time')}
+              disabled={true}
             />
 
             <MyInput label="Planned Activity"
@@ -375,31 +493,61 @@ const ATPForm = ({ navigation, route }) => {
             {inputs?.other_Activity &&
               <MyInput label="Other Activity *" {...fieldProps('other_Activity')} disabled={true} />
             }
-            <CustomMultiSelect
-              label="Meeting Participants *"
-              items={ParticipantsList}
-              selectedItems={inputs.meetings}
-              onSelectedItemsChange={handleMeetingChange}
-              required
-              placeholder=""
-              disabled={isLoading}
-              error={errors.meetings}
-            />
 
-            {inputs.meetings.includes('Other') && (
-              <MyInput label="Other *" {...fieldProps('other')} />
-            )}
+            <View>
+              {inputs.planedActivity == 2 ? (
 
-            <MyInput label="Activity Details *" {...fieldProps('activityDetails')} />
+                <CustomPicker
+                  items={subActivity}
+                  label={'Activity *'}
+                  placeholder=''
+                  {...pickerFieldProps('selectedSubActivity')}
+                />
+              ) : null}
 
-            <View style={st.row}>
-              <View style={st.wdh48}>
-                <AvatarPicker />
+              {inputs?.selectedSubActivity === 'Other' &&
+                <MyInput label="Other Activity *" {...fieldProps('other_subActivity')} />
+              }
+            </View>
+            <View>
+              <CustomMultiSelect
+                label="Meeting Participants *"
+                items={ParticipantsList}
+                selectedItems={inputs.meetings}
+                onSelectedItemsChange={handleMeetingChange}
+                required
+                placeholder=""
+                disabled={isLoading}
+                error={errors.meetings}
+              />
 
+              {inputs.meetings.includes('Other') && (
+                <MyInput label="Other *" {...fieldProps('other')} />
+              )}
+
+              <MyInput label="Activity Details *" {...fieldProps('activityDetails')} />
+
+              <View style={st.row}>
+                <View style={st.wdh48}>
+                  <AvatarPicker
+                    value={attachment}
+                    error={attachmentErr ? 'Required' : ''}
+                    onUpload={(res) => {
+                      uploadProfileToServer(res)
+                    }} />
+
+                </View>
+                <View style={[st.wdh48, { marginLeft: "2%" }]}>
+                  <VideoPicker
+                    value={attachedVideo}
+                    error={attachedVideoErr ? 'Required' : ''}
+                    onUpload={(res) => {
+                      uploadVideoToServer(res)
+                    }}
+                  />
+                </View>
               </View>
-              <View style={[st.wdh48, { marginLeft: "2%" }]}>
-                <VideoPicker />
-              </View>
+
             </View>
 
             <CustomButton title='Save'

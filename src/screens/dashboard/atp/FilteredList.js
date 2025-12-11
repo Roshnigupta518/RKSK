@@ -1,4 +1,4 @@
-import { StyleSheet, FlatList } from 'react-native'
+import { StyleSheet, FlatList, BackHandler, Text } from 'react-native'
 import React, { useMemo, useState, useEffect } from 'react'
 import { CustomContainer } from '../../../components/container'
 import EmptyItem from '../../../components/emptyItem'
@@ -7,6 +7,7 @@ import { useAppSelector } from '../../../hooks'
 import { getPlanStatus } from '../../../utils/helper'
 import CustomHeader from '../../../components/customHeader'
 import st from '../../../global/styles'
+import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 
 const FilteredList = ({ navigation, route }) => {
     const [title, setTitle] = useState()
@@ -16,22 +17,29 @@ const FilteredList = ({ navigation, route }) => {
     const activityPlanList = useAppSelector(state => state.activityPlan.data);
 
     const filteredList = useMemo(() => {
-        return activityPlanList.filter(item => {
-            const status = getPlanStatus(item);
-
-            if (filterType === "COMPLETED") return status === "Completed";
-
-            if (filterType === "TODAY") {
-                return status === "Pending"; // today pending
-            }
-
-            if (filterType === "OVERDUE") return status === "Overdue";
-
-            if (filterType === "SCHEDULED") return status === "Scheduled";
-
-            return true;
-        });
-    }, [activityPlanList, filterType]);
+      return activityPlanList.filter(item => {
+          const status = getPlanStatus(item); // Pending / Completed / Overdue / Scheduled / InProgress
+  
+          if (filterType === "COMPLETED") {
+              return status === "Completed";
+          }
+  
+          if (filterType === "TODAY") {
+              return status === "Pending" || status === "In Progress";
+          }
+  
+          if (filterType === "OVERDUE") {
+              return status === "Overdue" || status === "In Progress";
+          }
+  
+          if (filterType === "SCHEDULED") {
+              return status === "Scheduled";
+          }
+  
+          return true;
+      });
+  }, [activityPlanList, filterType]);
+  
 
     useEffect(() => {
         if (filterType === "COMPLETED") setTitle("Completed Activities");
@@ -40,12 +48,54 @@ const FilteredList = ({ navigation, route }) => {
         if (filterType === "SCHEDULED") setTitle("On-Schedule Activities");
     }, []);
 
+    useFocusEffect(
+        React.useCallback(() => {
+          const backAction = () => {
+            navigation.navigate('MainApp')
+            return true; // default back रोक देता है
+          };
+    
+          const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+          );
+    
+          return () => backHandler.remove();
+        }, [])
+      );
+
+    const uniqueList = useMemo(() => {
+        const map = new Map();
+    
+        (filteredList || []).forEach(item => {
+          map.set(item.atP_Id, item);
+        });
+    
+        const list = [...map.values()];
+    
+        // 🔥 SORTING LOGIC (newest first)
+        list.sort((a, b) => {
+          const getDate = (obj) =>
+            new Date(
+              obj.clockoutTime ||
+              obj.clockinTime ||
+              obj.visit_Start_Date ||
+              obj.createdDate ||
+              0
+            ).getTime();
+    
+          return getDate(b) - getDate(a); // Descending
+        });
+    
+        return list;
+      }, [filteredList]);
+
 
     return (
         <CustomContainer>
-            <CustomHeader title={title} onBackPress={() => navigation.goBack()} />
+            <CustomHeader title={title} onBackPress={() => navigation.navigate('MainApp')} />
             <FlatList
-                data={filteredList}
+                data={uniqueList}
                 keyExtractor={(item) => item.atP_Id.toString()}
                 renderItem={({ item }) => <AcitivityComponent
                     item={item}
@@ -55,6 +105,11 @@ const FilteredList = ({ navigation, route }) => {
                         )
                     }
                 />
+                }
+                ListHeaderComponent={()=>
+                <Text style={st.tx14}>
+                  {uniqueList?.length > 0 && `Total ${uniqueList?.length} activities`}
+                  </Text>
                 }
                 ListEmptyComponent={() => <EmptyItem />}
                 contentContainerStyle={st.pd20}

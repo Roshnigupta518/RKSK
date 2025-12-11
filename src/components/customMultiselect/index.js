@@ -45,6 +45,7 @@ const CustomMultiSelect = ({
         disabled={disable}
         iconColor={colors?.black || '#007bff'} 
         scrollEnabled={false}
+        tagContainerStyle={{marginBottom:10}}
       />
 
       {error ? <Text style={st.error}>{error}</Text> : null}
@@ -55,7 +56,7 @@ const CustomMultiSelect = ({
 
 const styles = StyleSheet.create({
   container: {
-    // marginBottom: 5,
+    // marginBottom: 10,
   },
   label: {
     marginBottom: 8,
@@ -66,6 +67,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     paddingHorizontal: 10,
+    paddingLeft:15,
     height:50
   },
   error: {

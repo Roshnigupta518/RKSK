@@ -39,6 +39,8 @@ export const processQueueItem = async (item) => {
       formdata.append("Video", item.payload.video_Path);
       formdata.append("VisitCompletion", item.payload.visit_Completion);
       formdata.append("Other_Activity", item.payload.other_Activity || '');
+      formdata.append("SubActivity", item.payload.selectedSubActivity || 'hi');
+      formdata.append("Subactivity_Other", item.payload.Subactivity_Other || '');
       
       const response = await atpFormRequest(formdata);
       console.log({ response })
@@ -47,7 +49,7 @@ export const processQueueItem = async (item) => {
           atP_Id: item.payload.atP_Id,
           newData: {
             formSynced: true,
-            // activity_Id : response?.activity_Id
+            activity_Id : response?.activity_Id
           }
         })
       );
@@ -75,7 +77,6 @@ export const processQueueItem = async (item) => {
     // do not remove → will retry again
   }
 };
-
 
 export const processQueue = async (isGetInProgress) => {
   const state = store.getState();

@@ -74,7 +74,7 @@ const CustomDatePicker = ({
 
       {showPicker && (
         <DateTimePicker
-          value={value || new Date(1900, 0, 1)} // ✅ default 1900-01-01
+          value={value || new Date()} 
           mode={mode}
           onChange={onDateChange}
           minimumDate={new Date(1900, 0, 1)} // ✅ strictly 1 Jan 1900 se aage

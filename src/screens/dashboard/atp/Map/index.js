@@ -72,6 +72,21 @@ const App = ({ navigation, route }) => {
 
     if (isValid) {
       handleLogin();
+      // navigation.reset({
+      //   index: 1,
+      //   routes: [
+      //     {
+      //       name: 'MainApp', 
+      //       state: {
+      //         routes: [{ name: 'ATPListScreen' }],
+      //       },
+      //     },
+      //     {
+      //       name: 'ATPForm',
+      //       params: { atP_Id: activiyDetails.atP_Id },
+      //     },
+      //   ],
+      // });
     }
   };
 

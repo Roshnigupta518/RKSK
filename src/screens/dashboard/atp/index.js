@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
-import { View, FlatList } from 'react-native';
+import { View, FlatList, Text } from 'react-native';
 import st from '../../../global/styles';
 import EmptyItem from '../../../components/emptyItem';
 import { useAppSelector } from '../../../hooks';
@@ -80,17 +80,16 @@ const ATPListScreen = ({ navigation }) => {
 });
 
   const dateFieldProps = (field, mode = 'date') => ({
-    value: inputs[field] ? new Date(inputs[field]) : new Date(),
+    value: inputs[field] ? new Date(inputs[field]) : null,
     error: errors[field],
     mode,
     onChange: (val) => {
-      // ✅ store as ISO string to preserve the actual time
       handleOnchange(field)(val.toISOString());
       if (errors[field]) handleError('', field);
     },
     disabled: isLoading,
   });
-
+  
   const applyFilters = () => {
     let filtered = [...uniqueList];
   
@@ -127,14 +126,14 @@ const ATPListScreen = ({ navigation }) => {
   const clearFilters = () => {
     setInputs(INITIALINPUT);
     setFilteredList([]);
-    setIsFilterPressed(false);   // 🔥 filter removed
+    setIsFilterPressed(false);   //  filter removed
     sheetRef.current.close();
   };  
   
   const onFilterApplyPress = () => {
     const result = applyFilters();
     setFilteredList(result);
-    setIsFilterPressed(true);   // 🔥 user actually applied filter
+    setIsFilterPressed(true);   // user actually applied filter
     sheetRef.current.close();
   };   
 
@@ -163,7 +162,6 @@ const ATPListScreen = ({ navigation }) => {
 
     return list;
   }, [activityPlanList]);
-
 
   useEffect(() => {
     if (activityPlanList) {
@@ -203,6 +201,13 @@ const ATPListScreen = ({ navigation }) => {
           return <EmptyItem message="No activities available" />;
         }}
         removeClippedSubviews={false}
+        ListHeaderComponent={()=>
+          <Text style={st.tx14}>
+            { !isFilterPressed ? uniqueList?.length > 0 && `Total ${uniqueList?.length} activities`
+          : filteredList?.length > 0 && `Total ${filteredList?.length} activities`
+          }
+            </Text>
+          }
       />
 
       <ReusableBottomSheet
@@ -216,13 +221,14 @@ const ATPListScreen = ({ navigation }) => {
           onPress: clearFilters,
         }}
         >
-
+       
         <CustomDatePicker
           label="Date"
           placeholder=""
-          iconName={'calendar'}
+          iconName="calendar"
           {...dateFieldProps('date', 'date')}
         />
+
         <MyInput label="Activity Name"
           {...fieldProps('activityName')}
         />
