@@ -586,11 +586,9 @@ const ATPDetailScreen = ({ navigation, route }) => {
     allCompleted = true;
   }
 
-  // console.log({allCompleted, isFormFilled})
-
   return (
     <CustomContainer>
-      <CustomHeader title="ATP Login"
+      <CustomHeader title="Activity Details"
         onBackPress={() => navigationAction()} />
       <CustomContent>
 
@@ -803,15 +801,18 @@ const ATPDetailScreen = ({ navigation, route }) => {
             <Text style={[st.tx14, st.txbold, { color: colors.blue }]}>Incomplete Activities</Text>
 
             <View style={st.warningBox}>
-              <Icon name="alert-circle" size={18} color="#E59E0B" />
+              <Icon name="alert-circle" size={16} color="#E59E0B" />
               <Text style={st.tx12}>
-                The following activities remain incomplete.
+                {"  The following activities remain incomplete."}
               </Text>
             </View>
 
             {incompleteSubs.map((item, index) => (
-              <View key={index} style={st.incompleteItem}>
-                <Text style={st.tx14}>{item.name}</Text>
+              <View>
+                <Text style={st.tx14}>{index+1}. {item.name}</Text>
+                {index !== incompleteSubs.length - 1 && (
+                  <View style={st.bordersty} />
+                )}
               </View>
             ))}
           </View>

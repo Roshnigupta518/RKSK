@@ -231,12 +231,9 @@ export const getPlanStatus = (item) => {
 };
 
 // export const calculateDashboardCounts = (activityList = []) => {
-//   // -------------------------------------
-//   // STEP 1: Make list UNIQUE by atP_Id
-//   // -------------------------------------
 //   const uniqueList = Object.values(
 //     activityList.reduce((acc, item) => {
-//       acc[item.atP_Id] = item; // override to keep last/latest
+//       acc[item.atP_Id] = item;
 //       return acc;
 //     }, {})
 //   );
@@ -253,10 +250,9 @@ export const getPlanStatus = (item) => {
 //   uniqueList.forEach(item => {
 //     const status = getPlanStatus(item);
 
-//     // COMPLETED THIS MONTH
+//     // 1️⃣ COMPLETED THIS MONTH
 //     if (status === "Completed" && item.clockoutTime) {
 //       const completedDate = new Date(item.clockoutTime);
-
 //       if (
 //         completedDate.getMonth() === currentMonth &&
 //         completedDate.getFullYear() === currentYear
@@ -265,26 +261,32 @@ export const getPlanStatus = (item) => {
 //       }
 //     }
 
-//     // SCHEDULED TODAY
-//     if (status === "Pending") {
-//       const [datePart] = item.visit_Start_Date.split(" ");
-//       const [day, month, year] = datePart.split("-");
-//       const visitDate = new Date(year, month - 1, day);
+//     // 2️⃣ SCHEDULED TODAY  (Pending + InProgress)
+//     if (status === "Pending" || status === "In Progress") {
+//       if (item.visit_Start_Date) {
+//         const [datePart] = item.visit_Start_Date.split(" ");
+//         const [day, month, year] = datePart.split("-");
+//         const visitDate = new Date(year, month - 1, day);
 
-//       if (
-//         visitDate.getDate() === now.getDate() &&
-//         visitDate.getMonth() === now.getMonth() &&
-//         visitDate.getFullYear() === now.getFullYear()
-//       ) {
-//         scheduledToday++;
+//         if (
+//           visitDate.getDate() === now.getDate() &&
+//           visitDate.getMonth() === now.getMonth() &&
+//           visitDate.getFullYear() === now.getFullYear()
+//         ) {
+//           scheduledToday++;
+//         }
 //       }
 //     }
 
-//     // OVERDUE
-//     if (status === "Overdue") overdue++;
+//     // 3️⃣ OVERDUE  (Overdue + InProgress)
+//     if (status === "Overdue" || status === "In Progress") {
+//       overdue++;
+//     }
 
-//     // ON SCHEDULE
-//     if (status === "Scheduled") onSchedule++;
+//     // 4️⃣ ON SCHEDULE  (Scheduled + InProgress)
+//     if (status === "Scheduled") {
+//       onSchedule++;
+//     }
 //   });
 
 //   return {
@@ -296,7 +298,6 @@ export const getPlanStatus = (item) => {
 // };
 
 export const calculateDashboardCounts = (activityList = []) => {
-  // STEP 1 → MAKE UNIQUE LIST
   const uniqueList = Object.values(
     activityList.reduce((acc, item) => {
       acc[item.atP_Id] = item;
@@ -310,13 +311,24 @@ export const calculateDashboardCounts = (activityList = []) => {
   let onSchedule = 0;
 
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
   uniqueList.forEach(item => {
     const status = getPlanStatus(item);
 
+    // -------- Get Activity Date Safely --------
+    const activityDate = parseDDMMYYYY(item.visit_Start_Date);
+    if (!activityDate) return;
+
+    const onlyDate = new Date(activityDate);
+    onlyDate.setHours(0, 0, 0, 0);
+
+    // ------------------------------
     // 1️⃣ COMPLETED THIS MONTH
+    // ------------------------------
     if (status === "Completed" && item.clockoutTime) {
       const completedDate = new Date(item.clockoutTime);
       if (
@@ -327,30 +339,33 @@ export const calculateDashboardCounts = (activityList = []) => {
       }
     }
 
-    // 2️⃣ SCHEDULED TODAY  (Pending + InProgress)
-    if (status === "Pending" || status === "In Progress") {
-      if (item.visit_Start_Date) {
-        const [datePart] = item.visit_Start_Date.split(" ");
-        const [day, month, year] = datePart.split("-");
-        const visitDate = new Date(year, month - 1, day);
-
-        if (
-          visitDate.getDate() === now.getDate() &&
-          visitDate.getMonth() === now.getMonth() &&
-          visitDate.getFullYear() === now.getFullYear()
-        ) {
-          scheduledToday++;
-        }
-      }
+    // ------------------------------
+    // 2️⃣ SCHEDULED TODAY (Pending + Today InProgress)
+    // ------------------------------
+    if (
+      (status === "Pending") ||
+      (status === "In Progress" && onlyDate.getTime() === now.getTime())
+    ) {
+      scheduledToday++;
     }
 
-    // 3️⃣ OVERDUE  (Overdue + InProgress)
-    if (status === "Overdue" || status === "In Progress") {
+    // ------------------------------
+    // 3️⃣ OVERDUE (Overdue + Past InProgress)
+    // ------------------------------
+    if (
+      status === "Overdue" ||
+      (status === "In Progress" && onlyDate.getTime() < now.getTime())
+    ) {
       overdue++;
     }
 
-    // 4️⃣ ON SCHEDULE  (Scheduled + InProgress)
-    if (status === "Scheduled") {
+    // ------------------------------
+    // 4️⃣ ON SCHEDULE (Future Scheduled + Future InProgress)
+    // ------------------------------
+    if (
+      status === "Scheduled" ||
+      (status === "In Progress" && onlyDate.getTime() > now.getTime())
+    ) {
       onSchedule++;
     }
   });
@@ -361,4 +376,14 @@ export const calculateDashboardCounts = (activityList = []) => {
     overdue,
     onSchedule,
   };
+};
+
+export const parseDDMMYYYY = (dateStr) => {
+  if (!dateStr) return null;
+
+  const [datePart, timePart] = dateStr.split(" ");
+  const [dd, mm, yyyy] = datePart.split("-").map(Number);
+  const [hh = 0, min = 0, sec = 0] = timePart ? timePart.split(":").map(Number) : [];
+
+  return new Date(yyyy, mm - 1, dd, hh, min, sec);
 };

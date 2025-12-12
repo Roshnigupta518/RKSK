@@ -39,7 +39,7 @@ export const processQueueItem = async (item) => {
       formdata.append("Video", item.payload.video_Path);
       formdata.append("VisitCompletion", item.payload.visit_Completion);
       formdata.append("Other_Activity", item.payload.other_Activity || '');
-      formdata.append("SubActivity", item.payload.selectedSubActivity || 'hi');
+      formdata.append("SubActivity", item.payload.selectedSubActivity || '');
       formdata.append("Subactivity_Other", item.payload.Subactivity_Other || '');
       
       const response = await atpFormRequest(formdata);
