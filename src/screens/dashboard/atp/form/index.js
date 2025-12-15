@@ -466,7 +466,9 @@ const ATPForm = ({ navigation, route }) => {
       <CustomHeader title="Field activity form" onBackPress={() => navigation.goBack()} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}>
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps='handled'
+        >
         <CustomContent>
 
           <View style={st.flex}>

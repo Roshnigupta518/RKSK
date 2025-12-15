@@ -72,73 +72,107 @@ const App = ({ navigation, route }) => {
 
     if (isValid) {
       handleLogin();
-      // navigation.reset({
-      //   index: 1,
-      //   routes: [
-      //     {
-      //       name: 'MainApp', 
-      //       state: {
-      //         routes: [{ name: 'ATPListScreen' }],
-      //       },
-      //     },
-      //     {
-      //       name: 'ATPForm',
-      //       params: { atP_Id: activiyDetails.atP_Id },
-      //     },
-      //   ],
-      // });
     }
   };
+
+  // const handleLogin = async () => {
+  //   setIsLoading(true)
+  //   const now = new Date();
+  //   const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  //   const clockinTime = istTime.toISOString().split(".")[0]; // removes milliseconds & Z
+
+  //   const params = {
+  //     clockinTime: clockinTime,
+  //     clockinAddress: locationArea,
+  //     clockin_lat: location.latitude,
+  //     clockin_long: location.longitude,
+  //     updatedBy: userLogin.userId,
+  //     mode: 1
+  //   }
+
+  //   dispatch(updateActivityPlanItem({
+  //     atP_Id: activiyDetails.atP_Id,
+  //     newData: params
+  //   }));
+
+  //   dispatch(addToQueue({
+  //     type: "CLOCK_IN",
+  //     payload: {
+  //       atP_Id: activiyDetails.atP_Id,
+  //       ...params
+  //     }
+  //   }));
+  //   Keyboard.dismiss();
+  //   navigation.reset({
+  //     index: 1,
+  //     routes: [
+  //       {
+  //         name: 'MainApp', 
+  //         state: {
+  //           routes: [{ name: 'ATPListScreen' }],
+  //         },
+  //       },
+  //       {
+  //         name: 'ATPForm',
+  //         params: { atP_Id: activiyDetails.atP_Id },
+  //       },
+  //     ],
+  //   });
+
+  //   await reStartBackgroundService(syncTaskName.syncAcitivityQueue)
+  //   setIsLoading(false)
+  // };
 
   const handleLogin = async () => {
-    setIsLoading(true)
-    const now = new Date();
-    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-    const clockinTime = istTime.toISOString().split(".")[0]; // removes milliseconds & Z
-
-    const params = {
-      clockinTime: clockinTime,
-      clockinAddress: locationArea,
-      clockin_lat: location.latitude,
-      clockin_long: location.longitude,
-      updatedBy: userLogin.userId,
-      mode: 1
-    }
-
-    dispatch(updateActivityPlanItem({
-      atP_Id: activiyDetails.atP_Id,
-      newData: params
-    }));
-
-    dispatch(addToQueue({
-      type: "CLOCK_IN",
-      payload: {
+    Keyboard.dismiss();
+    setIsLoading(true);
+  
+    setTimeout(async () => {
+      const now = new Date();
+      const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+      const clockinTime = istTime.toISOString().split(".")[0];
+  
+      const params = {
+        clockinTime,
+        clockinAddress: locationArea,
+        clockin_lat: location.latitude,
+        clockin_long: location.longitude,
+        updatedBy: userLogin.userId,
+        mode: 1
+      };
+  
+      dispatch(updateActivityPlanItem({
         atP_Id: activiyDetails.atP_Id,
-        ...params
-      }
-    }));
-
-    navigation.reset({
-      index: 1,
-      routes: [
-        {
-          name: 'MainApp', 
-          state: {
-            routes: [{ name: 'ATPListScreen' }],
+        newData: params
+      }));
+  
+      dispatch(addToQueue({
+        type: "CLOCK_IN",
+        payload: { atP_Id: activiyDetails.atP_Id, ...params }
+      }));
+  
+      await reStartBackgroundService(syncTaskName.syncAcitivityQueue);
+  
+      navigation.reset({
+        index: 1,
+        routes: [
+          {
+            name: 'MainApp',
+            state: { routes: [{ name: 'ATPListScreen' }] },
           },
-        },
-        {
-          name: 'ATPForm',
-          params: { atP_Id: activiyDetails.atP_Id },
-        },
-      ],
-    });
-
-    await reStartBackgroundService(syncTaskName.syncAcitivityQueue)
-    setIsLoading(false)
+          {
+            name: 'ATPForm',
+            params: { atP_Id: activiyDetails.atP_Id },
+          },
+        ],
+      });
+  
+      setIsLoading(false);
+    }, 300); // 🔥 important
   };
-
+  
   const handleLogOut = async () => {
+    Keyboard.dismiss()
     setIsLoading(true)
 
       const now = new Date();
@@ -199,8 +233,9 @@ const App = ({ navigation, route }) => {
     <CustomContainer>
       <CustomHeader title={''} onBackPress={() => navigation.goBack()} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : null}
         style={{ flex: 1 }}
+        keyboardShouldPersistTaps='handled'
       >
         {location &&
           <MapView
@@ -260,7 +295,6 @@ const App = ({ navigation, route }) => {
                       : 'Clock Out'
                   }
                   onPress={() => {
-                    Keyboard.dismiss()
                     if ((!activiyDetails?.clockinTime || (activiyDetails?.clockinTime &&
                       activiyDetails?.clockoutTime))) {
                       validation();
