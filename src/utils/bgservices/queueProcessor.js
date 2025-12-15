@@ -49,7 +49,7 @@ export const processQueueItem = async (item) => {
           atP_Id: item.payload.atP_Id,
           newData: {
             formSynced: true,
-            activity_Id : response?.activity_Id
+            activity_Id : response?.activityIds[0]
           }
         })
       );

@@ -363,7 +363,10 @@ const ATPForm = ({ navigation, route }) => {
         video_Path: attachedVideo,
         meeting_Participant: inputs.meetings?.toString(),
         activity_Details: inputs.activityDetails,
-        other_MeetingParticipant: inputs.other
+        other_MeetingParticipant: inputs.other,
+        latitude: location.latitude,
+        longititude: location.longitude,
+        subacitivity_Id: generateclientID(userLogin.userId),
       };
 
       // If selected subactivity is OTHER → add this extra key

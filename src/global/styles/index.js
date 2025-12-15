@@ -149,6 +149,9 @@ export default StyleSheet.create({
     imageSty:{
       width:'100%',
       height:120, 
+      borderRadius:5,
+      borderWidth:0.5,
+      borderColor:colors.lightGrey,
       borderRadius:5
     },
     warningBox:{
