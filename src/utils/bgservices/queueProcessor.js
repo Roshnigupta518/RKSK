@@ -4,6 +4,7 @@ import { store } from "../../redux/store";
 import { removeFromQueue } from "../../redux/slices/queueSlice";
 import { reStartBackgroundService } from "./backgroundService";
 import { syncTaskName } from "./backgroundTaskEnum";
+import { ENUM } from "./enum";
 
 export const processQueueItem = async (item) => {
   try {
@@ -11,17 +12,33 @@ export const processQueueItem = async (item) => {
     console.log("Processing item:", item.type);
 
     if (item.type === "CLOCK_IN") {
-      const response = await activityLoginRequest(item.payload);
-      console.log({ response })
-      store.dispatch(
-        updateActivityPlanItem({
+      try {
+        const response = await activityLoginRequest(item.payload);
+        console.log({ response })
+        store.dispatch(
+          updateActivityPlanItem({
+            atP_Id: item.payload.atP_Id,
+            newData: {
+              clockinSynced: true,
+              clockinSyncStatus: ENUM.SERVERSTATUS.COMPLETED,
+              clockinError: null
+            }
+          })
+        );
+        reStartBackgroundService(syncTaskName.syncGetAtpList)
+      } catch (error) {
+        store.dispatch(updateActivityPlanItem({
           atP_Id: item.payload.atP_Id,
           newData: {
-            clockinSynced: true,
+            clockinSynced: false,
+            clockinSyncStatus: ENUM.SERVERSTATUS.FAILED,
+            clockinError: error?.message || "Network error"
           }
-        })
-      );
-      reStartBackgroundService(syncTaskName.syncGetAtpList)
+        }));
+
+        // ❌ queue se remove mat karo
+        return;
+      }
     }
 
     if (item.type === "FORM") {
@@ -41,7 +58,7 @@ export const processQueueItem = async (item) => {
       formdata.append("Other_Activity", item.payload.other_Activity || '');
       formdata.append("SubActivity", item.payload.selectedSubActivity || '');
       formdata.append("Subactivity_Other", item.payload.Subactivity_Other || '');
-      
+       try{
       const response = await atpFormRequest(formdata);
       console.log({ response })
       store.dispatch(
@@ -49,25 +66,53 @@ export const processQueueItem = async (item) => {
           atP_Id: item.payload.atP_Id,
           newData: {
             formSynced: true,
-            activity_Id : response?.activityIds[0]
+            activity_Id: response?.activityIds[0],
+            formSyncStatus: ENUM.SERVERSTATUS.COMPLETED
           }
         })
       );
       reStartBackgroundService(syncTaskName.syncGetAtpList)
-    }
-
-    if (item.type === "CLOCK_OUT") {
-      const response = await activityLoginRequest(item.payload);
-      console.log({ response })
+    }catch(error){
       store.dispatch(
         updateActivityPlanItem({
           atP_Id: item.payload.atP_Id,
           newData: {
-            clockoutSynced: true,
+            formSynced: false,
+            formSyncStatus: ENUM.SERVERSTATUS.FAILED
           }
         })
       );
-      reStartBackgroundService(syncTaskName.syncGetAtpList)
+    }
+    }
+
+    if (item.type === "CLOCK_OUT") {
+      try {
+        const response = await activityLoginRequest(item.payload);
+        console.log({ response })
+        store.dispatch(
+          updateActivityPlanItem({
+            atP_Id: item.payload.atP_Id,
+            newData: {
+              clockoutSynced: true,
+              clockoutSyncStatus: ENUM.SERVERSTATUS.COMPLETED,
+              clockoutError: null
+            }
+          })
+        );
+        reStartBackgroundService(syncTaskName.syncGetAtpList)
+      } catch (error) {
+        store.dispatch(updateActivityPlanItem({
+          atP_Id: item.payload.atP_Id,
+          newData: {
+            clockoutSynced: false,
+            clockoutSyncStatus: ENUM.SERVERSTATUS.FAILED,
+            clockoutError: error?.message || "Network error"
+          }
+        }));
+
+        // ❌ queue se remove mat karo
+        return;
+      }
     }
 
     // remove processed item
@@ -85,11 +130,11 @@ export const processQueue = async (isGetInProgress) => {
   // if(isGetInProgress){
   if (!queue || queue.length === 0) {
     console.log("Queue empty, nothing to process");
-    return "EMPTY";  
+    return "EMPTY";
   }
   for (const item of queue) {
     await processQueueItem(item);
   }
   return "DONE";
-// }
+  // }
 };

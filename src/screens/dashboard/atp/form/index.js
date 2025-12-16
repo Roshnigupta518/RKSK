@@ -321,6 +321,14 @@ const ATPForm = ({ navigation, route }) => {
 
   const onSave = async () => {
     if (isLoading) return;
+    
+    if (!activiyDetails?.clockinTime) {
+      Alert.alert(
+        "Clock-In Required",
+        "Please complete Clock-In before saving the activity form."
+      );
+      return;
+    }
 
     setIsLoading(true)
 
@@ -461,6 +469,8 @@ const ATPForm = ({ navigation, route }) => {
     }));
   }, []);
 
+  const isClockedIn = !!activiyDetails?.clockinTime;
+
   return (
     <CustomContainer>
       <CustomHeader title="Field activity form" onBackPress={() => navigation.goBack()} />
@@ -470,6 +480,12 @@ const ATPForm = ({ navigation, route }) => {
         keyboardShouldPersistTaps='handled'
         >
         <CustomContent>
+
+        {!isClockedIn && (
+          <Text style={st.error}>
+            Please complete Clock-In before submitting the form
+          </Text>
+        )}
 
           <View style={st.flex}>
             <CustomDatePicker
@@ -557,7 +573,7 @@ const ATPForm = ({ navigation, route }) => {
 
             <CustomButton title='Save'
               onPress={onSave}
-              disabled={isLoading}
+              disabled={isLoading || !isClockedIn}
               loading={isLoading}
             />
           </View>

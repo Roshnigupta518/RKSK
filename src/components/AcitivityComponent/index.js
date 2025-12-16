@@ -4,9 +4,10 @@ import Field from '../field'
 import st from '../../global/styles'
 import { colors } from '../../global'
 import FieldRow from '../FieldRow'
-import { getPlanStatus } from '../../utils/helper'
+import { getClockInUI, getPlanStatus, getSyncUI } from '../../utils/helper'
+import { ENUM } from '../../utils/bgservices/enum'
 
-const AcitivityComponent = ({item, onPress}) => {
+const AcitivityComponent = ({ item, onPress }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -26,59 +27,63 @@ const AcitivityComponent = ({item, onPress}) => {
   };
 
   const status = getPlanStatus(item);
-  
+  const clockInUI = getSyncUI(item.clockinSyncStatus);
+  const formUI = getSyncUI(item.formSyncStatus);
+  const clockOutUI = getSyncUI(item.clockoutSyncStatus);
+
   return (
     <TouchableOpacity
-        onPress={onPress}
-        style={[st.card]}>
-        <View style={st.mt_5} />
-        <Text style={styles.title}>{item.visit_Purpose}</Text>
-       
-        <FieldRow>
+      onPress={onPress}
+      style={[st.card]}>
+      <View style={st.mt_5} />
+      <Text style={styles.title}>{item.visit_Purpose}</Text>
+
+      <FieldRow>
         <Field label="Asha" value={item.ashaNameEnglish} />
         <Field label="Village" value={item.villageName} alignRight />
-        </FieldRow>
+      </FieldRow>
 
-        <FieldRow>
+      <FieldRow>
         <Field label="Start Date and Time" value={item.visit_Start_Date} />
         <Field label="End Date and Time" value={item.visit_End_Date} alignRight />
-        </FieldRow>
+      </FieldRow>
 
-        <View style={[styles.ribbon, { backgroundColor: getStatusColor(status) }]}>
-          <Text style={[st.tx12, { color: colors.white }]}>
-            {status}
-          </Text>
-        </View>
+      <View style={[styles.ribbon, { backgroundColor: getStatusColor(status) }]}>
+        <Text style={[st.tx12, { color: colors.white }]}>
+          {status}
+        </Text>
+      </View>
 
-        {(item.clockinTime || item.clockoutTime || item.activity_Id) && (
-          <View style={styles.syncContainer}>
-            <View style={styles.syncRow}>
-              <Text style={styles.syncLabel}>Clock-In:</Text>
-              <Text style={[styles.syncStatus, { color: item.clockinSynced ? colors.green : colors.red }]}>
-                {item.clockinSynced ? "✔" : "⟳"}
-              </Text>
-            </View>
+      {(item.clockinTime || item.clockoutTime || item.activity_Id) && (
+        <View style={styles.syncContainer}>
+          <View style={styles.syncRow}>
+            <Text style={styles.syncLabel}>Clock-In:</Text>
+            <Text style={[styles.syncStatus, { color: clockInUI.color }]}>
+              {clockInUI.text}
+            </Text>
 
-            {(item.activity_Id || item.clientId) && (
-              <View style={styles.syncRow}>
-                <Text style={styles.syncLabel}>Form:</Text>
-                <Text style={[styles.syncStatus, { color: item.formSynced ? colors.green : colors.red }]}>
-                  {item.formSynced ? "✔" : "⟳"}
-                </Text>
-              </View>
-            )}
-
-            {item.clockoutTime && (
-              <View style={styles.syncRow}>
-                <Text style={styles.syncLabel}>Clock-Out:</Text>
-                <Text style={[styles.syncStatus, { color: item.clockoutSynced ? colors.green : colors.red }]}>
-                  {item.clockoutSynced ? "✔" : "⟳"}
-                </Text>
-              </View>
-            )}
           </View>
-        )}
-      </TouchableOpacity>
+
+          {(item.activity_Id || item.clientId) && (
+            <View style={styles.syncRow}>
+              <Text style={styles.syncLabel}>Form:</Text>
+              <Text style={[styles.syncStatus, { color: formUI.color }]}>
+              {formUI.text}
+            </Text>
+            </View>
+          )}
+
+          {item.clockoutTime && (
+            <View style={styles.syncRow}>
+              <Text style={styles.syncLabel}>Clock-Out:</Text>
+              <Text style={[styles.syncStatus, { color: clockOutUI.color }]}>
+              {clockOutUI.text}
+            </Text>
+            </View>
+          )}
+        </View>
+      )}
+    </TouchableOpacity>
   )
 }
 
@@ -88,7 +93,7 @@ const styles = StyleSheet.create({
   title: {
     ...st.tx14,
     ...st.txbold,
-    color:colors.blue,
+    color: colors.blue,
     marginBottom: 10,
   },
   ribbon: {
@@ -106,8 +111,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     backgroundColor: '#F5F5F5',
-    flexDirection:'row',
-    justifyContent:'space-between'
+    flexDirection: 'row',
+    justifyContent: 'space-between'
   },
 
   syncRow: {
@@ -118,7 +123,7 @@ const styles = StyleSheet.create({
 
   syncLabel: {
     ...st.tx12,
-    marginRight:5
+    marginRight: 5
   },
 
   syncStatus: {

@@ -24,6 +24,7 @@ import { updateActivityPlanItem } from '../../../../redux/slices/ActivityPlan';
 import { reStartBackgroundService } from '../../../../utils/bgservices/backgroundService';
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum';
 import { addToQueue } from '../../../../redux/slices/queueSlice';
+import { ENUM } from '../../../../utils/bgservices/enum';
 
 const INITIALINPUT = {
   remark: '',
@@ -75,54 +76,6 @@ const App = ({ navigation, route }) => {
     }
   };
 
-  // const handleLogin = async () => {
-  //   setIsLoading(true)
-  //   const now = new Date();
-  //   const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-  //   const clockinTime = istTime.toISOString().split(".")[0]; // removes milliseconds & Z
-
-  //   const params = {
-  //     clockinTime: clockinTime,
-  //     clockinAddress: locationArea,
-  //     clockin_lat: location.latitude,
-  //     clockin_long: location.longitude,
-  //     updatedBy: userLogin.userId,
-  //     mode: 1
-  //   }
-
-  //   dispatch(updateActivityPlanItem({
-  //     atP_Id: activiyDetails.atP_Id,
-  //     newData: params
-  //   }));
-
-  //   dispatch(addToQueue({
-  //     type: "CLOCK_IN",
-  //     payload: {
-  //       atP_Id: activiyDetails.atP_Id,
-  //       ...params
-  //     }
-  //   }));
-  //   Keyboard.dismiss();
-  //   navigation.reset({
-  //     index: 1,
-  //     routes: [
-  //       {
-  //         name: 'MainApp', 
-  //         state: {
-  //           routes: [{ name: 'ATPListScreen' }],
-  //         },
-  //       },
-  //       {
-  //         name: 'ATPForm',
-  //         params: { atP_Id: activiyDetails.atP_Id },
-  //       },
-  //     ],
-  //   });
-
-  //   await reStartBackgroundService(syncTaskName.syncAcitivityQueue)
-  //   setIsLoading(false)
-  // };
-
   const handleLogin = async () => {
     Keyboard.dismiss();
     setIsLoading(true);
@@ -143,12 +96,16 @@ const App = ({ navigation, route }) => {
   
       dispatch(updateActivityPlanItem({
         atP_Id: activiyDetails.atP_Id,
-        newData: params
+        newData: params,
+        clockinSyncStatus: ENUM.SERVERSTATUS.PENDING,
+        clockinError: null
       }));
   
       dispatch(addToQueue({
         type: "CLOCK_IN",
-        payload: { atP_Id: activiyDetails.atP_Id, ...params }
+        payload: { atP_Id: activiyDetails.atP_Id, ...params },
+        retries: 0,
+        lastError: null
       }));
   
       await reStartBackgroundService(syncTaskName.syncAcitivityQueue);
@@ -192,7 +149,8 @@ const App = ({ navigation, route }) => {
 
       dispatch(updateActivityPlanItem({
         atP_Id: activiyDetails.atP_Id,
-        newData: params
+        newData: params,
+        clockoutSyncStatus: ENUM.SERVERSTATUS.PENDING,
       }));
 
       dispatch(addToQueue({
@@ -233,7 +191,7 @@ const App = ({ navigation, route }) => {
     <CustomContainer>
       <CustomHeader title={''} onBackPress={() => navigation.goBack()} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : null}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
         keyboardShouldPersistTaps='handled'
       >

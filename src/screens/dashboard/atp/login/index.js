@@ -79,7 +79,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
     const todayDate = formatDate(date);
     setDate(todayDate);
   }, []);
-
+  // console.log({ activiyDetails, filterType })
   useEffect(() => {
     if (activiyDetails.clockinTime) {
       console.log({ activiyDetails, filterType })

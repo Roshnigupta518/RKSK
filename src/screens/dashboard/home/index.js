@@ -65,7 +65,7 @@ const Dashboard = ({ navigation }) => {
       >
         <View style={styles.headerTopRow} >
           <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.toggleDrawer()}>
-            <Icon name="menu" size={22} color={colors.white} />
+            <Icon name="menu" size={22} color={colors.black} />
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>Dashboard</Text>
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   menuBtn: {
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: colors.white,
     padding: 8,
     borderRadius: 40,
   },

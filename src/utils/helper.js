@@ -1,3 +1,6 @@
+import { ENUM } from "./bgservices/enum";
+import { colors } from "../global";
+
 export const getPickerImageResp = res => {
     const respArr = res.assets;
     const imgResp = Array.isArray(respArr) && respArr.length ? respArr[0] : null;
@@ -387,3 +390,18 @@ export const parseDDMMYYYY = (dateStr) => {
 
   return new Date(yyyy, mm - 1, dd, hh, min, sec);
 };
+
+export const getSyncUI = (status) => {
+  switch (status) {
+    case ENUM.SERVERSTATUS.COMPLETED:
+      return { text: "✔", color: colors.green };
+
+    case ENUM.SERVERSTATUS.FAILED:
+      return { text: "✖", color: colors.red };
+
+    case ENUM.SERVERSTATUS.PENDING:
+    default:
+      return { text: "⟳", color: colors.orange };
+  }
+};
+

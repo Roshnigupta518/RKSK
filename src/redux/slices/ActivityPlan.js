@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { ENUM } from '../../utils/bgservices/enum'
 
 const initialState = {
     data: []
@@ -13,12 +14,24 @@ const activityPlanSlice = createSlice({
         const clockinSynced = item.mode >= 1;          // mode 1 or 2
         const clockoutSynced = item.mode === 2;        // mode 2 only
         const formSynced = item.activity_Id != null;   // form submitted
+
+        const clockinSyncStatus =
+      item.mode >= 1 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
+
+    const clockoutSyncStatus =
+      item.mode === 2 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
+
+    const formSyncStatus =
+      item.activity_Id != null ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
     
         return {
           ...item,
           clockinSynced,
           clockoutSynced,
           formSynced,
+          clockinSyncStatus,
+          clockoutSyncStatus,
+          formSyncStatus,
         };
       });
     },

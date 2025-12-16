@@ -13,6 +13,7 @@ import Disclaimer from '../screens/dashboard/disclaimer';
 import PrivacyPolicy from '../screens/dashboard/privacyPolicy';
 import Profile from '../screens/dashboard/profile';
 import FilteredList from '../screens/dashboard/atp/FilteredList';
+import PeerEducator from '../screens/dashboard/peerEducator';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -83,6 +84,15 @@ const DrawerStack = () => {
           drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={ATPListScreen}
+      />
+       <Drawer.Screen
+        name="PeerEducator"
+        options={{
+          title: 'Peer Educator',
+          drawerLabel: 'Peer Educator',
+          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
+        }}
+        component={PeerEducator}
       />
       <Drawer.Screen
         name="Disclaimer"

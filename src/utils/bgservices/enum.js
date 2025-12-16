@@ -4,6 +4,7 @@ export const ENUM = {
         NOTSTARTED: 'NOT_STARTED',
         COMPLETED: 'COMPLETED',
         FAILED: 'FAILED',
+        PENDING : 'PENDING'
       },
       Status: {
         SUBMIT: 'SUBMIT',
