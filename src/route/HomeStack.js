@@ -14,6 +14,7 @@ import PrivacyPolicy from '../screens/dashboard/privacyPolicy';
 import Profile from '../screens/dashboard/profile';
 import FilteredList from '../screens/dashboard/atp/FilteredList';
 import PeerEducator from '../screens/dashboard/peerEducator';
+import PeerEducatorForm from '../screens/dashboard/peerEducator/form';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -28,6 +29,7 @@ const HomeStack = () => {
       <Stack.Screen name="ATPLogin" component={ATPLogin} options={{ animation: 'none' }} />
       <Stack.Screen name="LoginMap" component={LoginMap} />
       <Stack.Screen name="FilteredList" component={FilteredList} />
+      <Stack.Screen name="PeerEducatorForm" component={PeerEducatorForm} />
     </Stack.Navigator>
   )
 }
@@ -85,7 +87,7 @@ const DrawerStack = () => {
         }}
         component={ATPListScreen}
       />
-       <Drawer.Screen
+       {/* <Drawer.Screen
         name="PeerEducator"
         options={{
           title: 'Peer Educator',
@@ -93,7 +95,7 @@ const DrawerStack = () => {
           drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={PeerEducator}
-      />
+      /> */}
       <Drawer.Screen
         name="Disclaimer"
         options={{

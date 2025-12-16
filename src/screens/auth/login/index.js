@@ -26,11 +26,11 @@ import { onLogin } from '../../../utils/bgservices/tiggerfunction';
 import useNetworkStatus from '../../../hooks/networkStatus';
 
 const INITIALINPUT = {
-  // userName: '', 
-  // password: '',
+  userName: '', 
+  password: '',
 
-  userName: 'Jhabua#F2',
-  password: 'Admin@123',
+  // userName: 'Jhabua#F2',
+  // password: 'Admin@123',
 };
 
 const Login = ({ navigation }) => {

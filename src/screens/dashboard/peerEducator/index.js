@@ -17,7 +17,7 @@ const PeerEducator = ({ navigation }) => {
                         name="plus"
                         size={20}
                         color={colors.black}
-                    //   onPress={() => sheetRef.current.open()}
+                      onPress={() => navigation.navigate('PeerEducatorForm')}
                     />
                 </View>
             )
