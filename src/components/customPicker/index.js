@@ -24,8 +24,8 @@ const CustomPicker = ({
       <View  style={[
           styles.pickerWrapper,
           style,
-          error ? styles.errorBorder : null,
           disabled ? styles.disabledWrapper : null, // 🆕
+          error ? styles.errorBorder : null,
         ]}>
       
         <Picker enabled={!disabled}

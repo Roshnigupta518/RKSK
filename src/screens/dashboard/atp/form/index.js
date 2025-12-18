@@ -322,14 +322,6 @@ const ATPForm = ({ navigation, route }) => {
   const onSave = async () => {
     if (isLoading) return;
     
-    if (!activiyDetails?.clockinTime) {
-      Alert.alert(
-        "Clock-In Required",
-        "Please complete Clock-In before saving the activity form."
-      );
-      return;
-    }
-
     setIsLoading(true)
 
     const isValid = validateForm();

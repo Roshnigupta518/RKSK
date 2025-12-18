@@ -87,7 +87,7 @@ const DrawerStack = () => {
         }}
         component={ATPListScreen}
       />
-       {/* <Drawer.Screen
+       <Drawer.Screen
         name="PeerEducator"
         options={{
           title: 'Peer Educator',
@@ -95,7 +95,7 @@ const DrawerStack = () => {
           drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={PeerEducator}
-      /> */}
+      />
       <Drawer.Screen
         name="Disclaimer"
         options={{

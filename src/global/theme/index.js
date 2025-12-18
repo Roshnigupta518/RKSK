@@ -6,7 +6,7 @@ const colors = {
     orange:'#FAAC4A',
     white:'#fff',
     lightGrey : '#E9EDF1',
-    disabled : '#eee',
+    disabled : '#DCE6F2',
     black:'#000',
     green : 'green',
     yellow : '#FFBF00',
