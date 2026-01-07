@@ -1,5 +1,5 @@
 import React, { forwardRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import RBSheet from "react-native-raw-bottom-sheet";
 import CustomButton from "../customButton";
 import st from "../../global/styles";
@@ -24,6 +24,7 @@ const ReusableBottomSheet = forwardRef(
 
           {/* top drag line */}
           <View style={styles.dragLine} />
+          <ScrollView>
 
           {/* Title */}
           {title && <Text style={st.tx16}>{title}</Text>}
@@ -55,7 +56,7 @@ const ReusableBottomSheet = forwardRef(
             )}
             </View>
           </View>
-
+          </ScrollView>
         </View>
       </RBSheet>
     );

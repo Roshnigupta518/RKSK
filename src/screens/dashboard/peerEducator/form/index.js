@@ -370,7 +370,7 @@ const PeerEducatorForm = ({ navigation }) => {
             inputTxt={{ textAlignVertical: 'top' }}
           />
 
-          <MyInput label="सफलता  / अच्छा अनुभव"
+          <MyInput label="सफलता/अच्छा अनुभव"
             {...fieldProps('successStory')}
             multiline={true}
             inputsty={{ height: 120 }}
@@ -393,7 +393,10 @@ const PeerEducatorForm = ({ navigation }) => {
           </View>
 
           <CustomButton title='Save'
-            onPress={onSave}
+            onPress={()=>
+              // onSave()
+              navigation.navigate('RefferalDetails')
+            }
             disabled={isLoading}
             loading={isLoading}
           />
