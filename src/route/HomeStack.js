@@ -16,6 +16,7 @@ import FilteredList from '../screens/dashboard/atp/FilteredList';
 import PeerEducator from '../screens/dashboard/peerEducator';
 import PeerEducatorForm from '../screens/dashboard/peerEducator/form';
 import RefferalDetails from '../screens/dashboard/peerEducator/referral';
+import PeerDetails from '../screens/dashboard/peerEducator/peerDetail';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -32,6 +33,7 @@ const HomeStack = () => {
       <Stack.Screen name="FilteredList" component={FilteredList} />
       <Stack.Screen name="PeerEducatorForm" component={PeerEducatorForm} />
       <Stack.Screen name="RefferalDetails" component={RefferalDetails} />
+      <Stack.Screen name="PeerDetails" component={PeerDetails} />
     </Stack.Navigator>
   )
 }

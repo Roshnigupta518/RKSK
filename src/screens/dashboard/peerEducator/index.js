@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, FlatList } from 'react-native'
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native'
 import React, { useState, useLayoutEffect } from 'react'
 import st from '../../../global/styles'
 import EmptyItem from '../../../components/emptyItem'
@@ -26,12 +26,13 @@ const PeerEducator = ({ navigation }) => {
 
     const renderItem = ({ item, index }) => {
         return (
-            <View style={st.card} key={index}>
+            <TouchableOpacity style={st.card} key={index}
+             onPress={()=>navigation.navigate('PeerDetails')}>
                 <Field label={'गतिविधि की तारीख'} value={item.date} />
                 <Field label={'ग्राम का नाम'} value={item.village} />
                 <Field label={'आशा का नाम'} value={item.asha} />
                 <Field label={'साथिया का नाम'} value={item.sathiya} />
-            </View>
+            </TouchableOpacity>
         )
     }
 

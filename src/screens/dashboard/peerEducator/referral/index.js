@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View, FlatList } from 'react-native'
 import React, { useCallback, useState, useRef } from 'react'
 import { CustomContainer, CustomContent } from '../../../../components/container'
 import CustomHeader from '../../../../components/customHeader'
@@ -8,6 +8,7 @@ import Button from '../../../../components/customButton'
 import ReusableBottomSheet from '../../../../components/filterSheet'
 import MyInput from '../../../../components/customInput'
 import CustomCheckbox from '../../../../components/CustomCheckbox'
+import st from '../../../../global/styles'
 
 const INITIALINPUT = {
     refer: '',
@@ -21,6 +22,7 @@ const RefferalDetails = ({ navigation }) => {
     const [errors, setErrors] = useState(INITIALINPUT);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedReferrals, setSelectedReferrals] = useState([]);
+    const [referralList, setReferralList] = useState([]);
 
     const sheetRef = useRef();
 
@@ -105,37 +107,122 @@ const RefferalDetails = ({ navigation }) => {
         );
     };
 
+    const onSaveHandle = () => {
+        sheetRef.current.close()
+
+        if (inputs.refer == 2) {
+            navigation.navigate('PeerEducator')
+        } else {
+            const newItem = {
+                id: Date.now().toString(),
+                name: inputs.name,
+                gender: inputs.gender,
+                problem: inputs.problem,
+                referrals: selectedReferrals,
+            };
+
+            setReferralList(prev => [...prev, newItem]);
+
+            // reset bottom sheet form
+            setInputs(INITIALINPUT);
+            setSelectedReferrals([]);
+        }
+    }
+
+    const onSubmitAll = () => {
+        const payload = {
+            refer: inputs.refer,
+            referrals: referralList,
+        };
+    
+        console.log('FINAL DATA:', payload);
+    
+        // Example navigation
+        navigation.navigate('MainApp', {
+            screen: 'PeerEducator',
+            params: { referrals: payload },
+        });
+    }; 
+
+    const renderText = (label,value) => {
+        return(
+            <Text style={[st.tx12,{marginTop:5}]}>{label}<Text style={st.txbold}>{value}</Text></Text>
+        )
+    }
+    
+    const renderItem = ({item, index}) => {
+        return(
+        <View style={st.card} key={index}>
+            {renderText('किशोर/किशोरी का नाम:', item.name)}
+            {renderText('लिंग:', item.gender)}
+            {renderText('किसको रेफर किया:', item.referrals.join(', '))}
+            {renderText('समस्या/विषय:', item.problem)}
+        </View>
+        )
+    }
+
+    const showRefferals = referralList.length > 0
+
     return (
         <CustomContainer>
             <CustomHeader title="Referral Details"
                 onBackPress={() => navigation.goBack()}
+                rightIcon={showRefferals}
+                onRightPress={() => sheetRef.current.open()}
             />
             <CustomContent>
+                {!showRefferals&&
                 <CustomPicker
                     items={booleanData}
                     label={'क्या किसी किशोर किशोरी  को स्वास्थ संबंदी जाँच /उपचार /परामर्श हेतु रेफर किया गया था।'}
                     placeholder=''
                     {...pickerFieldProps('refer')}
                 />
+                }
 
                 {inputs.refer &&
-                    <Button title='Add Referral'
-                        onPress={() => sheetRef.current.open()}
+                    <Button title={inputs.refer == 2 ? 'Submit' : 'Add Referral'}
+                        onPress={() => {
+                            if (inputs.refer == 2) {
+                                navigation.navigate('MainApp', {
+                                    screen: 'PeerEducator',
+                                });
+                            } else {
+                                sheetRef.current.open()
+                            }
+                        }}
                         disabled={isLoading}
                         loading={isLoading}
                     />
                 }
 
+                {showRefferals && (
+                    <FlatList
+                        data={referralList}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderItem}
+                    />
+                )}
+
+                 {showRefferals && (
+                    <Button
+                        title="Submit"
+                        onPress={() => onSubmitAll()}
+                        disabled={isLoading}
+                        loading={isLoading}
+                    />
+                )}
+
                 <ReusableBottomSheet
                     ref={sheetRef}
                     title="Add Referral Detail"
                     buttonText="Filter"
-                    height={450}
-                    >
+                    height={450}>
 
                     <MyInput label="किशोर/किशोरी का नाम"
                         {...fieldProps('name')}
                     />
+
                     <CustomPicker
                         items={[]}
                         label={'लिंग'}
@@ -143,9 +230,8 @@ const RefferalDetails = ({ navigation }) => {
                         {...pickerFieldProps('gender')}
                     />
 
-
                     <View>
-                        <Text>किसको रेफर किया?</Text>
+                        <Text style={st.tx12}>किसको रेफर किया?</Text>
                         <View style={styles.chkboxContainer}>
                             {referralOptions.map((item) => (
                                 <CustomCheckbox
@@ -158,13 +244,12 @@ const RefferalDetails = ({ navigation }) => {
                         </View>
                     </View>
 
-
                     <MyInput label="समस्या/विषय"
                         {...fieldProps('problem')}
                     />
 
                     <Button title='Add'
-                        onPress={() => sheetRef.current.close()}
+                        onPress={() => onSaveHandle()}
                         disabled={isLoading}
                         loading={isLoading}
                     />
@@ -178,10 +263,10 @@ const RefferalDetails = ({ navigation }) => {
 export default RefferalDetails
 
 const styles = StyleSheet.create({
-    chkboxContainer:{
-        flexDirection: 'row', 
+    chkboxContainer: {
+        flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-between', 
-        marginVertical: 10 
+        justifyContent: 'space-between',
+        marginVertical: 10
     }
 })
