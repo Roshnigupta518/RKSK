@@ -63,8 +63,7 @@ const ATPForm = ({ navigation, route }) => {
 
   useEffect(() => {
     if (activiyDetails) {
-
-           setInputs({
+        setInputs({
         ...inputs,
         planedActivity: activiyDetails?.visit_PurposeId_Id,
         visit_Purpose: activiyDetails?.visit_Purpose,
@@ -118,6 +117,7 @@ const ATPForm = ({ navigation, route }) => {
     },
     []
   );
+  
   const handleError = useCallback((errorMsg, field) => {
     setErrors(prev => ({ ...prev, [field]: errorMsg }));
   }, []);

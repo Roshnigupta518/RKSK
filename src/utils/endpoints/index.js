@@ -7,6 +7,8 @@ class Endpoints {
   ATP_POST = this.baseUrl + 'ATP/uploadActivity'
   Activity_Login = this.baseUrl + 'ATP/FiledActivityTimeTracking'
   GET_VERSION = this.baseUrl + ''
+  GET_PEEREDUCATOR_LIST = this.baseUrl + 'PeerEducator/GetPeerEducatorForEdit'
+  GET_MASTER = this.baseUrl + 'Masters?'
 }
 
 export const API = new Endpoints();

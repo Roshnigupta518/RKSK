@@ -26,11 +26,13 @@ import { onLogin } from '../../../utils/bgservices/tiggerfunction';
 import useNetworkStatus from '../../../hooks/networkStatus';
 
 const INITIALINPUT = {
-  // userName: '', 
-  // password: '',
+  //Peer educator login
+  userName: 'JHBUA6099', 
+  password: '123456',
 
-  userName: 'Jhabua#F2',
-  password: 'Admin@123',
+  //Trainer login
+  // userName: 'Jhabua#F2',
+  // password: 'Admin@123',
 };
 
 const Login = ({ navigation }) => {
@@ -52,11 +54,11 @@ const Login = ({ navigation }) => {
     setErrors(prevState => ({ ...prevState, [input]: error }));
   };
 
-console.log({isConnected})
+// console.log({isConnected})
   const decodeToken = async(token) => {
     try {
       const decoded = jwtDecode(token);
-      // console.log('Decoded token:', decoded);
+      console.log('Decoded token:', decoded);
   
       const userId = decoded.sub;           
       const email = decoded.email;         
@@ -66,6 +68,7 @@ console.log({isConnected})
       const blockId = decoded.BlockId;
       const trainerId = decoded.TrainerId;
       const ngoId = decoded.NGOId;
+      const peerEducatorId = decoded.PeerEducatorId;
       const jwtToken = token
   
       return {
@@ -77,7 +80,8 @@ console.log({isConnected})
         blockId,
         trainerId,
         ngoId,
-        jwtToken
+        jwtToken,
+        peerEducatorId
       };
     } catch (error) {
       console.error('Invalid token', error);

@@ -130,9 +130,9 @@ export default StyleSheet.create({
       marginVertical: 10,
       borderWidth: 1,
       borderColor: 'rgba(200, 200, 200, 1)',
-      height: 120,
+      height: 103,
       backgroundColor: colors.white,
-      width:'100%'
+      width:'100%',
     },
     iconLeft:{position:'absolute', right:15},
     card: {
@@ -147,12 +147,12 @@ export default StyleSheet.create({
       elevation: 2,
     },
     imageSty:{
-      width:'100%',
-      height:120, 
+      width:100,
+      height:100, 
       borderRadius:5,
       borderWidth:0.5,
       borderColor:colors.lightGrey,
-      borderRadius:5
+      borderRadius:5,
     },
     warningBox:{
       padding:10, 

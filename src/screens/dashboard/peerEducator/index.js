@@ -1,13 +1,16 @@
 import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native'
-import React, { useState, useLayoutEffect } from 'react'
+import React, { useState, useLayoutEffect, useEffect } from 'react'
 import st from '../../../global/styles'
 import EmptyItem from '../../../components/emptyItem'
 import Field from '../../../components/peerField'
 import Icon from 'react-native-vector-icons/Feather'
 import { colors } from '../../../global'
+import { useAppSelector } from '../../../hooks'
+import { dateFormat } from '../../../utils/validations'
 
 const PeerEducator = ({ navigation }) => {
-    const [peerEducatorList, setPeerEducatorList] = useState(data)
+    const peerEducator = useAppSelector(state => state.peerEducatorList.data);
+    const [peerEducatorList, setPeerEducatorList] = useState(peerEducator)
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -28,10 +31,10 @@ const PeerEducator = ({ navigation }) => {
         return (
             <TouchableOpacity style={st.card} key={index}
              onPress={()=>navigation.navigate('PeerDetails')}>
-                <Field label={'गतिविधि की तारीख'} value={item.date} />
-                <Field label={'ग्राम का नाम'} value={item.village} />
-                <Field label={'आशा का नाम'} value={item.asha} />
-                <Field label={'साथिया का नाम'} value={item.sathiya} />
+                <Field label={'गतिविधि की तारीख'} value={dateFormat(item.activityDate)} />
+                <Field label={'ग्राम का नाम'} value={item.villageName} />
+                <Field label={'आशा का नाम'} value={item.ashaName} />
+                <Field label={'साथिया का नाम'} value={item.sathiyaName} />
             </TouchableOpacity>
         )
     }

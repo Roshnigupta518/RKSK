@@ -3,7 +3,7 @@ import {syncTaskName} from './backgroundTaskEnum';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { isUserLoggedIn } from '../../redux/store/getState';
-import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn } from './syncTask';
+import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn, syncPeerEducatorList, syncMastersData } from './syncTask';
 import { processQueue } from './queueProcessor';
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
@@ -67,7 +67,8 @@ const checkIfTaskNotSyncedToday = async taskName => {
             // let isSyncProfile = taskName == syncTaskName.syncGetProfile || syncAll;
             let isSyncATPList = taskName == syncTaskName.syncGetAtpList || syncAll;
             let isSyncActivityQueue = taskName == syncTaskName.syncAcitivityQueue || syncAll;
-           
+            let isSyncPeerEducatorList = taskName == syncTaskName.syncPeerEducatorList || syncAll;
+            let isSyncMasters = taskName == syncTaskName.syncMasters || syncAll;
             if (isAnythingPendingForSync) {
               isSyncActivityQueue = await checkIfTaskNotSyncedToday(
                 syncTaskName.syncAcitivityQueue
@@ -84,15 +85,20 @@ const checkIfTaskNotSyncedToday = async taskName => {
             //   await syncProfileData();
             // }
 
+            if(isSyncMasters) {
+              console.log('executing sync isSyncMasters');
+              await syncMastersData()
+            }
+
             if (isSyncATPList) {
               console.log('executing sync isSyncATPList');
               await syncATPListData();
             }
 
-            // if(isSyncActivityQueue){
-            //   console.log("Processing Queue...");
-            //   await processQueue();
-            // }
+            if(isSyncPeerEducatorList){
+              console.log("Processing Queue...");
+              await syncPeerEducatorList();
+            }
 
             if (isSyncActivityQueue) {
               const isSyncInProgress =

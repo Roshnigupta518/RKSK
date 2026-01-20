@@ -1,5 +1,4 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { setupListeners } from '@reduxjs/toolkit/query';
 import { combineReducers } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -17,6 +16,8 @@ import ClockTimeSlice from '../slices/ClockTime';
 import DisclaimerSlice from '../slices/disclaimer';
 import ActivityPlan from '../slices/ActivityPlan';
 import QueueSlice from '../slices/queueSlice';
+import PeerEducatorSlice from '../slices/peerEducatorList';
+import MastersSlice from '../slices/Masters';
 
 const authPersistConfig = {
     key: 'Login',
@@ -42,6 +43,12 @@ const authPersistConfig = {
     whitelist: ['data'],
   };
 
+  const peerEducatorListConfig = {
+    key: 'PeerEducatorList',
+    storage: AsyncStorage,
+    whitelist: ['data'],
+  }
+
   const atpQueueConfig = {
     key: 'queue',
     storage: AsyncStorage,
@@ -53,7 +60,9 @@ const authPersistConfig = {
     clockTime: persistReducer(clockPersistConfig, ClockTimeSlice),
     disclaimerStatus: persistReducer(disclaimerPersistConfig, DisclaimerSlice),
     activityPlan : persistReducer(atpPersistConfig, ActivityPlan), 
-    queue: persistReducer(atpQueueConfig, QueueSlice), 
+    queue: persistReducer(atpQueueConfig, QueueSlice),
+    peerEducatorList: persistReducer(peerEducatorListConfig, PeerEducatorSlice),
+    masters : MastersSlice
   })
 
 export const store = configureStore({
