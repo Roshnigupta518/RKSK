@@ -6,6 +6,10 @@ import { setActivityPlan } from "../../redux/slices/ActivityPlan";
 import { setPeerEducatorList } from "../../redux/slices/peerEducatorList";
 import { setLocalMasters } from "../../redux/slices/Masters";
 import { saveToLocal } from "./storage";
+import { setPeerReferralList, updateSavePeerReferralSyncStatus } from "../../redux/slices/ReferralList";
+import { getSavedPeerEducatorNotStarted } from '../../redux/store/getState';
+import { ENUM } from "../bgservices/enum";
+import Toast from "react-native-toast-message";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -96,6 +100,21 @@ export const getPeerEducatorListHandle = async() => {
     return [];
   }
 }
+}
+
+export const getPeerEducatorReferralListHandle = async() => {
+  try {
+    const url = `${API.GET_PEEREDUCATOR_REFERRAL_LIST}`;
+    const result = await getApi(url);
+    if (result?.status === 200) {
+      store.dispatch(setPeerReferralList(result.data))
+    } else {
+      console.warn('getPeerEducatorReferralListHandle Unexpected response:', result);
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+    return [];
+  }
 }
 
 const mapToPickerFormat = (arr = []) =>
@@ -195,7 +214,69 @@ export const getMastersDataHandle = async ({ flag, id = 0, cluster = 0 }) => {
   }
 };
 
+export const savePeerEducatorFormDatafromRedux = async isSyncInProgrss => {
+  const getSavedPeerEducatorlistStarted =
+  getSavedPeerEducatorNotStarted(isSyncInProgrss);
 
+  for (let i = 0; i < getSavedPeerEducatorlistStarted?.length; i++) {
+    await saveSinglePeerEducatorList(getSavedPeerEducatorlistStarted[i]);
+  }
+};
+
+export const saveSinglePeerEducatorList = async (data) => {
+  const MAX_RETRY = 3;
+
+  const currentRetry = data?.retryCount || 0;
+
+  if (currentRetry >= MAX_RETRY) {
+    console.warn('Max retry reached. Removing from list:', data.clientId);
+    store.dispatch(removePeerReferralByClientId({ clientId: data.clientId }));
+    return;
+  }
+
+  store.dispatch(updateSavePeerReferralSyncStatus({
+    syncStatus: ENUM.SERVERSTATUS.INPROGRESS,
+    clientId: data.clientId,
+  }));
+
+  const url = `${API.SAVE_PEEREDICATOR_REFERRAL}`;
+  const formdata = new FormData();
+  formdata.append("data", data);
+
+  try {
+    const result = await uploadApi(url, formdata);
+
+    if (result.status === 201) {
+      store.dispatch(updateSavePeerReferralSyncStatus({
+        syncStatus: ENUM.SERVERSTATUS.COMPLETED,
+        clientId: data.clientId,
+      }));
+
+      Toast.show({
+        type: "myCustomType",
+        text1: "Success",
+        text2: "Data Saved successfully",
+        props: { key: 'success' }, 
+      });
+    }
+  } catch (e) {
+    store.dispatch(incrementPeerRetryCount({ clientId: data.clientId }));
+
+    const updatedItem = store.getState().peerReferralList.data.find(i => i.clientId === data.clientId);
+
+    if ((updatedItem?.retryCount || 0) >= MAX_RETRY) {
+      console.warn('Retry failed 3 times. Removing item:', data.clientId);
+      store.dispatch(removePeerReferralByClientId({ clientId: data.clientId }));
+    } else {
+      store.dispatch(updateSavePeerReferralSyncStatus({
+        syncStatus: ENUM.SERVERSTATUS.FAILED,
+        clientId: data.clientId,
+      }));
+    }
+
+    handleAPIErrorResponse(e, 'save peer educator form data catch');
+  }
+};
 
 export const getDasboardDataHandle = async() => {
 

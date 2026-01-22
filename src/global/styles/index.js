@@ -159,5 +159,10 @@ export default StyleSheet.create({
       flexDirection:'row',
       backgroundColor:'#FFF8E5',
       marginVertical:10
-    }
+    },
+    statusIconSty:{
+      position:'absolute',
+      top:2,
+      right:5,
+    },
 })

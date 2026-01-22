@@ -18,6 +18,7 @@ import ActivityPlan from '../slices/ActivityPlan';
 import QueueSlice from '../slices/queueSlice';
 import PeerEducatorSlice from '../slices/peerEducatorList';
 import MastersSlice from '../slices/Masters';
+import PeerReferralList from '../slices/ReferralList';
 
 const authPersistConfig = {
     key: 'Login',
@@ -54,6 +55,12 @@ const authPersistConfig = {
     storage: AsyncStorage,
     whitelist: ['pending'],
   };
+  
+  const peerReferralConfig = {
+    key: 'PeerReferralList',
+    storage: AsyncStorage,
+    whitelist: ['pending'],
+  };
 
   const appReducer = combineReducers({
     login: persistReducer(authPersistConfig, loginSlice),
@@ -62,6 +69,7 @@ const authPersistConfig = {
     activityPlan : persistReducer(atpPersistConfig, ActivityPlan), 
     queue: persistReducer(atpQueueConfig, QueueSlice),
     peerEducatorList: persistReducer(peerEducatorListConfig, PeerEducatorSlice),
+    peerReferralList: persistReducer(peerReferralConfig, PeerReferralList),
     masters : MastersSlice
   })
 

@@ -9,6 +9,14 @@ import ReusableBottomSheet from '../../../../components/filterSheet'
 import MyInput from '../../../../components/customInput'
 import CustomCheckbox from '../../../../components/CustomCheckbox'
 import st from '../../../../global/styles'
+import Toast from 'react-native-toast-message'
+import { setPeerReferralList } from '../../../../redux/slices/ReferralList'
+import { useAppDispatch, useAppSelector } from '../../../../hooks'
+import { generateclientID, getLabelsFromValues } from '../../../../utils/helper';
+import { ENUM } from '../../../../utils/bgservices/enum'
+import { genderData } from '../../../../utils/staticJson'
+import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum'
+import { startBackgroundService } from '../../../../utils/bgservices/backgroundService'
 
 const INITIALINPUT = {
     refer: '',
@@ -17,14 +25,18 @@ const INITIALINPUT = {
     name: ''
 }
 
-const RefferalDetails = ({ navigation }) => {
+const RefferalDetails = ({ navigation, route }) => {
     const [inputs, setInputs] = useState(INITIALINPUT);
     const [errors, setErrors] = useState(INITIALINPUT);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedReferrals, setSelectedReferrals] = useState([]);
     const [referralList, setReferralList] = useState([]);
+    const [isChecked, setIsChecked] = useState(false);
+    const userLogin = useAppSelector(state => state.login.data);
+    const { data } = route.params || {}
 
     const sheetRef = useRef();
+    const dispatch = useAppDispatch()
 
     const handleOnchange = useCallback(
         (field) => (value) => {
@@ -90,6 +102,27 @@ const RefferalDetails = ({ navigation }) => {
         disabled: isLoading,
     });
 
+    const renderConsent = () => {
+        return (
+            <View style={st.mt_5}>
+                <CustomCheckbox
+                    label="I confirm that all the information entered is accurate."
+                    checked={isChecked}
+                    onChange={setIsChecked}
+                />
+            </View>
+        )
+    }
+
+    const showConsentError = () => {
+        Toast.show({
+            type: "myCustomType",
+            text1: "Error",
+            text2: "Please acknowledge before submitting",
+            props: { key: 'error' },
+        });
+    }
+
     const clearFilters = () => {
         setInputs(INITIALINPUT);
         sheetRef.current.close();
@@ -108,6 +141,11 @@ const RefferalDetails = ({ navigation }) => {
     };
 
     const onSaveHandle = () => {
+
+        if (!validateReferralForm()) {
+            return; // stop if invalid
+        }
+
         sheetRef.current.close()
 
         if (inputs.refer == 2) {
@@ -129,35 +167,106 @@ const RefferalDetails = ({ navigation }) => {
         }
     }
 
+    const validateReferralForm = () => {
+        let isValid = true;
+        let newErrors = { ...INITIALINPUT };
+
+        if (!inputs.name?.trim()) {
+            newErrors.name = 'Required';
+            isValid = false;
+        }
+
+        if (!inputs.gender) {
+            newErrors.gender = 'Required';
+            isValid = false;
+        }
+
+        if (selectedReferrals.length === 0) {
+            Toast.show({
+                type: "myCustomType",
+                text1: "Error",
+                text2: "कम से कम एक रेफरल विकल्प चुनें",
+                props: { key: 'error' },
+            });
+            isValid = false;
+        }
+
+        if (!inputs.problem?.trim()) {
+            newErrors.problem = 'Required';
+            isValid = false;
+        }
+
+        setErrors(newErrors);
+        return isValid;
+    };
+
     const onSubmitAll = () => {
+        if (!isChecked) {
+            showConsentError()
+            return;
+        }
+
         const payload = {
+            ...data,
             refer: inputs.refer,
             referrals: referralList,
+            clientId: generateclientID(userLogin.userId),
+            syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
+            createdAt: new Date().toISOString(),
+            retryCount: 0,
         };
-    
+
+        dispatch(setPeerReferralList(payload));
+        startBackgroundService(syncTaskName.syncPeerEducatorFormData)
         console.log('FINAL DATA:', payload);
-    
+
         // Example navigation
         navigation.navigate('MainApp', {
             screen: 'PeerEducator',
             params: { referrals: payload },
         });
-    }; 
+    };
 
-    const renderText = (label,value) => {
-        return(
-            <Text style={[st.tx12,{marginTop:5}]}>{label}<Text style={st.txbold}>{value}</Text></Text>
+    const notAddedReferral = () => {
+
+        if (!isChecked) {
+            showConsentError()
+            return;
+        }
+
+        const payload = {
+            ...data,
+            refer: inputs.refer,
+            referrals: [],
+            clientId: generateclientID(userLogin.userId),
+            syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
+            createdAt: new Date().toISOString(),
+            retryCount: 0,
+        };
+
+        dispatch(setPeerReferralList(payload));
+
+        startBackgroundService(syncTaskName.syncPeerEducatorFormData)
+
+        navigation.navigate('MainApp', {
+            screen: 'PeerEducator',
+        });
+    }
+
+    const renderText = (label, value) => {
+        return (
+            <Text style={[st.tx12, { marginTop: 5 }]}>{label}<Text style={st.txbold}>{value}</Text></Text>
         )
     }
-    
-    const renderItem = ({item, index}) => {
-        return(
-        <View style={st.card} key={index}>
-            {renderText('किशोर/किशोरी का नाम:', item.name)}
-            {renderText('लिंग:', item.gender)}
-            {renderText('किसको रेफर किया:', item.referrals.join(', '))}
-            {renderText('समस्या/विषय:', item.problem)}
-        </View>
+
+    const renderItem = ({ item, index }) => {
+        return (
+            <View style={st.card} key={index}>
+                {renderText('किशोर/किशोरी का नाम:', item.name)}
+                {renderText('लिंग:', getLabelsFromValues(item.gender, genderData))}
+                {renderText('किसको रेफर किया:', item.referrals.join(', '))}
+                {renderText('समस्या/विषय:', item.problem)}
+            </View>
         )
     }
 
@@ -171,22 +280,22 @@ const RefferalDetails = ({ navigation }) => {
                 onRightPress={() => sheetRef.current.open()}
             />
             <CustomContent>
-                {!showRefferals&&
-                <CustomPicker
-                    items={booleanData}
-                    label={'क्या किसी किशोर किशोरी  को स्वास्थ संबंदी जाँच /उपचार /परामर्श हेतु रेफर किया गया था।'}
-                    placeholder=''
-                    {...pickerFieldProps('refer')}
-                />
+                {!showRefferals &&
+                    <CustomPicker
+                        items={booleanData}
+                        label={'क्या किसी किशोर किशोरी  को स्वास्थ संबंदी जाँच /उपचार /परामर्श हेतु रेफर किया गया था।'}
+                        placeholder=''
+                        {...pickerFieldProps('refer')}
+                    />
                 }
+
+                {inputs.refer == 2 && renderConsent()}
 
                 {inputs.refer &&
                     <Button title={inputs.refer == 2 ? 'Submit' : 'Add Referral'}
                         onPress={() => {
                             if (inputs.refer == 2) {
-                                navigation.navigate('MainApp', {
-                                    screen: 'PeerEducator',
-                                });
+                                notAddedReferral()
                             } else {
                                 sheetRef.current.open()
                             }
@@ -204,7 +313,9 @@ const RefferalDetails = ({ navigation }) => {
                     />
                 )}
 
-                 {showRefferals && (
+                {showRefferals && renderConsent()}
+
+                {showRefferals && (
                     <Button
                         title="Submit"
                         onPress={() => onSubmitAll()}
@@ -219,19 +330,19 @@ const RefferalDetails = ({ navigation }) => {
                     buttonText="Filter"
                     height={450}>
 
-                    <MyInput label="किशोर/किशोरी का नाम"
+                    <MyInput label="किशोर/किशोरी का नाम *"
                         {...fieldProps('name')}
                     />
 
                     <CustomPicker
-                        items={[]}
-                        label={'लिंग'}
+                        items={genderData}
+                        label={'लिंग *'}
                         placeholder=''
                         {...pickerFieldProps('gender')}
                     />
 
                     <View>
-                        <Text style={st.tx12}>किसको रेफर किया?</Text>
+                        <Text style={st.tx12}>किसको रेफर किया? *</Text>
                         <View style={styles.chkboxContainer}>
                             {referralOptions.map((item) => (
                                 <CustomCheckbox
@@ -244,7 +355,7 @@ const RefferalDetails = ({ navigation }) => {
                         </View>
                     </View>
 
-                    <MyInput label="समस्या/विषय"
+                    <MyInput label="समस्या/विषय *"
                         {...fieldProps('problem')}
                     />
 

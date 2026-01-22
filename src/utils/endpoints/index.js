@@ -9,6 +9,8 @@ class Endpoints {
   GET_VERSION = this.baseUrl + ''
   GET_PEEREDUCATOR_LIST = this.baseUrl + 'PeerEducator/GetPeerEducatorForEdit'
   GET_MASTER = this.baseUrl + 'Masters?'
+  GET_PEEREDUCATOR_REFERRAL_LIST = this.baseUrl + 'PeerEducator/GetPeerEducatorReportinFormList'
+  SAVE_PEEREDICATOR_REFERRAL = this.baseUrl + 'PeerEducator/PeerForm'
 }
 
 export const API = new Endpoints();

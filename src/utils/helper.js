@@ -233,73 +233,6 @@ export const getPlanStatus = (item) => {
   return "Pending";
 };
 
-// export const calculateDashboardCounts = (activityList = []) => {
-//   const uniqueList = Object.values(
-//     activityList.reduce((acc, item) => {
-//       acc[item.atP_Id] = item;
-//       return acc;
-//     }, {})
-//   );
-
-//   let completedThisMonth = 0;
-//   let scheduledToday = 0;
-//   let overdue = 0;
-//   let onSchedule = 0;
-
-//   const now = new Date();
-//   const currentMonth = now.getMonth();
-//   const currentYear = now.getFullYear();
-
-//   uniqueList.forEach(item => {
-//     const status = getPlanStatus(item);
-
-//     // 1️⃣ COMPLETED THIS MONTH
-//     if (status === "Completed" && item.clockoutTime) {
-//       const completedDate = new Date(item.clockoutTime);
-//       if (
-//         completedDate.getMonth() === currentMonth &&
-//         completedDate.getFullYear() === currentYear
-//       ) {
-//         completedThisMonth++;
-//       }
-//     }
-
-//     // 2️⃣ SCHEDULED TODAY  (Pending + InProgress)
-//     if (status === "Pending" || status === "In Progress") {
-//       if (item.visit_Start_Date) {
-//         const [datePart] = item.visit_Start_Date.split(" ");
-//         const [day, month, year] = datePart.split("-");
-//         const visitDate = new Date(year, month - 1, day);
-
-//         if (
-//           visitDate.getDate() === now.getDate() &&
-//           visitDate.getMonth() === now.getMonth() &&
-//           visitDate.getFullYear() === now.getFullYear()
-//         ) {
-//           scheduledToday++;
-//         }
-//       }
-//     }
-
-//     // 3️⃣ OVERDUE  (Overdue + InProgress)
-//     if (status === "Overdue" || status === "In Progress") {
-//       overdue++;
-//     }
-
-//     // 4️⃣ ON SCHEDULE  (Scheduled + InProgress)
-//     if (status === "Scheduled") {
-//       onSchedule++;
-//     }
-//   });
-
-//   return {
-//     completedThisMonth,
-//     scheduledToday,
-//     overdue,
-//     onSchedule,
-//   };
-// };
-
 export const calculateDashboardCounts = (activityList = []) => {
   const uniqueList = Object.values(
     activityList.reduce((acc, item) => {
@@ -405,3 +338,61 @@ export const getSyncUI = (status) => {
   }
 };
 
+export const showIconName = (status) => {
+  if (status == ENUM.SERVERSTATUS.COMPLETED || status == 1) {
+    return 'check'
+  } else if (status == ENUM.SERVERSTATUS.INPROGRESS || status == null || status == ENUM.SERVERSTATUS.NOTSTARTED) {
+    return 'clock'
+  } else if (status == ENUM.SERVERSTATUS.FAILED || status == 0) {
+    return 'x'
+  } else {
+    return ''
+  }
+}
+
+export const showIconColor = (status) => {
+  if (status == ENUM.SERVERSTATUS.COMPLETED || status == 1) {
+    return colors.orange
+  } else if (status == ENUM.SERVERSTATUS.FAILED || status == 0) {
+    return colors.danger
+  } else {
+    return colors.grey
+  }
+}
+
+
+// export const getLabelsFromValues = (values = [], items = []) => {
+//   if (!Array.isArray(values)) values = [values];
+
+//   return values
+//     .map(val => items.find(i => String(i.value) === String(val))?.label)
+//     .filter(Boolean);
+// };
+
+
+export const getLabelsFromValues = (values = [], items = []) => {
+  if (!Array.isArray(values)) values = [values];
+
+  return values
+    .map(val => {
+      const strVal = String(val).toLowerCase();
+
+      const found = items.find(i => {
+        const valueKey = i.value ?? i.id;
+        const labelKey = i.label ?? i.name;
+
+        return (
+          String(valueKey).toLowerCase() === strVal ||
+          String(labelKey).toLowerCase() === strVal
+        );
+      });
+
+      if (found) {
+        return found.label ?? found.name;
+      }
+
+      // fallback → raw value
+      return String(val);
+    })
+    .filter(Boolean);
+};

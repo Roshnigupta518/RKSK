@@ -7,9 +7,10 @@ import Icon from 'react-native-vector-icons/Feather'
 import { colors } from '../../../global'
 import { useAppSelector } from '../../../hooks'
 import { dateFormat } from '../../../utils/validations'
+import IconStatus from '../../../components/iconStatus'
 
 const PeerEducator = ({ navigation }) => {
-    const peerEducator = useAppSelector(state => state.peerEducatorList.data);
+    const peerEducator = useAppSelector(state => state.peerReferralList.data);
     const [peerEducatorList, setPeerEducatorList] = useState(peerEducator)
 
     useLayoutEffect(() => {
@@ -30,7 +31,8 @@ const PeerEducator = ({ navigation }) => {
     const renderItem = ({ item, index }) => {
         return (
             <TouchableOpacity style={st.card} key={index}
-             onPress={()=>navigation.navigate('PeerDetails')}>
+             onPress={()=>navigation.navigate('PeerDetails',{data:item})}>
+                <IconStatus status={item.syncStatus} />
                 <Field label={'गतिविधि की तारीख'} value={dateFormat(item.activityDate)} />
                 <Field label={'ग्राम का नाम'} value={item.villageName} />
                 <Field label={'आशा का नाम'} value={item.ashaName} />
@@ -48,6 +50,7 @@ const PeerEducator = ({ navigation }) => {
                 contentContainerStyle={st.pd20}
                 ListEmptyComponent={() => <EmptyItem />}
                 ListHeaderComponent={() =>
+                    peerEducatorList.length > 0 && 
                     <Text style={st.tx14}>
                         {`Total ${peerEducatorList.length} records`}
                     </Text>

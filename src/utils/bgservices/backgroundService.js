@@ -3,7 +3,7 @@ import {syncTaskName} from './backgroundTaskEnum';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { isUserLoggedIn } from '../../redux/store/getState';
-import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn, syncPeerEducatorList, syncMastersData } from './syncTask';
+import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn,syncPeerEducatorFormData, syncPeerEducatorList, syncMastersData, syncPeerEducatorReferralList } from './syncTask';
 import { processQueue } from './queueProcessor';
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
@@ -36,7 +36,12 @@ const checkIfTaskNotSyncedToday = async taskName => {
     const isSyncAcitivityQueue = await checkIfTaskNotSyncedToday(
       syncTaskName.syncAcitivityQueue,
     );
-    const isSyncPending = isSyncAcitivityQueue
+
+    const isSyncPeerEducatorFormData = await checkIfTaskNotSyncedToday(
+      syncTaskName.syncPeerEducatorFormData,
+    );
+
+    const isSyncPending = isSyncAcitivityQueue || isSyncPeerEducatorFormData
     
     return isSyncPending
   };
@@ -68,7 +73,10 @@ const checkIfTaskNotSyncedToday = async taskName => {
             let isSyncATPList = taskName == syncTaskName.syncGetAtpList || syncAll;
             let isSyncActivityQueue = taskName == syncTaskName.syncAcitivityQueue || syncAll;
             let isSyncPeerEducatorList = taskName == syncTaskName.syncPeerEducatorList || syncAll;
+            let isSyncPeerReferralList = taskName == syncTaskName.syncPeerEducatorReferralList || syncAll;
             let isSyncMasters = taskName == syncTaskName.syncMasters || syncAll;
+            let isSyncPeerEducatorFormData = taskName == syncTaskName.syncPeerEducatorFormData || syncAll;
+            // 
             if (isAnythingPendingForSync) {
               isSyncActivityQueue = await checkIfTaskNotSyncedToday(
                 syncTaskName.syncAcitivityQueue
@@ -100,17 +108,28 @@ const checkIfTaskNotSyncedToday = async taskName => {
               await syncPeerEducatorList();
             }
 
+            if(isSyncPeerReferralList) {
+              console.log("peer educator referral list...");
+              await syncPeerEducatorReferralList()
+            }
+
             if (isSyncActivityQueue) {
               const isSyncInProgress =
               taskName == syncTaskName.syncAcitivityQueue || isAnythingPendingForSync;
               console.log('excuting acitivty queue', isSyncInProgress)
 
               console.log('executing sync isSyncActivityQueue');
-              await updateSyncNotification("Syncing atp form data...");
+              await updateSyncNotification("Syncing atp atp form data...");
               await syncATPFormData(isSyncInProgress)
               console.log('completed sync isSyncActivityQueue');
             }
-            
+
+            if(isSyncPeerEducatorFormData){
+              const isSyncInProgress = taskName == syncTaskName.syncPeerEducatorFormData || isAnythingPendingForSync;
+              await updateSyncNotification("Syncing atp peer educator form data...");
+              await syncPeerEducatorFormData(isSyncInProgress)
+              console.log('completed sync isSyncPeerEducatorFormData');
+            }
 
             if (await checkIfSyncPending()) {
               console.log('sync pending--------------');

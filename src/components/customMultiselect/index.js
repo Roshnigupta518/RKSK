@@ -45,7 +45,7 @@ const CustomMultiSelect = ({
         disabled={disable}
         iconColor={colors?.black || '#007bff'} 
         scrollEnabled={false}
-        tagContainerStyle={{marginBottom:10}}
+        tagContainerStyle={{marginBottom:10, width:'95%'}}
       />
 
       {error ? <Text style={st.error}>{error}</Text> : null}

@@ -56,7 +56,7 @@ const ATPForm = ({ navigation, route }) => {
     state => state.activityPlan.data.find(item => item.atP_Id == atP_Id)
   );
 
-  // console.log({ activiyDetails })
+  console.log({ activiyDetails })
 
   const dispatch = useDispatch()
   const userLogin = useSelector(state => state.login.data);

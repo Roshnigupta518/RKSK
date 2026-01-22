@@ -5,6 +5,8 @@ export const syncTaskName = {
     syncGetAtpList : 'getAtpList',
     syncAcitivityQueue : 'syncAcitivityQueue',
     syncPeerEducatorList : 'syncPeerEducatorList',
-    syncMasters : 'syncMasters'
+    syncMasters : 'syncMasters',
+    syncPeerEducatorReferralList : 'syncPeerEducatorReferralList',
+    syncPeerEducatorFormData : 'syncPeerEducatorFormData'
   };
   

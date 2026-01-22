@@ -1,7 +1,8 @@
 import { syncTaskName } from "./backgroundTaskEnum";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getDasboardDataHandle, getProfileDataHandle, getATPListRequest, getPeerEducatorListHandle, getMastersDataHandle } from "../services";
+import { getDasboardDataHandle, getProfileDataHandle, getATPListRequest, getPeerEducatorListHandle, getMastersDataHandle, getPeerEducatorReferralListHandle } from "../services";
 import { processQueue } from "./queueProcessor";
+import { savePeerEducatorFormDatafromRedux } from "../services";
 
 const setSyncStatus = async taskName => {
     const status = { lastSyncOn: new Date() };
@@ -28,6 +29,11 @@ export const syncPeerEducatorList = async () => {
     await setSyncStatus(syncTaskName.syncPeerEducatorList);
 };
 
+export const syncPeerEducatorReferralList = async () => {
+    getPeerEducatorReferralListHandle();
+    await setSyncStatus(syncTaskName.syncPeerEducatorReferralList);
+};
+
 export const syncMastersData = async () => {
     await getMastersDataHandle({ flag: 2, id: 0 }); // ONLY DISTRICT
     await setSyncStatus(syncTaskName.syncMasters);
@@ -41,5 +47,10 @@ export const syncATPFormData = async (isSyncInProgress) => {
         console.log("Queue empty → skipping queue sync");
     }
     await setSyncStatus(syncTaskName.syncAcitivityQueue);
+}
+
+export const syncPeerEducatorFormData = async(isSyncInProgress) => {
+    await savePeerEducatorFormDatafromRedux(isSyncInProgress)
+    await setSyncStatus(syncTaskName.syncPeerEducatorFormData);
 }
 

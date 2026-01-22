@@ -83,8 +83,6 @@ export const activityDuration = [
     { "value": 3, "label": "45 मिनट" },
     { "value": 4, "label": "60 मिनट" },
     { "value": 5, "label": "60 मिनट से अधिक" },
-    { "value": 6, "label": "कम्‍युनिटी हेल्‍थ ऑफिसर" },
-    { "value": 7, "label": "आंगनवाडी आर्यकर्ता" },
 ]
 
 export const contentUse = [

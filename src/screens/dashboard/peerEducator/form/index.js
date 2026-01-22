@@ -10,14 +10,12 @@ import st from '../../../../global/styles';
 import WithImageUpload from '../../../../HOC/ImageUploader';
 import Icon from 'react-native-vector-icons/Feather'
 import { colors } from '../../../../global'
-import CustomCheckbox from '../../../../components/CustomCheckbox'
 import { useAppSelector, useAppDispatch } from '../../../../hooks'
 import { fetchMasters } from '../../../../redux/slices/Masters'
-import { setLocalMasters } from '../../../../redux/slices/Masters'
-import Toast from 'react-native-toast-message'
 import useNetworkStatus from '../../../../hooks/networkStatus'
 import { activityPlace, genderData, activityType, moduleData, comicBooks, activityToDo, activityDuration, contentUse } from '../../../../utils/staticJson'
 import CustomMultiSelect from '../../../../components/customMultiselect'
+import { getLabelsFromValues } from '../../../../utils/helper'
 
 const INITIALINPUT = {
   district: '',
@@ -54,7 +52,6 @@ const PeerEducatorForm = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [attachment, setAttachment] = useState([]);
   const [attachmentErr, setAttachmentErr] = useState();
-  const [isChecked, setIsChecked] = useState(false);
 
   const isConnected = useNetworkStatus()
 
@@ -91,13 +88,17 @@ const PeerEducatorForm = ({ navigation }) => {
     comicBook: comicBooks || [],
   };
 
-
-  console.log({ pickerData, userLogin })
-
   useEffect(() => {
     if (!districtList?.length && isConnected && !isPeerEducator) {
       dispatch(fetchMasters({ flag: 2, id: 0 }));
     }
+  }, []);
+
+  useEffect(() => {
+    setInputs(prev => ({
+      ...prev,
+      activityDate: prev.date || new Date().toISOString(),
+    }));
   }, []);
 
   useEffect(() => {
@@ -135,7 +136,6 @@ const PeerEducatorForm = ({ navigation }) => {
     return found ? found.value : '';
   };
   
-
   useEffect(() => {
     if (isPeerEducator && peerEducatorDetails) {
       setInputs(prev => ({
@@ -175,7 +175,7 @@ const PeerEducatorForm = ({ navigation }) => {
         return { ...prev, [field]: value };
       });
 
-      // 🔥 clear error for this field
+      // clear error for this field
       setErrors(prev => {
         if (field.includes('.')) {
           const [parent, child] = field.split('.');
@@ -262,7 +262,7 @@ const PeerEducatorForm = ({ navigation }) => {
     let tempErrors = {};
     let valid = true;
 
-    // 🔹 Normal fields (input + picker + date)
+    // Normal fields (input + picker + date)
     REQUIRED_FIELDS.forEach(key => {
       if (
         !inputs[key] ||
@@ -307,26 +307,34 @@ const PeerEducatorForm = ({ navigation }) => {
 
     setErrors(tempErrors);
     return valid;
-  };
+  };  
 
   const onSave = () => {
     if (!validateForm()) return;
-
-    if (!isChecked) {
-      Toast.show({
-        type: "myCustomType",
-        text1: "Error",
-        text2: "Please acknowledge before submitting",
-        props: { key: 'error' },
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    // API call
-
-    navigation.navigate('RefferalDetails')
+  
+    const dataWithNames = {
+      ...inputs,
+      attachment,
+  
+      districtName: pickerData.district.find(i => i.value == inputs.district)?.label || '',
+      blockName: pickerData.block.find(i => i.value == inputs.block)?.label || '',
+      supervisorNameText: pickerData.supervisor.find(i => i.value == inputs.supervisorName)?.label || '',
+      ashaName: pickerData.asha.find(i => i.value == inputs.ashaName)?.label || '',
+      villageName: pickerData.village.find(i => i.value == inputs.village)?.label || '',
+      sathiyaName: pickerData.sathiya.find(i => i.value == inputs.sathiyaName)?.label || '',
+      genderText: pickerData.gender.find(i => i.value == inputs.gender)?.label || '',
+  
+      locationText: getLabelsFromValues(inputs.location, pickerData.location),
+      activityTypeText: getLabelsFromValues(inputs.activityType, pickerData.activityType),
+      moduleText: getLabelsFromValues(inputs.module, pickerData.module),
+      comicBookText: getLabelsFromValues(inputs.comicBook, pickerData.comicBook),
+      activityMethodText: getLabelsFromValues(inputs.activityMethod, pickerData.activityMethod),
+      materialUsedText: getLabelsFromValues(inputs.materialUsed, contentUse),
+    };
+  
+    navigation.navigate('RefferalDetails', { data: dataWithNames });
   };
+  
 
   const ReadOnlyPicker = React.memo(
     ({ label, value, items = [], error, disabled = false, onValueChange }) => {
@@ -486,7 +494,7 @@ const PeerEducatorForm = ({ navigation }) => {
           </View>
 
           <View style={[st.card, st.mt_10]}>
-            <Text style={[st.tx14, st.txbold]}>प्रतिभागियों की संख्या</Text>
+            <Text style={[st.tx14, st.txbold]}>प्रतिभागियों की संख्या *</Text>
 
             {PARTICIPANTS.map(item => (
               <View key={item.key} style={[st.row, st.align_C]}>
@@ -519,20 +527,20 @@ const PeerEducatorForm = ({ navigation }) => {
 
           <CustomPicker
             items={activityDuration}
-            label={'गतिविधि की अवधि'}
+            label={'गतिविधि की अवधि *'}
             placeholder=''
             {...pickerFieldProps('duration')}
           />
 
           <CustomMultiSelect
-            label={'सामग्री उपयोग'}
+            label={'सामग्री उपयोग *'}
             items={contentUse}
             placeholder=""
             required
             {...multiSelectFieldProps('materialUsed')}
           />
 
-          <MyInput label="किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न"
+          <MyInput label="किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न *"
             {...fieldProps('questions')}
             multiline={true}
             maxLength={100}
@@ -544,7 +552,7 @@ const PeerEducatorForm = ({ navigation }) => {
             {inputs.questions?.length || 0}/100
           </Text>
 
-          <MyInput label="गतिविधि के दौरान आई चुनौतियां"
+          <MyInput label="गतिविधि के दौरान आई चुनौतियां *"
             {...fieldProps('challenges')}
             multiline={true}
             maxLength={100}
@@ -575,15 +583,7 @@ const PeerEducatorForm = ({ navigation }) => {
               onRemove={removeImage}
             />
 
-          <View style={st.mt_5}>
-            <CustomCheckbox
-              label="I confirm that all the information entered is accurate."
-              checked={isChecked}
-              onChange={setIsChecked}
-            />
-          </View>
-
-          <CustomButton title='Save'
+          <CustomButton title='Next'
             onPress={() =>
               onSave()
               // navigation.navigate('RefferalDetails')

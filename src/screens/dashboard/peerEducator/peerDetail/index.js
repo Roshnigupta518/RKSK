@@ -1,47 +1,121 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import { View, Image } from 'react-native'
+import React, { useMemo } from 'react'
 import CustomHeader from '../../../../components/customHeader'
 import { CustomContainer, CustomContent } from '../../../../components/container'
 import PeerField from '../../../../components/peerField'
 import st from '../../../../global/styles'
+import { getLabelsFromValues } from '../../../../utils/helper'
+import { genderData } from '../../../../utils/staticJson'
 
-const PeerDetails = ({ navigation }) => {
+const formatDate = (iso) => {
+    if (!iso) return '-'
+    const d = new Date(iso)
+    return d.toLocaleDateString('en-GB') // 21/01/2026
+}
+
+const joinArray = (arr) => {
+    if (!arr || !arr.length) return '-'
+    return arr.join(', ')
+}
+
+const PeerDetails = ({ navigation, route }) => {
+    const { data = {} } = route?.params || {}
+    console.log({ data })
+    const participantsText = useMemo(() => {
+        if (!data.participants) return '-'
+        return `
+            किशोर: ${data.participants.boys || 0},
+            किशोरी: ${data.participants.girls || 0},
+            आशा सहयोगी: ${data.participants.supervisor || 0},
+            आशा: ${data.participants.asha || 0},
+            CHO: ${data.participants.cho || 0},
+            आंगनवाड़ी: ${data.participants.awc || 0}
+                `.trim()
+    }, [data.participants])
+
     return (
         <CustomContainer>
-            <CustomHeader title="Reporting Data Details"
+            <CustomHeader
+                title="Reporting Data Details"
                 onBackPress={() => navigation.goBack()}
             />
+
             <CustomContent>
-                <View style={st.card}>
-                    <PeerField label={'गतिविधि की तारीख'} value={''} />
-                    <PeerField label={'ग्राम का नाम'} value={''} />
-                    <PeerField label={'आशा का नाम'} value={''} />
-                    <PeerField label={'साथिया का नाम'} value={''} />
-                    <PeerField label={'जिला'} value={''} />
-                    <PeerField label={'विकासखंड/ब्लॉक'} value={''} />
-                    <PeerField label={'आशा सुपरवाइजर का नाम'} value={''} />
-                    <PeerField label={'लिंग'} value={''} />
-                    <PeerField label={'गतिविधि का स्थान'} value={''} />
-                    <PeerField label={'गतिविधि का प्रकार'} value={''} />
-                    <PeerField label={'गतिविधि कैसे की?'} value={''} />
-                    <PeerField label={'प्रतिभागियों की संख्या'} value={''} />
-                    <PeerField label={'गतिविधि की अवधि'} value={''} />
-                    <PeerField label={'सामग्री उपयोग'} value={''} />
-                    <PeerField label={'कौन-सा मॉड्यूल/विषय लिया गया?'} value={''} />
-                    <PeerField label={'कौन-सी कॉमिक्स बुक का उपयोग किया गया?'} value={''} />
-                    <PeerField label={'किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न'} value={''} />
-                    <PeerField label={'गतिविधि के दौरान आई चुनौतियां'} value={''} />
-                    <PeerField label={'सफलता/अच्छा अनुभव'} value={''} />
-                    <PeerField label={'फोटो'} value={''} />
-                </View>
+
 
                 <View style={st.card}>
-                    <PeerField label={'किशोर/किशोरी का नाम'} value={''} />
-                    <PeerField label={'लिंग'} value={''} />
-                    <PeerField label={'साथिया का नाम'} value={''} />
-                    <PeerField label={'समस्या/विषय'} value={''} />
+                    <PeerField label="गतिविधि की तारीख" value={formatDate(data.activityDate)} />
+
+                    <PeerField label="ग्राम का नाम" value={data.villageName} />
+                    <PeerField label="आशा का नाम" value={data.ashaName} />
+                    <PeerField label="साथिया का नाम" value={data.sathiyaName} />
+
+                    <PeerField label="जिला" value={data.districtName} />
+                    <PeerField label="विकासखंड/ब्लॉक" value={data.blockName} />
+                    <PeerField label="आशा सुपरवाइजर का नाम" value={data.supervisorNameText} />
+                    <PeerField label="लिंग" value={data.genderText} />
+
+                    <PeerField label="गतिविधि का स्थान" value={joinArray(data.locationText)} />
+                    <PeerField label="गतिविधि का प्रकार" value={joinArray(data.activityTypeText)} />
+                    <PeerField label="गतिविधि कैसे की?" value={joinArray(data.activityMethodText)} />
+
+                    <PeerField label="प्रतिभागियों की संख्या" value={participantsText} />
+
+                    <PeerField label="गतिविधि की अवधि" value={data.duration ? `${data.duration} मिनट` : '-'} />
+
+                    <PeerField label="सामग्री उपयोग" value={joinArray(data.materialUsedText)} />
+                    <PeerField label="कौन-सा मॉड्यूल/विषय लिया गया?" value={joinArray(data.moduleText)} />
+                    <PeerField label="कौन-सी कॉमिक्स बुक का उपयोग किया गया?" value={joinArray(data.comicBookText)} />
+
+                    <PeerField label="किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न" value={data.questions} />
+                    <PeerField label="गतिविधि के दौरान आई चुनौतियां" value={data.challenges} />
+                    <PeerField label="सफलता/अच्छा अनुभव" value={data.successStory} />
+
+                    <PeerField
+                        label="फोटो"
+                        value={data.attachment?.length ? `${data.attachment.length} फोटो` : 'कोई फोटो नहीं'}
+                    />
+
+                    {data.attachment?.length > 0 && (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+                            {data.attachment.map((img, index) => (
+                                <Image
+                                    key={index}
+                                    source={{ uri: img.uri }}
+                                    style={{
+                                        width: 70,
+                                        height: 70,
+                                        borderRadius: 6,
+                                        marginRight: 8,
+                                        marginBottom: 8,
+                                        borderWidth: 1,
+                                        borderColor: '#ddd',
+                                    }}
+                                />
+                            ))}
+                        </View>
+                    )}
                 </View>
 
+                {data.referrals?.length > 0 &&
+                    data.referrals.map((ref, index) => (
+                        <View key={index} style={[st.card, { marginTop: 10 }]}>
+                            <PeerField label="किशोर/किशोरी का नाम" value={ref.name} />
+                            <PeerField
+                                label="लिंग"
+                                value={getLabelsFromValues(ref.gender, genderData)}
+                            />
+                            <PeerField label="साथिया का नाम" value={data.sathiyaName} />
+                            <PeerField label="समस्या/विषय" value={ref.problem} />
+
+                            {ref.referrals?.length > 0 && (
+                                <PeerField
+                                    label="किसको रेफर किया"
+                                    value={ref.referrals.join(', ')}
+                                />
+                            )}
+                        </View>
+                    ))}
             </CustomContent>
         </CustomContainer>
     )
