@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-nati
 import RBSheet from "react-native-raw-bottom-sheet";
 import CustomButton from "../customButton";
 import st from "../../global/styles";
+import Icon from 'react-native-vector-icons/Feather';
+import { colors } from "../../global";
 
 const ReusableBottomSheet = forwardRef(
-  ({ title, height = 350, children, buttonText = "Apply", footerExtraButton, onButtonPress }, ref) => {
+  ({ title, height = 350, children, buttonText = "Apply", footerExtraButton, onButtonPress, onClose }, ref) => {
     return (
       <RBSheet
         ref={ref}
@@ -24,6 +26,9 @@ const ReusableBottomSheet = forwardRef(
 
           {/* top drag line */}
           <View style={styles.dragLine} />
+          <TouchableOpacity onPress={onClose} style={{position:'absolute', top:0, right:0}} >
+          <Icon name='x' size={20} color={colors.blue} />
+          </TouchableOpacity>
           <ScrollView>
 
           {/* Title */}

@@ -220,6 +220,7 @@ const ATPListScreen = ({ navigation }) => {
           label: "Clear Filter",
           onPress: clearFilters,
         }}
+        onClose={()=>sheetRef.current.close()}
         >
        
         <CustomDatePicker

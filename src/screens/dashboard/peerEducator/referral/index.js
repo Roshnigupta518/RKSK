@@ -329,7 +329,9 @@ const RefferalDetails = ({ navigation, route }) => {
                     ref={sheetRef}
                     title="Add Referral Detail"
                     buttonText="Filter"
-                    height={450}>
+                    height={450}
+                    onClose={()=>sheetRef.current.close()}
+                    >
 
                     <MyInput label="किशोर/किशोरी का नाम *"
                         {...fieldProps('name')}
