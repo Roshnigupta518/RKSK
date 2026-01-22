@@ -59,7 +59,7 @@ const authPersistConfig = {
   const peerReferralConfig = {
     key: 'PeerReferralList',
     storage: AsyncStorage,
-    whitelist: ['pending'],
+    whitelist: ['data'],
   };
 
   const appReducer = combineReducers({

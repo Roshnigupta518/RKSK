@@ -17,6 +17,7 @@ import { ENUM } from '../../../../utils/bgservices/enum'
 import { genderData } from '../../../../utils/staticJson'
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum'
 import { startBackgroundService } from '../../../../utils/bgservices/backgroundService'
+import PeerField from '../../../../components/peerField'
 
 const INITIALINPUT = {
     refer: '',
@@ -255,7 +256,7 @@ const RefferalDetails = ({ navigation, route }) => {
 
     const renderText = (label, value) => {
         return (
-            <Text style={[st.tx12, { marginTop: 5 }]}>{label}<Text style={st.txbold}>{value}</Text></Text>
+            <PeerField label={label} value={value} />
         )
     }
 

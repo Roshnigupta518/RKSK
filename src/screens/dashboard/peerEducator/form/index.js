@@ -16,6 +16,7 @@ import useNetworkStatus from '../../../../hooks/networkStatus'
 import { activityPlace, genderData, activityType, moduleData, comicBooks, activityToDo, activityDuration, contentUse } from '../../../../utils/staticJson'
 import CustomMultiSelect from '../../../../components/customMultiselect'
 import { getLabelsFromValues } from '../../../../utils/helper'
+import PeerField from '../../../../components/peerField'
 
 const INITIALINPUT = {
   district: '',
@@ -69,6 +70,8 @@ const PeerEducatorForm = ({ navigation }) => {
 
   const userLogin = useAppSelector(state => state.login.data);
   const peerEducatorDetails = useAppSelector(state => state.peerEducatorList.data);
+
+  // console.log({peerEducatorDetails})
 
   const isTrainer = userLogin?.role === 'TrainerUser';
   const isPeerEducator = userLogin?.role === 'Peer Educater';
@@ -146,16 +149,16 @@ const PeerEducatorForm = ({ navigation }) => {
         ashaName: String(peerEducatorDetails.ashaId || ''),
         village: String(peerEducatorDetails.villageId || ''),
         sathiyaName: String(peerEducatorDetails.id || ''),
-        gender: mapGenderToValue(peerEducatorDetails.gender, genderByPeerEducator[peerEducatorDetails.id] || [])
+        gender: peerEducatorDetails.gender,
       }));
       
       // 🔁 Cascade API calls to populate dropdowns
-      dispatch(fetchMasters({ flag: 3, id: peerEducatorDetails.districtId })); // block
-      dispatch(fetchMasters({ flag: 4, id: peerEducatorDetails.blockId }));    // asha sahyogi
-      dispatch(fetchMasters({ flag: 7, id: peerEducatorDetails.ashaFacilitatorId })); // asha
-      dispatch(fetchMasters({ flag: 8, id: peerEducatorDetails.ashaId }));     // village
-      dispatch(fetchMasters({ flag: 13, id: peerEducatorDetails.ashaId }));    // peer educator
-      dispatch(fetchMasters({ flag: 14, id: peerEducatorDetails.id }));        // gender
+      // dispatch(fetchMasters({ flag: 3, id: peerEducatorDetails.districtId })); // block
+      // dispatch(fetchMasters({ flag: 4, id: peerEducatorDetails.blockId }));    // asha sahyogi
+      // dispatch(fetchMasters({ flag: 7, id: peerEducatorDetails.ashaFacilitatorId })); // asha
+      // dispatch(fetchMasters({ flag: 8, id: peerEducatorDetails.ashaId }));     // village
+      // dispatch(fetchMasters({ flag: 13, id: peerEducatorDetails.ashaId }));    // peer educator
+      // dispatch(fetchMasters({ flag: 14, id: peerEducatorDetails.id }));        // gender
     }
   }, [isPeerEducator, peerEducatorDetails]);
   
@@ -310,6 +313,7 @@ const PeerEducatorForm = ({ navigation }) => {
   };  
 
   const onSave = () => {
+    console.log({inputs})
     if (!validateForm()) return;
   
     const dataWithNames = {
@@ -406,7 +410,6 @@ const PeerEducatorForm = ({ navigation }) => {
     ),
     'image'
   );
-
   
   return (
     <CustomContainer>
@@ -416,7 +419,10 @@ const PeerEducatorForm = ({ navigation }) => {
         style={{ flex: 1 }}
         keyboardShouldPersistTaps='handled'>
         <CustomContent>
+         
           <View>
+          {!isPeerEducator&&
+            <View>
             {BASIC_PICKERS.map(item => {
               const shouldDisable =
                 isPeerEducator && item.disableForPE;
@@ -470,6 +476,20 @@ const PeerEducatorForm = ({ navigation }) => {
                 />
               );
             })}
+            </View>
+            }
+
+            {isPeerEducator&&( 
+                <View style={st.card}>
+                  <PeerField label="जिला" value={peerEducatorDetails.districtId} />
+                  <PeerField label="ब्लॉक" value={peerEducatorDetails.blockId} />
+                  <PeerField label="आशा सुपरवाइजर का नाम" value={peerEducatorDetails.ashaFacilitatorId} />
+                  <PeerField label="आशा का नाम" value={peerEducatorDetails.ashaId} />
+                  <PeerField label="ग्राम का नाम" value={peerEducatorDetails.villageId} />
+                  <PeerField label="साथिया का नाम" value={peerEducatorDetails.peerEducatorName} />
+                  <PeerField label="लिंग" value={peerEducatorDetails.gender} />
+                </View>
+            )} 
 
             <CustomDatePicker
               label="गतिविधि की तारीख"
@@ -493,7 +513,7 @@ const PeerEducatorForm = ({ navigation }) => {
 
           </View>
 
-          <View style={[st.card, st.mt_10]}>
+          <View style={[st.card]}>
             <Text style={[st.tx14, st.txbold]}>प्रतिभागियों की संख्या *</Text>
 
             {PARTICIPANTS.map(item => (

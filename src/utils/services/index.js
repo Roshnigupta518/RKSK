@@ -6,10 +6,12 @@ import { setActivityPlan } from "../../redux/slices/ActivityPlan";
 import { setPeerEducatorList } from "../../redux/slices/peerEducatorList";
 import { setLocalMasters } from "../../redux/slices/Masters";
 import { saveToLocal } from "./storage";
-import { setPeerReferralList, updateSavePeerReferralSyncStatus } from "../../redux/slices/ReferralList";
+import { incrementPeerRetryCount, removePeerReferralByClientId, setPeerReferralList, updateSavePeerReferralSyncStatus } from "../../redux/slices/ReferralList";
 import { getSavedPeerEducatorNotStarted } from '../../redux/store/getState';
 import { ENUM } from "../bgservices/enum";
 import Toast from "react-native-toast-message";
+import { syncTaskName } from "../../utils/bgservices/backgroundTaskEnum";
+import { startBackgroundService } from '../bgservices/backgroundService' 
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -102,20 +104,43 @@ export const getPeerEducatorListHandle = async() => {
 }
 }
 
-export const getPeerEducatorReferralListHandle = async() => {
+export const getPeerEducatorReferralListHandle = async () => {
   try {
+    const state = store.getState().peerReferralList;
+    const localList = state.data || [];
+
     const url = `${API.GET_PEEREDUCATOR_REFERRAL_LIST}`;
     const result = await getApi(url);
+
     if (result?.status === 200) {
-      store.dispatch(setPeerReferralList(result.data))
-    } else {
-      console.warn('getPeerEducatorReferralListHandle Unexpected response:', result);
+      const serverList = Array.isArray(result.data) ? result.data : [];
+
+      const serverIds = new Set(serverList.map(i => i.clientId));
+
+      // sirf unsynced local items rakho
+      const offlineItems = localList.filter(item =>
+        (item.syncStatus === ENUM.SERVERSTATUS.NOTSTARTED ||
+         item.syncStatus === ENUM.SERVERSTATUS.FAILED ||
+         item.syncStatus === ENUM.SERVERSTATUS.INPROGRESS) &&
+        !serverIds.has(item.clientId)
+      );
+
+      const mergedList = [
+        ...serverList.map(s => ({
+          ...s,
+          syncStatus: ENUM.SERVERSTATUS.COMPLETED,
+          retryCount: 0,
+        })),
+        ...offlineItems,
+      ];
+
+      store.dispatch(setPeerReferralList(mergedList));
     }
   } catch (e) {
     handleAPIErrorResponse(e);
-    return [];
   }
-}
+};
+
 
 const mapToPickerFormat = (arr = []) =>
   arr.map(item => ({
@@ -258,6 +283,7 @@ export const saveSinglePeerEducatorList = async (data) => {
         text2: "Data Saved successfully",
         props: { key: 'success' }, 
       });
+      startBackgroundService(syncTaskName.syncPeerEducatorReferralList)
     }
   } catch (e) {
     store.dispatch(incrementPeerRetryCount({ clientId: data.clientId }));

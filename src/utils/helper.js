@@ -352,9 +352,9 @@ export const showIconName = (status) => {
 
 export const showIconColor = (status) => {
   if (status == ENUM.SERVERSTATUS.COMPLETED || status == 1) {
-    return colors.orange
+    return colors.blue
   } else if (status == ENUM.SERVERSTATUS.FAILED || status == 0) {
-    return colors.danger
+    return colors.red
   } else {
     return colors.grey
   }

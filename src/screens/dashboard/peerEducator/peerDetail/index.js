@@ -105,9 +105,7 @@ const PeerDetails = ({ navigation, route }) => {
                                 label="लिंग"
                                 value={getLabelsFromValues(ref.gender, genderData)}
                             />
-                            <PeerField label="साथिया का नाम" value={data.sathiyaName} />
                             <PeerField label="समस्या/विषय" value={ref.problem} />
-
                             {ref.referrals?.length > 0 && (
                                 <PeerField
                                     label="किसको रेफर किया"
