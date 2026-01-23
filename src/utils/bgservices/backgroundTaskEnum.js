@@ -1,5 +1,5 @@
 export const syncTaskName = {
-    all: 'All',
+    all: 'ALL',
     syncDashboard : 'dashboard',
     syncGetProfile : 'getProfile',
     syncGetAtpList : 'getAtpList',

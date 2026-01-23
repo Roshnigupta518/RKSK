@@ -249,6 +249,8 @@ export const savePeerEducatorFormDatafromRedux = async isSyncInProgrss => {
 };
 
 export const saveSinglePeerEducatorList = async (data) => {
+  const loginDetails = getLoginDetails()
+
   const MAX_RETRY = 3;
 
   const currentRetry = data?.retryCount || 0;
@@ -265,25 +267,56 @@ export const saveSinglePeerEducatorList = async (data) => {
   }));
 
   const url = `${API.SAVE_PEEREDICATOR_REFERRAL}`;
-  const formdata = new FormData();
-  formdata.append("data", data);
-
+  const formData = new FormData();
+  formData.append('DistrictId', data.district);
+  formData.append('BlockId', data.block);
+  formData.append('VillageId', data.village);
+  formData.append('AshaFacilitatorId', data.supervisorName);
+  formData.append('AshaId', data.ashaName);
+  formData.append('sathiyaName', data.sathiyaName);
+  formData.append('gender', data.gender);
+  formData.append('activityDate', data.activityDate);
+  formData.append('location', data.locationText);
+  formData.append('activityType', data.activityTypeText);
+  formData.append('module', data.moduleText);
+  formData.append('comicBook', data.comicBookText);
+  formData.append('activityMethod', data.activityMethodText);
+  formData.append('Participants', JSON.stringify(data.participants));
+  formData.append('duration', data.duration);
+  formData.append('materialUsed', data.materialUsedText);
+  formData.append('questions', data.questions);
+  formData.append('challenges', data.challenges);
+  formData.append('successStory', data.successStory);
+  formData.append('createby', loginDetails.userId);
+  formData.append('Boys_Girls_Reffered_Health_Treatment', data.refer);
+  formData.append('referralsJson', JSON.stringify(data.referrals));
+  formData.append('SyncStatus', data.syncStatus);
+  formData.append('ClientId', data.clientId);
+  formData.append('IP', data.IP);
+  formData.append('Referrals', '')
+  {
+    data?.attachment?.map((i) => {
+      formData.append('Photo', i);
+    })
+  }
+  formData.append('PhotoFilePath', '');
+  formData.append('SupervisorName',data.supervisorName)
+  
   try {
-    const result = await uploadApi(url, formdata);
-
-    if (result.status === 201) {
+    const result = await uploadApi(url, formData);
+    if (result.status === 200) {
       store.dispatch(updateSavePeerReferralSyncStatus({
         syncStatus: ENUM.SERVERSTATUS.COMPLETED,
         clientId: data.clientId,
       }));
-
+     
       Toast.show({
-        type: "myCustomType",
-        text1: "Success",
+        type: 'success',
+        text1: 'Success',
         text2: "Data Saved successfully",
-        props: { key: 'success' }, 
       });
-      startBackgroundService(syncTaskName.syncPeerEducatorReferralList)
+
+      // startBackgroundService(syncTaskName.syncPeerEducatorReferralList)
     }
   } catch (e) {
     store.dispatch(incrementPeerRetryCount({ clientId: data.clientId }));

@@ -19,6 +19,7 @@ import QueueSlice from '../slices/queueSlice';
 import PeerEducatorSlice from '../slices/peerEducatorList';
 import MastersSlice from '../slices/Masters';
 import PeerReferralList from '../slices/ReferralList';
+import ipAddressSlice from '../slices/getIpAddress';
 
 const authPersistConfig = {
     key: 'Login',
@@ -62,6 +63,13 @@ const authPersistConfig = {
     whitelist: ['data'],
   };
 
+  const ipAddressConfig = {
+    key: 'ipAddress',
+    storage: AsyncStorage,
+    whitelist: ['data'],
+  };
+  
+
   const appReducer = combineReducers({
     login: persistReducer(authPersistConfig, loginSlice),
     clockTime: persistReducer(clockPersistConfig, ClockTimeSlice),
@@ -70,11 +78,24 @@ const authPersistConfig = {
     queue: persistReducer(atpQueueConfig, QueueSlice),
     peerEducatorList: persistReducer(peerEducatorListConfig, PeerEducatorSlice),
     peerReferralList: persistReducer(peerReferralConfig, PeerReferralList),
+    getIpAddress: persistReducer(ipAddressConfig, ipAddressSlice),
     masters : MastersSlice
   })
 
+  const rootReducer = (state: any, action: any) => {
+    if (action.type === 'RESET_ALL') {
+      return appReducer(
+        {
+          disclaimerStatus: state?.disclaimerStatus,
+        },
+        action
+      );
+    }
+    return appReducer(state, action);
+  };
+
 export const store = configureStore({
-    reducer: appReducer,
+    reducer: rootReducer,
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware({
         serializableCheck: {

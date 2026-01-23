@@ -11,7 +11,7 @@ import IconStatus from '../../../components/iconStatus'
 
 const PeerEducator = ({ navigation }) => {
     const peerEducator = useAppSelector(state => state.peerReferralList.data);
-    const [peerEducatorList, setPeerEducatorList] = useState(peerEducator)
+    const [peerEducatorList, setPeerEducatorList] = useState([])
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -28,14 +28,20 @@ const PeerEducator = ({ navigation }) => {
         });
     }, []);
 
+    useEffect(() => {
+        setPeerEducatorList(peerEducator);
+    }, [peerEducator]);
+      
+
     const renderItem = ({ item, index }) => {
         return (
             <TouchableOpacity style={st.card} key={index}
              onPress={()=>navigation.navigate('PeerDetails',{data:item})}>
                 <IconStatus status={item.syncStatus} />
+                <Field label={'Id'} value={item.id || item.clientId} />
                 <Field label={'गतिविधि की तारीख'} value={dateFormat(item.activityDate)} />
                 <Field label={'ग्राम का नाम'} value={item.villageName} />
-                <Field label={'आशा का नाम'} value={item.ashaName} />
+                <Field label={'आशा का नाम'} value={item.ashaNameText} />
                 <Field label={'साथिया का नाम'} value={item.sathiyaName} />
             </TouchableOpacity>
         )
@@ -45,7 +51,7 @@ const PeerEducator = ({ navigation }) => {
         <View style={st.container}>
             <FlatList
                 data={peerEducatorList}
-                keyExtractor={(item, index) => index?.toString()}
+                keyExtractor={(item) => item.clientId || item.id?.toString()}
                 renderItem={renderItem}
                 contentContainerStyle={st.pd20}
                 ListEmptyComponent={() => <EmptyItem />}

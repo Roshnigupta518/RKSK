@@ -21,7 +21,7 @@ import PeerField from '../../../../components/peerField'
 
 const INITIALINPUT = {
     refer: '',
-    problem: '',
+    healthissue: '',
     gender: '',
     name: ''
 }
@@ -38,6 +38,7 @@ const RefferalDetails = ({ navigation, route }) => {
 
     const sheetRef = useRef();
     const dispatch = useAppDispatch()
+    const ipAddress = useAppSelector(state => state.getIpAddress.data);
 
     const handleOnchange = useCallback(
         (field) => (value) => {
@@ -153,17 +154,25 @@ const RefferalDetails = ({ navigation, route }) => {
             navigation.navigate('PeerEducator')
         } else {
             const newItem = {
-                id: Date.now().toString(),
+                // id: Date.now().toString(),
                 name: inputs.name,
-                gender: inputs.gender,
-                problem: inputs.problem,
+                gender: getLabelsFromValues(inputs.gender, genderData).join(''),
+                healthissue: inputs.healthissue,
                 referrals: selectedReferrals,
+                // IP: ipAddress
             };
 
             setReferralList(prev => [...prev, newItem]);
 
             // reset bottom sheet form
-            setInputs(INITIALINPUT);
+            // setInputs(INITIALINPUT);
+            setInputs(prev => ({
+                ...prev,
+                name: '',
+                gender: '',
+                healthissue: '',
+              }));
+              
             setSelectedReferrals([]);
         }
     }
@@ -192,8 +201,8 @@ const RefferalDetails = ({ navigation, route }) => {
             isValid = false;
         }
 
-        if (!inputs.problem?.trim()) {
-            newErrors.problem = 'Required';
+        if (!inputs.healthissue?.trim()) {
+            newErrors.healthissue = 'Required';
             isValid = false;
         }
 
@@ -202,6 +211,7 @@ const RefferalDetails = ({ navigation, route }) => {
     };
 
     const onSubmitAll = () => {
+        console.log({inputs})
         if (!isChecked) {
             showConsentError()
             return;
@@ -215,16 +225,14 @@ const RefferalDetails = ({ navigation, route }) => {
             syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
             createdAt: new Date().toISOString(),
             retryCount: 0,
+            IP: ipAddress
         };
 
         dispatch(setPeerReferralList(payload));
         startBackgroundService(syncTaskName.syncPeerEducatorFormData)
-        console.log('FINAL DATA:', payload);
-
-        // Example navigation
         navigation.navigate('MainApp', {
             screen: 'PeerEducator',
-            params: { referrals: payload },
+            // params: { referrals: payload },
         });
     };
 
@@ -266,7 +274,7 @@ const RefferalDetails = ({ navigation, route }) => {
                 {renderText('किशोर/किशोरी का नाम:', item.name)}
                 {renderText('लिंग:', getLabelsFromValues(item.gender, genderData))}
                 {renderText('किसको रेफर किया:', item.referrals.join(', '))}
-                {renderText('समस्या/विषय:', item.problem)}
+                {renderText('समस्या/विषय:', item.healthissue)}
             </View>
         )
     }
@@ -292,7 +300,7 @@ const RefferalDetails = ({ navigation, route }) => {
 
                 {inputs.refer == 2 && renderConsent()}
 
-                {inputs.refer &&
+                {(inputs.refer && !showRefferals)  &&
                     <Button title={inputs.refer == 2 ? 'Submit' : 'Add Referral'}
                         onPress={() => {
                             if (inputs.refer == 2) {
@@ -335,7 +343,11 @@ const RefferalDetails = ({ navigation, route }) => {
 
                     <MyInput label="किशोर/किशोरी का नाम *"
                         {...fieldProps('name')}
+                        maxLength={30}
                     />
+                    <Text style={[st.error, st.txAlignR]}>
+                        {inputs.name?.length || 0}/30
+                    </Text>
 
                     <CustomPicker
                         items={genderData}
@@ -359,8 +371,12 @@ const RefferalDetails = ({ navigation, route }) => {
                     </View>
 
                     <MyInput label="समस्या/विषय *"
-                        {...fieldProps('problem')}
+                        {...fieldProps('healthissue')}
+                        maxLength={100}
                     />
+                    <Text style={[st.error, st.txAlignR]}>
+                        {inputs.healthissue?.length || 0}/100
+                    </Text>
 
                     <Button title='Add'
                         onPress={() => onSaveHandle()}

@@ -55,17 +55,17 @@ const PeerDetails = ({ navigation, route }) => {
                     <PeerField label="आशा सुपरवाइजर का नाम" value={data.supervisorNameText} />
                     <PeerField label="लिंग" value={data.genderText} />
 
-                    <PeerField label="गतिविधि का स्थान" value={joinArray(data.locationText)} />
-                    <PeerField label="गतिविधि का प्रकार" value={joinArray(data.activityTypeText)} />
-                    <PeerField label="गतिविधि कैसे की?" value={joinArray(data.activityMethodText)} />
+                    <PeerField label="गतिविधि का स्थान" value={(data.locationText)} />
+                    <PeerField label="गतिविधि का प्रकार" value={(data.activityTypeText)} />
+                    <PeerField label="गतिविधि कैसे की?" value={(data.activityMethodText)} />
 
                     <PeerField label="प्रतिभागियों की संख्या" value={participantsText} />
 
                     <PeerField label="गतिविधि की अवधि" value={data.duration ? `${data.duration} मिनट` : '-'} />
 
-                    <PeerField label="सामग्री उपयोग" value={joinArray(data.materialUsedText)} />
-                    <PeerField label="कौन-सा मॉड्यूल/विषय लिया गया?" value={joinArray(data.moduleText)} />
-                    <PeerField label="कौन-सी कॉमिक्स बुक का उपयोग किया गया?" value={joinArray(data.comicBookText)} />
+                    <PeerField label="सामग्री उपयोग" value={(data.materialUsedText)} />
+                    <PeerField label="कौन-सा मॉड्यूल/विषय लिया गया?" value={(data.moduleText)} />
+                    <PeerField label="कौन-सी कॉमिक्स बुक का उपयोग किया गया?" value={(data.comicBookText)} />
 
                     <PeerField label="किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न" value={data.questions} />
                     <PeerField label="गतिविधि के दौरान आई चुनौतियां" value={data.challenges} />
@@ -73,7 +73,7 @@ const PeerDetails = ({ navigation, route }) => {
 
                     <PeerField
                         label="फोटो"
-                        value={data.attachment?.length ? `${data.attachment.length} फोटो` : 'कोई फोटो नहीं'}
+                        value={data.attachment?.length ? `${data.attachment?.length} फोटो` : 'कोई फोटो नहीं'}
                     />
 
                     {data.attachment?.length > 0 && (
@@ -105,7 +105,7 @@ const PeerDetails = ({ navigation, route }) => {
                                 label="लिंग"
                                 value={getLabelsFromValues(ref.gender, genderData)}
                             />
-                            <PeerField label="समस्या/विषय" value={ref.problem} />
+                            <PeerField label="समस्या/विषय" value={ref.healthissue} />
                             {ref.referrals?.length > 0 && (
                                 <PeerField
                                     label="किसको रेफर किया"

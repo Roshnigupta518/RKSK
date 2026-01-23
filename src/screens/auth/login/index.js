@@ -24,15 +24,20 @@ import {jwtDecode} from 'jwt-decode';
 import { wp } from '../../../global';
 import { onLogin } from '../../../utils/bgservices/tiggerfunction';
 import useNetworkStatus from '../../../hooks/networkStatus';
+import { setIpAddressLogin } from '../../../redux/slices/getIpAddress';
 
 const INITIALINPUT = {
   //Peer educator login
-  userName: 'JHBUA6099', 
-  password: '123456',
+  // userName: 'JHBUA6099', 
+  // password: '123456',
 
   //Trainer login
   // userName: 'Jhabua#F2',
   // password: 'Admin@123',
+
+ userName: '', 
+  password: '',
+
 };
 
 const Login = ({ navigation }) => {
@@ -142,6 +147,7 @@ const Login = ({ navigation }) => {
 
     const url = `${API.LOGIN}`;
     const hashedPassword = await convertSHA(inputs.password);
+    dispatch(setIpAddressLogin(ipAddress))
     const params = {
       "username": inputs.userName,
       "password": hashedPassword,

@@ -10,6 +10,8 @@ import { colors, size, family, wp, hp } from '../global';
 import st from '../global/styles'
 import ConfirmPopup from '../components/ExitModal';
 import { useState } from 'react';
+import {persistor, store} from '../redux/store';
+import { ENUM } from '../utils/bgservices/enum';
 
 const CustomSidebar = (props) => {
   const dispatch = useDispatch();
@@ -28,6 +30,39 @@ const CustomSidebar = (props) => {
       <Icon name="chevron-right" size={20} color={colors.gray} />
     </TouchableOpacity>
   );
+
+  const useHasPendingSync = () => {
+    // const activityQueue = useSelector(state => state.activityQueue?.data || []);
+    // const peerFormQueue = useSelector(state => state.peerEducatorForm?.data || []);
+    const peerReferralQueue = useSelector(state => state.peerReferralList?.data || []);
+  
+    return (
+      // activityQueue.some(i => i.syncStatus !== 'COMPLETED') ||
+      // peerFormQueue.some(i => i.syncStatus !== 'COMPLETED') ||
+      peerReferralQueue.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED)
+    );
+  };
+
+  const hasPendingSync = useHasPendingSync();
+
+  const logoutMessage = hasPendingSync
+  ? "Some data is not synced yet. If you logout now, your offline data will be permanently deleted. Please make sure your data is synced before logout."
+  : "Are you sure you want to logout?";
+
+  
+  const handleConfirm = () => {
+    dispatch(clearLogin())
+    setLogoutModal(false);
+     
+  store.dispatch({ type: 'RESET_ALL' });
+
+  persistor.purge().then(() => {
+    console.log('🔁 Persisted storage purged!');
+    // Navigate to login or reset app state
+  });
+
+  props.navigation.closeDrawer();
+  };
 
   return (
     <DrawerContentScrollView {...props}>
@@ -77,16 +112,11 @@ const CustomSidebar = (props) => {
       <ConfirmPopup
         visible={logoutModal}
         title="Logout"
-        message="Are you sure you want to logout?"
+        message={logoutMessage}
         confirmText="Logout"
         cancelText="Cancel"
         onCancel={() => setLogoutModal(false)}
-        onConfirm={() => {
-          setLogoutModal(false);
-          dispatch(clearLogin());
-          props.navigation.closeDrawer();
-        }}
-      />
+        onConfirm={handleConfirm}/>
 
 
     </DrawerContentScrollView>

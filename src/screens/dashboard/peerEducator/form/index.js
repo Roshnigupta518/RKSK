@@ -71,8 +71,6 @@ const PeerEducatorForm = ({ navigation }) => {
   const userLogin = useAppSelector(state => state.login.data);
   const peerEducatorDetails = useAppSelector(state => state.peerEducatorList.data);
 
-  // console.log({peerEducatorDetails})
-
   const isTrainer = userLogin?.role === 'TrainerUser';
   const isPeerEducator = userLogin?.role === 'Peer Educater';
 
@@ -148,8 +146,8 @@ const PeerEducatorForm = ({ navigation }) => {
         supervisorName: String(peerEducatorDetails.ashaFacilitatorId || ''),
         ashaName: String(peerEducatorDetails.ashaId || ''),
         village: String(peerEducatorDetails.villageId || ''),
-        sathiyaName: String(peerEducatorDetails.id || ''),
-        gender: peerEducatorDetails.gender,
+        sathiyaName: String(peerEducatorDetails.peerEducatorName || ''),
+        gender: peerEducatorDetails.genderId,
       }));
       
       // 🔁 Cascade API calls to populate dropdowns
@@ -320,20 +318,20 @@ const PeerEducatorForm = ({ navigation }) => {
       ...inputs,
       attachment,
   
-      districtName: pickerData.district.find(i => i.value == inputs.district)?.label || '',
-      blockName: pickerData.block.find(i => i.value == inputs.block)?.label || '',
-      supervisorNameText: pickerData.supervisor.find(i => i.value == inputs.supervisorName)?.label || '',
-      ashaName: pickerData.asha.find(i => i.value == inputs.ashaName)?.label || '',
-      villageName: pickerData.village.find(i => i.value == inputs.village)?.label || '',
-      sathiyaName: pickerData.sathiya.find(i => i.value == inputs.sathiyaName)?.label || '',
-      genderText: pickerData.gender.find(i => i.value == inputs.gender)?.label || '',
+      districtName: !isPeerEducator ? pickerData.district.find(i => i.value == inputs.district)?.label : peerEducatorDetails.districtName,
+      blockName: !isPeerEducator ? pickerData.block.find(i => i.value == inputs.block)?.label : peerEducatorDetails.blockName,
+      supervisorNameText: !isPeerEducator ? pickerData.supervisor.find(i => i.value == inputs.supervisorName)?.label : peerEducatorDetails.ashaSahyogi_Name,
+      ashaNameText: !isPeerEducator ? pickerData.asha.find(i => i.value == inputs.ashaName)?.label : peerEducatorDetails.ashaName,
+      villageName: !isPeerEducator ? pickerData.village.find(i => i.value == inputs.village)?.label : peerEducatorDetails.villageName,
+      sathiyaName: !isPeerEducator ? pickerData.sathiya.find(i => i.value == inputs.sathiyaName)?.label : peerEducatorDetails.peerEducatorName,
+      genderText: !isPeerEducator ? pickerData.gender.find(i => i.value == inputs.gender)?.label : peerEducatorDetails.gender,
   
-      locationText: getLabelsFromValues(inputs.location, pickerData.location),
-      activityTypeText: getLabelsFromValues(inputs.activityType, pickerData.activityType),
-      moduleText: getLabelsFromValues(inputs.module, pickerData.module),
-      comicBookText: getLabelsFromValues(inputs.comicBook, pickerData.comicBook),
-      activityMethodText: getLabelsFromValues(inputs.activityMethod, pickerData.activityMethod),
-      materialUsedText: getLabelsFromValues(inputs.materialUsed, contentUse),
+      locationText: getLabelsFromValues(inputs.location, pickerData.location)?.join(','),
+      activityTypeText: getLabelsFromValues(inputs.activityType, pickerData.activityType)?.join(','),
+      moduleText: getLabelsFromValues(inputs.module, pickerData.module)?.join(','),
+      comicBookText: getLabelsFromValues(inputs.comicBook, pickerData.comicBook)?.join(','),
+      activityMethodText: getLabelsFromValues(inputs.activityMethod, pickerData.activityMethod)?.join(','),
+      materialUsedText: getLabelsFromValues(inputs.materialUsed, contentUse)?.join(','),
     };
   
     navigation.navigate('RefferalDetails', { data: dataWithNames });
@@ -481,11 +479,11 @@ const PeerEducatorForm = ({ navigation }) => {
 
             {isPeerEducator&&( 
                 <View style={st.card}>
-                  <PeerField label="जिला" value={peerEducatorDetails.districtId} />
-                  <PeerField label="ब्लॉक" value={peerEducatorDetails.blockId} />
+                  <PeerField label="जिला" value={peerEducatorDetails.districtName} />
+                  <PeerField label="ब्लॉक" value={peerEducatorDetails.blockName} />
                   <PeerField label="आशा सुपरवाइजर का नाम" value={peerEducatorDetails.ashaFacilitatorId} />
-                  <PeerField label="आशा का नाम" value={peerEducatorDetails.ashaId} />
-                  <PeerField label="ग्राम का नाम" value={peerEducatorDetails.villageId} />
+                  <PeerField label="आशा का नाम" value={peerEducatorDetails.ashaName} />
+                  <PeerField label="ग्राम का नाम" value={peerEducatorDetails.villageName} />
                   <PeerField label="साथिया का नाम" value={peerEducatorDetails.peerEducatorName} />
                   <PeerField label="लिंग" value={peerEducatorDetails.gender} />
                 </View>

@@ -52,7 +52,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
     React.useCallback(() => {
       const backAction = () => {
         navigationAction()
-        return true; // default back रोक देता है
+        return true; 
       };
 
       const backHandler = BackHandler.addEventListener(
@@ -79,7 +79,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
     const todayDate = formatDate(date);
     setDate(todayDate);
   }, []);
-  // console.log({ activiyDetails, filterType })
+ 
   useEffect(() => {
     if (activiyDetails.clockinTime) {
       console.log({ activiyDetails, filterType })

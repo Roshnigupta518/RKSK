@@ -339,11 +339,11 @@ export const getSyncUI = (status) => {
 };
 
 export const showIconName = (status) => {
-  if (status == ENUM.SERVERSTATUS.COMPLETED || status == 1) {
+  if (status == ENUM.SERVERSTATUS.COMPLETED ) {
     return 'check'
-  } else if (status == ENUM.SERVERSTATUS.INPROGRESS || status == null || status == ENUM.SERVERSTATUS.NOTSTARTED) {
+  } else if (status == ENUM.SERVERSTATUS.INPROGRESS || status == ENUM.SERVERSTATUS.NOTSTARTED) {
     return 'clock'
-  } else if (status == ENUM.SERVERSTATUS.FAILED || status == 0) {
+  } else if (status == ENUM.SERVERSTATUS.FAILED ) {
     return 'x'
   } else {
     return ''

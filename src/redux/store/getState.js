@@ -6,9 +6,8 @@ export const isUserLoggedIn = () => {
   };
 
   export const getSavedPeerEducatorNotStarted = (isGetInProgress) => {
-    let savedPeerEducatorData = store
-      .getState()
-      .peerReferralList?.data
+    const data = store.getState().peerReferralList?.data
+    let savedPeerEducatorData = data
       ?.filter(res =>
         res.syncStatus === ENUM.SERVERSTATUS.NOTSTARTED ||
         res.syncStatus === ENUM.SERVERSTATUS.FAILED ||   // include failed
@@ -20,6 +19,8 @@ export const isUserLoggedIn = () => {
       const dateB = new Date(b.createdAt).getTime();
       return dateA < dateB ? 1 : -1;
     });
+
+    console.log({data, savedPeerEducatorData, isGetInProgress})
   
     return savedPeerEducatorData;
   };

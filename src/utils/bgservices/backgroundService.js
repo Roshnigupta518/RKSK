@@ -77,10 +77,15 @@ const checkIfTaskNotSyncedToday = async taskName => {
             let isSyncMasters = taskName == syncTaskName.syncMasters || syncAll;
             let isSyncPeerEducatorFormData = taskName == syncTaskName.syncPeerEducatorFormData || syncAll;
             // 
+
             if (isAnythingPendingForSync) {
               isSyncActivityQueue = await checkIfTaskNotSyncedToday(
                 syncTaskName.syncAcitivityQueue
               );
+
+              isSyncPeerEducatorFormData = await checkIfTaskNotSyncedToday(
+                syncTaskName.syncPeerEducatorFormData
+              )
             }
              
             // if (isSyncDashboard) {
@@ -126,6 +131,7 @@ const checkIfTaskNotSyncedToday = async taskName => {
 
             if(isSyncPeerEducatorFormData){
               const isSyncInProgress = taskName == syncTaskName.syncPeerEducatorFormData || isAnythingPendingForSync;
+              console.log('excuting isSyncPeerEducatorFormData', isSyncInProgress)
               await updateSyncNotification("Syncing atp peer educator form data...");
               await syncPeerEducatorFormData(isSyncInProgress)
               console.log('completed sync isSyncPeerEducatorFormData');

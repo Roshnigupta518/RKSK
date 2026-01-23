@@ -9,25 +9,46 @@ const PeerReferralListSlice = createSlice({
   initialState,
   reducers: {
     setPeerReferralList: (state, action) => {
-      const incoming = Array.isArray(action.payload)
+      const patients = Array.isArray(action.payload)
         ? action.payload
         : [action.payload];
     
-      state.data = incoming.map(item => ({
-        retryCount: item.retryCount ?? 0,   
-        ...item,
-      }));
+      patients.forEach(patient => {
+        const index = state.data.findIndex(
+          p => p.clientId === patient.clientId
+        );
     
+        const normalizedPatient = {
+          retryCount: patient.retryCount ?? 0,
+          ...patient,
+        };
+    
+        if (index >= 0) {
+          // 👇 Existing ko update karo
+          state.data[index] = {
+            ...state.data[index],
+            ...normalizedPatient,
+          };
+        } else {
+          // 👇 New ko push karo
+          state.data.push(normalizedPatient);
+        }
+      });
+    
+      // 👇 Latest first sort (createdAt ya fallback pe)
       state.data.sort((a, b) => {
-        const dateA = new Date(a.createdAt || 0).getTime();
-        const dateB = new Date(b.createdAt || 0).getTime();
+        const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
+        const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
         return dateB - dateA;
       });
-    },    
+    },
+    
 
     updateSavePeerReferralSyncStatus: (state, action) => {
       const { syncStatus, clientId } = action.payload;
+      console.log({syncStatus, clientId})
       const itemToUpdate = state.data?.find(item => item.clientId === clientId);
+      console.log({itemToUpdate})
       if (itemToUpdate) {
         itemToUpdate.syncStatus = syncStatus;
       }
