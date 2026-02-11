@@ -27,7 +27,7 @@ const INITIALINPUT = {
   sathiyaName: '',
   gender: '',
   activityDate: '',
-  location: [],
+  location: '',
   activityType: [],
   module: [],
   comicBook: [],
@@ -289,6 +289,11 @@ const PeerEducatorForm = ({ navigation }) => {
         tempErrors.participants[key] = 'Only number allowed';
         valid = false;
       }
+      else if (!Number.isInteger(Number(value))) {
+        if (!tempErrors.participants) tempErrors.participants = {};
+        tempErrors.participants[key] = 'Decimal not allowed';
+        valid = false;
+      }
       else if (Number(value) < 0) {
         if (!tempErrors.participants) tempErrors.participants = {};
         tempErrors.participants[key] = 'Value cannot be negative';
@@ -297,10 +302,10 @@ const PeerEducatorForm = ({ navigation }) => {
     });
 
     if (!attachment || attachment.length < 1) {
-      setAttachmentErr('कम से कम 1 फोटो अपलोड करें');
+      setAttachmentErr('Upload at least 1 photo');
       valid = false;
     } else if (attachment.length > 3) {
-      setAttachmentErr('अधिकतम 3 फोटो अपलोड कर सकते हैं');
+      setAttachmentErr('You can upload maximum 3 photos');
       valid = false;
     } else {
       setAttachmentErr('');
@@ -391,6 +396,10 @@ const PeerEducatorForm = ({ navigation }) => {
                     </Pressable>
                   </View>
                 ))}
+                {value?.length != 3&&
+                 <Pressable style={[st.plusbox]} onPress={handleMediaUpload}>
+                      <Icon name={'plus-circle'} size={20} color={colors.blue} />
+                  </Pressable>}
               </View>
             ) : (
               <View style={st.center}>
@@ -496,6 +505,12 @@ const PeerEducatorForm = ({ navigation }) => {
               maximumDate={new Date()}
               iconName={'calendar'}
               {...dateFieldProps('activityDate', 'date')}
+            />
+
+            <CustomPicker
+              label={'गतिविधि का स्थान *'}
+              items={pickerData.location}
+              {...pickerFieldProps('location')}
             />
 
             {PICKERS.map(p => (
@@ -626,7 +641,7 @@ const PARTICIPANTS = [
   { key: 'awc', label: 'आंगनवाड़ी कार्यकर्ता *' },
 ];
 const PICKERS = [
-  { key: 'location', label: 'गतिविधि का स्थान *' },
+  // { key: 'location', label: 'गतिविधि का स्थान *' },
   { key: 'activityType', label: 'गतिविधि का प्रकार *' },
   { key: 'module', label: 'कौन-सा मॉड्यूल /विषय लिया गया? *' },
   { key: 'comicBook', label: 'कौन-सी कॉमिक्स बुक का उपयोग किया गया? *' },

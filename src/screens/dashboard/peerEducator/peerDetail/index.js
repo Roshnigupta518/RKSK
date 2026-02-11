@@ -5,7 +5,7 @@ import { CustomContainer, CustomContent } from '../../../../components/container
 import PeerField from '../../../../components/peerField'
 import st from '../../../../global/styles'
 import { getLabelsFromValues } from '../../../../utils/helper'
-import { genderData } from '../../../../utils/staticJson'
+import { activityDuration, genderData } from '../../../../utils/staticJson'
 
 const formatDate = (iso) => {
     if (!iso) return '-'
@@ -44,29 +44,31 @@ const PeerDetails = ({ navigation, route }) => {
 
 
                 <View style={st.card}>
-                    <PeerField label="गतिविधि की तारीख" value={formatDate(data.activityDate)} />
-
-                    <PeerField label="ग्राम का नाम" value={data.villageName} />
-                    <PeerField label="आशा का नाम" value={data.ashaName} />
-                    <PeerField label="साथिया का नाम" value={data.sathiyaName} />
-
+                   
                     <PeerField label="जिला" value={data.districtName} />
                     <PeerField label="विकासखंड/ब्लॉक" value={data.blockName} />
                     <PeerField label="आशा सुपरवाइजर का नाम" value={data.supervisorNameText} />
+                    <PeerField label="आशा का नाम" value={data.ashaName} />
+                    <PeerField label="ग्राम का नाम" value={data.villageName} />
+                    <PeerField label="साथिया का नाम" value={data.sathiyaName} />
                     <PeerField label="लिंग" value={data.genderText} />
+                    <PeerField label="गतिविधि की तारीख" value={formatDate(data.activityDate)} />
 
                     <PeerField label="गतिविधि का स्थान" value={(data.locationText)} />
                     <PeerField label="गतिविधि का प्रकार" value={(data.activityTypeText)} />
+                    <PeerField label="कौन-सा मॉड्यूल/विषय लिया गया?" value={(data.moduleText)} />
+                    <PeerField label="कौन-सी कॉमिक्स बुक का उपयोग किया गया?" value={(data.comicBookText)} />
+
                     <PeerField label="गतिविधि कैसे की?" value={(data.activityMethodText)} />
 
                     <PeerField label="प्रतिभागियों की संख्या" value={participantsText} />
 
-                    <PeerField label="गतिविधि की अवधि" value={data.duration ? `${data.duration} मिनट` : '-'} />
+                    <PeerField label="गतिविधि की अवधि" 
+                    value={getLabelsFromValues(data.duration, activityDuration)}
+                     />
 
                     <PeerField label="सामग्री उपयोग" value={(data.materialUsedText)} />
-                    <PeerField label="कौन-सा मॉड्यूल/विषय लिया गया?" value={(data.moduleText)} />
-                    <PeerField label="कौन-सी कॉमिक्स बुक का उपयोग किया गया?" value={(data.comicBookText)} />
-
+                   
                     <PeerField label="किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न" value={data.questions} />
                     <PeerField label="गतिविधि के दौरान आई चुनौतियां" value={data.challenges} />
                     <PeerField label="सफलता/अच्छा अनुभव" value={data.successStory} />

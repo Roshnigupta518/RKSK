@@ -74,26 +74,27 @@ const ATPForm = ({ navigation, route }) => {
       const filledSubs =
         activiyDetails?.subacitivity
           ?.filter(item =>
-            item.photo_Path &&
-            item.video_Path &&
-            item.meeting_Participant &&
-            item.activity_Details &&
-            item.activity_DateTime &&
-            item.visit_Completion,
+            item.photo_Path ||
+            item.video_Path ||
+            item.meeting_Participant ||
+            item.activity_Details ||
+            item.activity_DateTime ||
+            item.visit_Completion
           )
-          ?.map(item => item.name) || [];
+          ?.map(item => item.id) || [];
   
       // 2️⃣ Convert subActivities into dropdown format
       let tempSubAct =
         activiyDetails?.subacitivity?.map(item => ({
           label: item.name,
-          value: item.name,
+          value: item.id ? item.id: 'Other' ,
         })) || [];
   
       // 3️⃣ Remove FILLED subactivities from dropdown
       tempSubAct = tempSubAct.filter(
         item => !filledSubs.includes(item.value)
       );
+      console.log({tempSubAct, filledSubs})
   
       // 4️⃣ Always include "Other" if not already filled
       const isOtherFilled = filledSubs.includes("Other");
@@ -108,6 +109,7 @@ const ATPForm = ({ navigation, route }) => {
     }
   }, [activiyDetails]);  
 
+  
   const handleOnchange = useCallback(
     (field) => (value) => {
       setInputs((prev) => {
@@ -181,7 +183,7 @@ const ATPForm = ({ navigation, route }) => {
         <Pressable onPress={handleMediaUpload}>
           <View style={[st.photoContainer, { borderColor: error ? colors.red : '#ccc' }]}>
             {value ? (
-              <Image source={{ uri: value.uri }} style={st.imageSty} />
+              <Image source={{ uri: value.uri }} style={[st.imageSty,{width:'100%'}]} />
             ) : (
               <View style={st.center}>
                 <Icon name={'camera'} size={20} color={colors.lightGrey} />
@@ -206,7 +208,7 @@ const ATPForm = ({ navigation, route }) => {
           <View style={[st.photoContainer, { borderColor: error ? colors.red : '#ccc' }]}>
             {value ? (
               <Video source={{ uri: value.uri }} 
-              style={st.imageSty} 
+              style={[st.imageSty,{width:'100%'}]} 
               controls 
               paused={paused}
               />
@@ -316,128 +318,144 @@ const ATPForm = ({ navigation, route }) => {
 
     } else if (error == 'permissionDenied') {
       permissionHandle()
+    } else{
+      Alert.alert(
+        'Location Not Captured',
+        'We could not detect your location. Please try again after moving to an open area.'
+      );
     }
   }
 
   const onSave = async () => {
     if (isLoading) return;
-    
-    setIsLoading(true)
-
-    const isValid = validateForm();
-    if (!isValid) {
-      setIsLoading(false);  
-      return;
-    }
-
-    console.log('Form data is valid:', inputs, attachment, attachedVideo);
-    const datePart = moment(inputs.date);
-    const timePart = moment(inputs.time);
-
-    const combined = moment(datePart)
-      .set({
+  
+    try {
+      setIsLoading(true);
+  
+      const isValid = validateForm();
+      if (!isValid) return;
+  
+      const datePart = moment(inputs.date);
+      const timePart = moment(inputs.time);
+  
+      const combined = moment(datePart).set({
         hour: timePart.hour(),
         minute: timePart.minute(),
         second: timePart.second(),
       });
-
-    const ActivityDateTime = combined.format('YYYY-MM-DD HH:mm:ss');
-
-    if (!location?.latitude && !location?.longitude) {
-      locationHandle();
-      setIsLoading(false);   // 🔥 important
-      return;
-    }
-
-   // 👇 Get existing subacitivity array (preserve others)
-  const existingSubs = activiyDetails?.subacitivity || [];
-
-  // 👇 Create subactivity array only if visit_Purpose == 2
-  let subactivityArray = [...existingSubs];  // Start with existing to preserve unfilled ones
-
-    if (inputs.planedActivity == 2) {
-
-      let subObj = {
-        name: inputs.selectedSubActivity,           // Always store selected name
-        photo_Path: attachment,
-        video_Path: attachedVideo,
-        meeting_Participant: inputs.meetings?.toString(),
-        activity_Details: inputs.activityDetails,
-        other_MeetingParticipant: inputs.other,
-        latitude: location.latitude,
-        longititude: location.longitude,
-        subacitivity_Id: generateclientID(userLogin.userId),
-      };
-
-      // If selected subactivity is OTHER → add this extra key
-      if (inputs.selectedSubActivity === "Other") {
-        subObj.SubActivity_Other = inputs.other_subActivity;   // <-- ADD
+  
+      const ActivityDateTime = combined.format('YYYY-MM-DD HH:mm:ss');
+  
+      // 🔥 Location check
+      if (!location?.latitude && !location?.longitude) {
+        locationHandle();
+        return;
       }
-
-      // If Meeting Participant includes Other
-      if (inputs.meetings?.includes("Other")) {
-        subObj.other_MeetingParticipant = inputs.other;        // <-- Already correct
-      }
-
-      // 🔥 MERGE LOGIC: Update existing or append new
-        const selectedIndex = existingSubs.findIndex(sub => sub.name?.trim() == inputs.selectedSubActivity?.trim());
+  
+      const existingSubs = activiyDetails?.subacitivity || [];
+      let subactivityArray = [...existingSubs];
+      
+      if (inputs.planedActivity == 2) {
+         console.log({subactivityArray})
+        const selectedSubActivityObj = subactivityArray.find(
+          item => item.id === inputs.selectedSubActivity
+        );
+      
+        const selectedLabel = selectedSubActivityObj?.name || '';
+  
+        let subObj = {
+          id: inputs.selectedSubActivity,
+          name: selectedLabel,
+          photo_Path: attachment,
+          video_Path: attachedVideo,
+          meeting_Participant: inputs.meetings?.toString(),
+          activity_Details: inputs.activityDetails,
+          other_MeetingParticipant: inputs.other,
+          latitude: location.latitude,
+          longititude: location.longitude,
+          subacitivity_Id: generateclientID(userLogin.userId),
+          activity_DateTime: ActivityDateTime,
+          visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
+        };
+  
+        if (inputs.selectedSubActivity === "Other") {
+          subObj.SubActivity_Other = inputs.other_subActivity;
+        }
+  
+        if (inputs.meetings?.includes("Other")) {
+          subObj.other_MeetingParticipant = inputs.other;
+        }
+  
+        const selectedIndex = existingSubs.findIndex(
+          sub => sub.id == inputs.selectedSubActivity
+        );
         console.log({selectedIndex})
+  
         if (selectedIndex !== -1) {
-          // Update existing subactivity (e.g., Activity1)
-          subactivityArray[selectedIndex] = { 
-            ...existingSubs[selectedIndex],  // Preserve any other fields if needed
-            ...subObj 
+          subactivityArray[selectedIndex] = {
+            ...existingSubs[selectedIndex],
+            ...subObj
           };
         } else {
-          // Append new (e.g., "Other" if not exists)
           subactivityArray.push(subObj);
         }
-    }
-
-    const params = {
-      activity_DateTime: ActivityDateTime,
-      activity_Details: inputs.activityDetails,
-      Address: locationArea,
-      Latitude: location.latitude,
-      Longitude: location.longitude,
-      meeting_Participant: inputs.meetings?.toString(),
-      other_MeetingParticipant: inputs.other,
-      photo_Path: attachment,
-      PlannedActivity: inputs.planedActivity,
-      video_Path: attachedVideo,
-      visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
-      other_Activity: inputs.other_Activity,
-      CreatedBy: userLogin.userId,
-      clientId: generateclientID(userLogin.userId),
-      selectedSubActivity: inputs.selectedSubActivity,
-      Subactivity_Other: inputs.other_subActivity,
-      // ADD THIS
-      subacitivity: subactivityArray
-    }
-
-    dispatch(updateActivityPlanItem({
-      atP_Id: activiyDetails.atP_Id,
-      newData: params
-    }));
-
-    dispatch(addToQueue({
-      type: "FORM",
-      payload: {
-        atP_Id: activiyDetails.atP_Id,
-        ...params
       }
-    }));
+  
+      const params = {
+        activity_DateTime: ActivityDateTime,
+        activity_Details: inputs.activityDetails,
+        Address: locationArea,
+        Latitude: location.latitude,
+        Longitude: location.longitude,
+        meeting_Participant: inputs.meetings?.toString(),
+        other_MeetingParticipant: inputs.other,
+        photo_Path: attachment,
+        PlannedActivity: inputs.planedActivity,
+        video_Path: attachedVideo,
+        visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
+        other_Activity: inputs.other_Activity,
+        CreatedBy: userLogin.userId,
+        clientId: generateclientID(userLogin.userId),
+        selectedSubActivity: inputs.selectedSubActivity,
+        Subactivity_Other: inputs.other_subActivity,
+        subacitivity: subactivityArray
+      };
 
-    await reStartBackgroundService(syncTaskName.syncAcitivityQueue);
-
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'ATPLogin', params: { atP_Id: activiyDetails.atP_Id }, }],
-    });
-
-    setIsLoading(false)
-  };
-
+      console.log({params})
+  
+      dispatch(updateActivityPlanItem({
+        atP_Id: activiyDetails.atP_Id,
+        newData: params
+      }));
+  
+      dispatch(addToQueue({
+        type: "FORM",
+        payload: {
+          atP_Id: activiyDetails.atP_Id,
+          ...params
+        }
+      }));
+  
+      await reStartBackgroundService(syncTaskName.syncAcitivityQueue);
+  
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'ATPLogin', params: { atP_Id: activiyDetails.atP_Id } }],
+      });
+  
+    } catch (error) {
+      console.log("onSave Error:", error);
+  
+      Alert.alert(
+        "Something went wrong",
+        "Unable to save data. Please try again."
+      );
+  
+    } finally {
+      setIsLoading(false);
+    }
+  };  
+  
   const handleMeetingChange = useCallback((val) => {
     Keyboard.dismiss();
     setInputs((prev) => ({

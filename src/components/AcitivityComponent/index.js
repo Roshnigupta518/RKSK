@@ -7,7 +7,7 @@ import FieldRow from '../FieldRow'
 import { getClockInUI, getPlanStatus, getSyncUI } from '../../utils/helper'
 import { ENUM } from '../../utils/bgservices/enum'
 
-const AcitivityComponent = ({ item, onPress }) => {
+const AcitivityComponent = ({ item, index, onPress }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -36,7 +36,7 @@ const AcitivityComponent = ({ item, onPress }) => {
       onPress={onPress}
       style={[st.card]}>
       <View style={st.mt_5} />
-      <Text style={styles.title}>{item.visit_Purpose}</Text>
+      <Text style={styles.title}>{index+1}. {item.visit_Purpose}</Text>
 
       <FieldRow>
         <Field label="Asha" value={item.ashaNameEnglish} />

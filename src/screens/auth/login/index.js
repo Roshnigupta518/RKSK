@@ -32,11 +32,12 @@ const INITIALINPUT = {
   // password: '123456',
 
   //Trainer login
-  // userName: 'Jhabua#F2',
-  // password: 'Admin@123',
+  userName: 'Basoda#M1', //Jhabua#F2
+  password: 'Admin@123',
 
- userName: '', 
-  password: '',
+  // live trainer login
+//  userName: 'Ghughri#M2', 
+//  password: 'Admin@123',
 
 };
 

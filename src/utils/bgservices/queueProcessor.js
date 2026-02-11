@@ -58,6 +58,7 @@ export const processQueueItem = async (item) => {
       formdata.append("Other_Activity", item.payload.other_Activity || '');
       formdata.append("SubActivity", item.payload.selectedSubActivity || '');
       formdata.append("Subactivity_Other", item.payload.Subactivity_Other || '');
+      formdata.append('CreatedBy', item.payload.CreatedBy)
        try{
       const response = await atpFormRequest(formdata);
       console.log({ response })

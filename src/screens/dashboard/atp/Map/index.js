@@ -30,6 +30,14 @@ const INITIALINPUT = {
   remark: '',
 };
 
+const DEFAULT_REGION = {
+  latitude: 23.2599,
+  longitude: 77.4126,
+  latitudeDelta: 0.5,
+  longitudeDelta: 0.5,
+};
+
+
 const App = ({ navigation, route }) => {
   const [date, setDate] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +48,7 @@ const App = ({ navigation, route }) => {
   const { activiyDetails } = route.params || {}
 
   const { location, locationArea } = useLocation();
+  // console.log({location})
   const dispatch = useDispatch()
 
   const userLogin = useSelector(state => state.login.data);
@@ -90,7 +99,8 @@ const App = ({ navigation, route }) => {
         clockinAddress: locationArea,
         clockin_lat: location.latitude,
         clockin_long: location.longitude,
-        updatedBy: userLogin.userId,
+        // updatedBy: userLogin.userId,
+        "createdBy": userLogin.userId,
         mode: 1
       };
   
@@ -125,7 +135,7 @@ const App = ({ navigation, route }) => {
       });
   
       setIsLoading(false);
-    }, 300); // 🔥 important
+    }, 300); 
   };
   
   const handleLogOut = async () => {
@@ -195,29 +205,34 @@ const App = ({ navigation, route }) => {
         style={{ flex: 1 }}
         keyboardShouldPersistTaps='handled'
       >
-        {location &&
+        {/* {location && */}
           <MapView
             style={styles.map}
             provider={PROVIDER_GOOGLE}
             showsUserLocation={true}
             followUserLocation={true}
-            initialRegion={{
-              latitude: location.latitude,
-              longitude: location.longitude,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
+            region={
+              location
+                ? {
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                  }
+                : DEFAULT_REGION
+            }
+            
           >
-            {location && (
+            {/* {location && ( */}
               <Marker
                 coordinate={{
-                  latitude: location.latitude || 0,
-                  longitude: location.longitude || 0,
+                  latitude: location?.latitude || 0,
+                  longitude: location?.longitude || 0,
                 }}
               />
-            )}
+            {/* )} */}
           </MapView>
-        }
+         {/* }  */}
 
         <View style={[st.pd_H20, st.mt_5]}>
           <View>
@@ -244,7 +259,7 @@ const App = ({ navigation, route }) => {
               </View>
               <View style={st.wdh30}>
                 <Button
-                  disabled={(locationArea) ? false : true}
+                  // disabled={(locationArea) ? false : true}
                   loading={isLoading}
                   title={
                     !activiyDetails?.clockinTime ||

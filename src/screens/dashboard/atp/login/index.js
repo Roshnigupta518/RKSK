@@ -208,14 +208,18 @@ const ATPDetailScreen = ({ navigation, route }) => {
                           <Text style={st.tx12}>{timeDifference}</Text>
 
                           <View style={[st.row, st.align_C]}>
+                            <View style={st.wdh10}>
                             <Icon
                               name={"arrow-down-left"}
-                              size={20}
+                              size={16}
                               color={colors.success}
                             />
-                            <Text style={[st.tx12, { color: colors.grey }]}>
+                            </View>
+                           <View style={st.wdh90}>
+                            <Text style={[st.tx12, { color: colors.grey }]} numberOfLines={1} adjustsFontSizeToFit>
                               {formatClockInDisplay(activiyDetails?.clockinTime)}
                             </Text>
+                            </View>
                           </View>
                         </View>
                       </View>
@@ -303,7 +307,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
               <Field label="Entry End Date and Time" value={activiyDetails.visit_Completion} />
             </FieldRow>
             <FieldRow>
-              <Field label="Planned Activity" value={activiyDetails.planned_Activity} />
+              <Field label="Planned Activity" value={activiyDetails.visit_Purpose} />
               <Field label="Other Planned Activity" value={activiyDetails.other_Activity} />
             </FieldRow>
             <FieldRow>

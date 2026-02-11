@@ -9,33 +9,67 @@ const activityPlanSlice = createSlice({
    name:'activityPlan',
    initialState,
    reducers: {
-    setActivityPlan: (state, action) => {
-      state.data = action.payload.map(item => {
-        const clockinSynced = item.mode >= 1;          // mode 1 or 2
-        const clockoutSynced = item.mode === 2;        // mode 2 only
-        const formSynced = item.activity_Id != null;   // form submitted
+    // setActivityPlan: (state, action) => {
+    //   state.data = action.payload.map(item => {
+    //     const clockinSynced = item.mode >= 1;          // mode 1 or 2
+    //     const clockoutSynced = item.mode === 2;        // mode 2 only
+    //     const formSynced = item.activity_Id != null;   // form submitted
 
-        const clockinSyncStatus =
-      item.mode >= 1 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
+    //     const clockinSyncStatus =
+    //   item.mode >= 1 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
 
-    const clockoutSyncStatus =
-      item.mode === 2 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
+    // const clockoutSyncStatus =
+    //   item.mode === 2 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
 
-    const formSyncStatus =
-      item.activity_Id != null ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
+    // const formSyncStatus =
+    //   item.activity_Id != null ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
     
-        return {
-          ...item,
-          clockinSynced,
-          clockoutSynced,
-          formSynced,
-          clockinSyncStatus,
-          clockoutSyncStatus,
-          formSyncStatus,
-        };
-      });
-    },
+    //     return {
+    //       ...item,
+    //       clockinSynced,
+    //       clockoutSynced,
+    //       formSynced,
+    //       clockinSyncStatus,
+    //       clockoutSyncStatus,
+    //       formSyncStatus,
+    //     };
+    //   });
+    // },
 
+   
+    setActivityPlan: (state, action) => {
+
+      const serverItems = action.payload.map(item => ({
+        ...item,
+        clockinSynced: item.mode >= 1,
+        clockoutSynced: item.mode === 2,
+        formSynced: item.activity_Id != null,
+        clockinSyncStatus:
+          item.mode >= 1 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING,
+        clockoutSyncStatus:
+          item.mode === 2 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING,
+        formSyncStatus:
+          item.activity_Id != null ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING,
+      }));
+    
+      const localMap = new Map(
+        state.data.map(item => [item.atP_Id, item])
+      );
+    
+      serverItems.forEach(serverItem => {
+    
+        if (!localMap.has(serverItem.atP_Id)) {
+          // ✅ Only NEW item add
+          localMap.set(serverItem.atP_Id, serverItem);
+        }
+    
+        // ❌ If already exists → DO NOTHING
+        // Local data remains untouched
+      });
+    
+      state.data = Array.from(localMap.values());
+    },
+   
     updateActivityPlanItem: (state, action) => {
       const { atP_Id, newData } = action.payload;
     

@@ -39,7 +39,6 @@ export const atpFormRequest = async (data) => {
   try {
     const url = `${API.ATP_POST}`;
     const result = await uploadApi(url, data);
-    
     if (result?.status === 200) {
       return result.data; 
     } else {
@@ -309,12 +308,14 @@ export const saveSinglePeerEducatorList = async (data) => {
         syncStatus: ENUM.SERVERSTATUS.COMPLETED,
         clientId: data.clientId,
       }));
-     
+    
       Toast.show({
-        type: 'success',
-        text1: 'Success',
+        type: "myCustomType",
+        text1: "Success",
         text2: "Data Saved successfully",
-      });
+        position: 'bottom',
+        props: { key: 'success' },
+    });
 
       // startBackgroundService(syncTaskName.syncPeerEducatorReferralList)
     }

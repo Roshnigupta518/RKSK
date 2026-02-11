@@ -154,6 +154,16 @@ export default StyleSheet.create({
       borderColor:colors.lightGrey,
       borderRadius:5,
     },
+    plusbox:{
+      width:100,
+      height:100, 
+      borderRadius:5,
+      borderWidth:0.8,
+      borderColor:colors.lightGrey,
+      borderRadius:5,
+      justifyContent:'center',
+      alignItems:'center'
+    },
     warningBox:{
       padding:10, 
       flexDirection:'row',

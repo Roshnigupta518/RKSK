@@ -147,18 +147,31 @@ const ATPListScreen = ({ navigation }) => {
     const list = [...map.values()];
 
     // 🔥 SORTING LOGIC (newest first)
-    list.sort((a, b) => {
-      const getDate = (obj) =>
-        new Date(
-          obj.clockoutTime ||
-          obj.clockinTime ||
-          obj.visit_Start_Date ||
-          obj.createdDate ||
-          0
-        ).getTime();
+  list.sort((a, b) => {
+  const getDate = (obj) => {
 
-      return getDate(b) - getDate(a); // Descending
-    });
+    if (obj.clockoutTime) return new Date(obj.clockoutTime).getTime();
+
+    if (obj.clockinTime) return new Date(obj.clockinTime).getTime();
+
+    if (obj.createdDate) return new Date(obj.createdDate).getTime();
+
+    if (obj.visit_Start_Date) {
+      // convert DD-MM-YYYY HH:mm:ss → YYYY-MM-DDTHH:mm:ss
+      const parts = obj.visit_Start_Date.split(" ");
+      if (parts.length === 2) {
+        const [datePart, timePart] = parts;
+        const [dd, mm, yyyy] = datePart.split("-");
+        const iso = `${yyyy}-${mm}-${dd}T${timePart}`;
+        return new Date(iso).getTime();
+      }
+    }
+
+    return 0;
+  };
+
+  return getDate(b) - getDate(a);
+});
 
     return list;
   }, [activityPlanList]);
@@ -171,10 +184,11 @@ const ATPListScreen = ({ navigation }) => {
 
   console.log({ uniqueList })
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item, index }) => {
     return (
       <AcitivityComponent 
         item={item}
+        index={index}
         onPress={() => 
           navigation.navigate('ATPLogin', 
             { atP_Id: item.atP_Id, animation: 'none' }

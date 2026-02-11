@@ -90,17 +90,31 @@ const FilteredList = ({ navigation, route }) => {
 
     // 🔥 SORTING LOGIC (newest first)
     list.sort((a, b) => {
-      const getDate = (obj) =>
-        new Date(
-          obj.clockoutTime ||
-          obj.clockinTime ||
-          obj.visit_Start_Date ||
-          obj.createdDate ||
-          0
-        ).getTime();
-
-      return getDate(b) - getDate(a); // Descending
+      const getDate = (obj) => {
+    
+        if (obj.clockoutTime) return new Date(obj.clockoutTime).getTime();
+    
+        if (obj.clockinTime) return new Date(obj.clockinTime).getTime();
+    
+        if (obj.createdDate) return new Date(obj.createdDate).getTime();
+    
+        if (obj.visit_Start_Date) {
+          // convert DD-MM-YYYY HH:mm:ss → YYYY-MM-DDTHH:mm:ss
+          const parts = obj.visit_Start_Date.split(" ");
+          if (parts.length === 2) {
+            const [datePart, timePart] = parts;
+            const [dd, mm, yyyy] = datePart.split("-");
+            const iso = `${yyyy}-${mm}-${dd}T${timePart}`;
+            return new Date(iso).getTime();
+          }
+        }
+    
+        return 0;
+      };
+    
+      return getDate(b) - getDate(a);
     });
+    
 
     return list;
   }, [filteredList]);
@@ -111,8 +125,9 @@ const FilteredList = ({ navigation, route }) => {
       <FlatList
         data={uniqueList}
         keyExtractor={(item) => item.atP_Id.toString()}
-        renderItem={({ item }) => <AcitivityComponent
+        renderItem={({ item, index }) => <AcitivityComponent
           item={item}
+          index={index}
           onPress={() =>
             navigation.navigate('ATPLogin',
               { atP_Id: item.atP_Id, animation: 'none', filterType: filterType }
