@@ -32,13 +32,11 @@ const CustomSidebar = (props) => {
   );
 
   const useHasPendingSync = () => {
-    // const activityQueue = useSelector(state => state.activityQueue?.data || []);
-    // const peerFormQueue = useSelector(state => state.peerEducatorForm?.data || []);
+    const activityQueue = useSelector(state => state.queue?.pending || []);
     const peerReferralQueue = useSelector(state => state.peerReferralList?.data || []);
-  
+
     return (
-      // activityQueue.some(i => i.syncStatus !== 'COMPLETED') ||
-      // peerFormQueue.some(i => i.syncStatus !== 'COMPLETED') ||
+      activityQueue?.length > 0 ||
       peerReferralQueue.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED)
     );
   };

@@ -1,6 +1,6 @@
 import { API } from "../endpoints";
 import { getApi, postApi, postApiWithToken, uploadApi } from "../apicalls";
-import { handleAPIErrorResponse } from "../validations";
+import { handleAPIErrorResponse, TodayDate } from "../validations";
 import { store } from "../../redux/store";
 import { setActivityPlan } from "../../redux/slices/ActivityPlan";
 import { setPeerEducatorList } from "../../redux/slices/peerEducatorList";
@@ -12,6 +12,7 @@ import { ENUM } from "../bgservices/enum";
 import Toast from "react-native-toast-message";
 import { syncTaskName } from "../../utils/bgservices/backgroundTaskEnum";
 import { startBackgroundService } from '../bgservices/backgroundService' 
+import { setPeerEducatorId, setPeerEducatorReportCount } from "../../redux/slices/peerReportingCount";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -87,12 +88,14 @@ export const appUpdateRequest = async() =>{
 
 export const getPeerEducatorListHandle = async() => {
   const loginDetails = getLoginDetails()
-  if(loginDetails.role == 'Peer Educater'){
+  if(loginDetails.role == 'PeerEducater'){
   try {
     const url = `${API.GET_PEEREDUCATOR_LIST}?id=${loginDetails.peerEducatorId}`;
     const result = await getApi(url);
     if (result?.status === 200) {
+      console.log({getPeerEducatorListHandle: result.data.id})
       store.dispatch(setPeerEducatorList(result.data))
+      store.dispatch(setPeerEducatorId(result.data.id))
     } else {
       console.warn('getPeerEducatorListHandle Unexpected response:', result);
     }
@@ -139,7 +142,6 @@ export const getPeerEducatorReferralListHandle = async () => {
     handleAPIErrorResponse(e);
   }
 };
-
 
 const mapToPickerFormat = (arr = []) =>
   arr.map(item => ({
@@ -248,6 +250,7 @@ export const savePeerEducatorFormDatafromRedux = async isSyncInProgrss => {
 };
 
 export const saveSinglePeerEducatorList = async (data) => {
+  console.log({saveSinglePeerEducatorListapi: data})
   const loginDetails = getLoginDetails()
 
   const MAX_RETRY = 3;
@@ -280,7 +283,12 @@ export const saveSinglePeerEducatorList = async (data) => {
   formData.append('module', data.moduleText);
   formData.append('comicBook', data.comicBookText);
   formData.append('activityMethod', data.activityMethodText);
-  formData.append('Participants', JSON.stringify(data.participants));
+  formData.append('AWC',parseInt(data.participants.awc));
+  formData.append('Boys', parseInt(data.participants.boys));
+  formData.append('Girls', parseInt(data.participants.girls));
+  formData.append('Supervisor', parseInt(data.participants.supervisor));
+  formData.append('Asha', parseInt(data.participants.asha));
+  formData.append('CHO', parseInt(data.participants.cho));
   formData.append('duration', data.duration);
   formData.append('materialUsed', data.materialUsedText);
   formData.append('questions', data.questions);
@@ -299,14 +307,18 @@ export const saveSinglePeerEducatorList = async (data) => {
     })
   }
   formData.append('PhotoFilePath', '');
+  formData.append('TrainerId', loginDetails.trainerId || 0);
   formData.append('SupervisorName',data.supervisorName)
+  formData.append('PeerEducatorId', data?.sathiyaName);
   
   try {
     const result = await uploadApi(url, formData);
+    console.log('peerformresult', result)
     if (result.status === 200) {
       store.dispatch(updateSavePeerReferralSyncStatus({
         syncStatus: ENUM.SERVERSTATUS.COMPLETED,
         clientId: data.clientId,
+        id: result.data.message
       }));
     
       Toast.show({
@@ -337,6 +349,28 @@ export const saveSinglePeerEducatorList = async (data) => {
     handleAPIErrorResponse(e, 'save peer educator form data catch');
   }
 };
+
+export const getPeerReportingCount = async() => {
+  console.log('hi calling report count of peer educator')
+  const data = store.getState().peerReportingCount?.data;
+  console.log({data})
+  if(data?.peerEducatorId){
+  try {
+    const url = `${API.PEER_REPORT_COUNT}?PeerEducatorId=${data?.peerEducatorId}&date=${TodayDate()}`;
+    console.log({url})
+    const result = await getApi(url);
+    console.log({getPeerReportingCount:result})
+    if (result?.status === 200) {
+      store.dispatch(setPeerEducatorReportCount(result.data))
+    } else {
+      console.warn('getPeerEducatorListHandle Unexpected response:', result);
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+    return [];
+  }
+}
+}
 
 export const getDasboardDataHandle = async() => {
 

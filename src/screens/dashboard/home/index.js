@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState, useMemo } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, BackHandler, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, BackHandler, ScrollView, RefreshControl } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/Feather";
 import colors from '../../../global/theme'
@@ -9,9 +9,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import ExitModal from "../../../components/ExitModal";
 import { useAppSelector } from "../../../hooks";
 import { calculateDashboardCounts } from "../../../utils/helper";
+import { reStartBackgroundService } from "../../../utils/bgservices/backgroundService";
+import { syncTaskName } from "../../../utils/bgservices/backgroundTaskEnum";
 
 const Dashboard = ({ navigation }) => {
   const [exitModal, setExitModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false)
 
   const activityPlanList = useAppSelector(state => state.activityPlan.data);
 
@@ -55,10 +58,18 @@ const Dashboard = ({ navigation }) => {
     </TouchableOpacity>
   );
   
+  const handleRefresh = () => {
+    reStartBackgroundService(syncTaskName.all)
+  }
 
   return (
     <CustomContainer>
       {/* ---------------- Header Section ---------------- */}
+      <ScrollView style={st.flex} 
+       refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+      >
       <LinearGradient
         colors={["#0057A3", "#0079C8"]}
         style={styles.header}
@@ -107,7 +118,7 @@ const Dashboard = ({ navigation }) => {
           </View>
         </View>
       </View>
-
+      </ScrollView>
       <ExitModal
         visible={exitModal}
         title="Exit From RKSK MP"

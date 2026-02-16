@@ -1,6 +1,6 @@
 import { syncTaskName } from "./backgroundTaskEnum";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getDasboardDataHandle, getProfileDataHandle, getATPListRequest, getPeerEducatorListHandle, getMastersDataHandle, getPeerEducatorReferralListHandle } from "../services";
+import { getDasboardDataHandle, getProfileDataHandle, getATPListRequest, getPeerEducatorListHandle, getMastersDataHandle, getPeerEducatorReferralListHandle, getPeerReportingCount } from "../services";
 import { processQueue } from "./queueProcessor";
 import { savePeerEducatorFormDatafromRedux } from "../services";
 
@@ -18,6 +18,11 @@ export const syncProfileData = async () => {
     getProfileDataHandle();
     await setSyncStatus(syncTaskName.syncGetProfile);
 };
+
+export const syncPeerReportingCount = async() => {
+    getPeerReportingCount()
+    await setSyncStatus(syncTaskName.syncPeerReportingCount)
+}
 
 export const syncATPListData = async () => {
     getATPListRequest();

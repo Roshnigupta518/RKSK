@@ -20,6 +20,7 @@ import PeerEducatorSlice from '../slices/peerEducatorList';
 import MastersSlice from '../slices/Masters';
 import PeerReferralList from '../slices/ReferralList';
 import ipAddressSlice from '../slices/getIpAddress';
+import PeerReportingCountSlice from '../slices/peerReportingCount';
 
 const authPersistConfig = {
     key: 'Login',
@@ -79,7 +80,8 @@ const authPersistConfig = {
     peerEducatorList: persistReducer(peerEducatorListConfig, PeerEducatorSlice),
     peerReferralList: persistReducer(peerReferralConfig, PeerReferralList),
     getIpAddress: persistReducer(ipAddressConfig, ipAddressSlice),
-    masters : MastersSlice
+    masters : MastersSlice,
+    peerReportingCount: PeerReportingCountSlice
   })
 
   const rootReducer = (state: any, action: any) => {

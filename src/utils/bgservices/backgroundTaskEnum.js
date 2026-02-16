@@ -7,6 +7,7 @@ export const syncTaskName = {
     syncPeerEducatorList : 'syncPeerEducatorList',
     syncMasters : 'syncMasters',
     syncPeerEducatorReferralList : 'syncPeerEducatorReferralList',
-    syncPeerEducatorFormData : 'syncPeerEducatorFormData'
+    syncPeerEducatorFormData : 'syncPeerEducatorFormData',
+    syncPeerReportingCount: 'syncPeerReportingCount'
   };
   

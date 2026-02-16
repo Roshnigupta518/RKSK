@@ -9,7 +9,7 @@ const CustomContainer = ({children, style}) => {
 
 const CustomContent = ({children, style}) => {
   return (
-    <ScrollView
+    <ScrollView nestedScrollEnabled
       contentContainerStyle={{flexGrow: 1}}
       keyboardShouldPersistTaps={'handled'}>
       <View style={[styles.content, style]}>{children}</View>

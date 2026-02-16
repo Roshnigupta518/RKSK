@@ -18,7 +18,7 @@ const CustomMultiSelect = ({
 }) => {
   const hasError = typeof error === 'string' && error.length > 0;
   return (
-    <View style={styles.container}>
+    <View style={styles.container} pointerEvents={disable? 'none' : 'auto'}>
       
       {label && <Text style={[styles.label]}>{label}</Text>}
 
@@ -29,7 +29,7 @@ const CustomMultiSelect = ({
         onSelectedItemsChange={onSelectedItemsChange}
         selectedItems={selectedItems}
         selectText={placeholder}
-        searchInputPlaceholderText="Search..."
+        searchInputPlaceholderText="Select..."
         tagRemoveIconColor={colors?.blue || 'red'}
         tagBorderColor={colors?.blue || '#007bff'}
         tagTextColor={colors?.blue || '#007bff'}
@@ -41,11 +41,24 @@ const CustomMultiSelect = ({
         submitButtonColor={colors?.primary || '#007bff'}
         submitButtonText="OK"
         single={single}
-        styleDropdownMenuSubsection={[styles.dropdown, {borderColor:hasError?colors.red : '#ccc'}]}
+        styleDropdownMenuSubsection={[styles.dropdown,
+           {borderColor:hasError?colors.red : '#ccc', backgroundColor: disable ? colors.disabled : colors.white,}
+          ]}
         disabled={disable}
         iconColor={colors?.black || '#007bff'} 
         scrollEnabled={false}
         tagContainerStyle={{marginBottom:10, width:'95%'}}
+        textInputProps={{
+          editable: false
+        }}
+        styleInputGroup={{
+          height: 0,
+          opacity: 0
+        }}
+        styleListContainer={{
+          maxHeight: 300,
+          overflow: 'hidden'
+        }}
       />
 
       {error ? <Text style={st.error}>{error}</Text> : null}
@@ -68,7 +81,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     paddingLeft:15,
-    height:50
+    height:50,
   },
   error: {
     color: 'red',

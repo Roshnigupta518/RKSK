@@ -38,11 +38,11 @@ const PeerEducator = ({ navigation }) => {
             <TouchableOpacity style={st.card} key={index}
              onPress={()=>navigation.navigate('PeerDetails',{data:item})}>
                 <IconStatus status={item.syncStatus} />
-                <Field label={'Id'} value={item.id || item.clientId} />
+                <Field label={'गतिविधि क्रमांक'} value={item.id} />
                 <Field label={'गतिविधि की तारीख'} value={dateFormat(item.activityDate)} />
                 <Field label={'ग्राम का नाम'} value={item.villageName} />
-                <Field label={'आशा का नाम'} value={item.ashaNameText} />
-                <Field label={'साथिया का नाम'} value={item.sathiyaName} />
+                <Field label={'आशा का नाम'} value={item.ashaNameText || item.ashaName} />
+                <Field label={'साथिया का नाम'} value={item.sathiyaNameText || item.sathiyaName} />
             </TouchableOpacity>
         )
     }

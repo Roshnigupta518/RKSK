@@ -17,6 +17,9 @@ import { activityPlace, genderData, activityType, moduleData, comicBooks, activi
 import CustomMultiSelect from '../../../../components/customMultiselect'
 import { getLabelsFromValues } from '../../../../utils/helper'
 import PeerField from '../../../../components/peerField'
+import { setPeerEducatorId, clearPeerEducatorId } from '../../../../redux/slices/peerReportingCount'
+import { startBackgroundService } from '../../../../utils/bgservices/backgroundService'
+import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum'
 
 const INITIALINPUT = {
   district: '',
@@ -70,10 +73,12 @@ const PeerEducatorForm = ({ navigation }) => {
 
   const userLogin = useAppSelector(state => state.login.data);
   const peerEducatorDetails = useAppSelector(state => state.peerEducatorList.data);
-
+  const peerEducatorReportingCount = useAppSelector(state => state.peerReportingCount?.data?.reportingCount)
+console.log({peerEducatorDetails})
+  const isReportingCount = peerEducatorReportingCount === 1
   const isTrainer = userLogin?.role === 'TrainerUser';
-  const isPeerEducator = userLogin?.role === 'Peer Educater';
-
+  const isPeerEducator = userLogin?.role === 'PeerEducater';
+  
   const pickerData = {
     district: districtList,
     block: blockByDistrict[inputs.district] || [],
@@ -131,11 +136,6 @@ const PeerEducatorForm = ({ navigation }) => {
       }));
     }
   }, [blockList]);
-
-  const mapGenderToValue = (genderText, genderList) => {
-    const found = genderList.find(g => g.label === genderText);
-    return found ? found.value : '';
-  };
   
   useEffect(() => {
     if (isPeerEducator && peerEducatorDetails) {
@@ -146,9 +146,11 @@ const PeerEducatorForm = ({ navigation }) => {
         supervisorName: String(peerEducatorDetails.ashaFacilitatorId || ''),
         ashaName: String(peerEducatorDetails.ashaId || ''),
         village: String(peerEducatorDetails.villageId || ''),
-        sathiyaName: String(peerEducatorDetails.peerEducatorName || ''),
+        sathiyaName: String(peerEducatorDetails.id || ''),
         gender: peerEducatorDetails.genderId,
       }));
+
+      startBackgroundService(syncTaskName.syncPeerReportingCount)
       
       // 🔁 Cascade API calls to populate dropdowns
       // dispatch(fetchMasters({ flag: 3, id: peerEducatorDetails.districtId })); // block
@@ -157,6 +159,8 @@ const PeerEducatorForm = ({ navigation }) => {
       // dispatch(fetchMasters({ flag: 8, id: peerEducatorDetails.ashaId }));     // village
       // dispatch(fetchMasters({ flag: 13, id: peerEducatorDetails.ashaId }));    // peer educator
       // dispatch(fetchMasters({ flag: 14, id: peerEducatorDetails.id }));        // gender
+    }else{
+      dispatch(clearPeerEducatorId())
     }
   }, [isPeerEducator, peerEducatorDetails]);
   
@@ -328,7 +332,7 @@ const PeerEducatorForm = ({ navigation }) => {
       supervisorNameText: !isPeerEducator ? pickerData.supervisor.find(i => i.value == inputs.supervisorName)?.label : peerEducatorDetails.ashaSahyogi_Name,
       ashaNameText: !isPeerEducator ? pickerData.asha.find(i => i.value == inputs.ashaName)?.label : peerEducatorDetails.ashaName,
       villageName: !isPeerEducator ? pickerData.village.find(i => i.value == inputs.village)?.label : peerEducatorDetails.villageName,
-      sathiyaName: !isPeerEducator ? pickerData.sathiya.find(i => i.value == inputs.sathiyaName)?.label : peerEducatorDetails.peerEducatorName,
+      sathiyaNameText: !isPeerEducator ? pickerData.sathiya.find(i => i.value == inputs.sathiyaName)?.label : peerEducatorDetails.peerEducatorName,
       genderText: !isPeerEducator ? pickerData.gender.find(i => i.value == inputs.gender)?.label : peerEducatorDetails.gender,
   
       locationText: getLabelsFromValues(inputs.location, pickerData.location)?.join(','),
@@ -342,7 +346,6 @@ const PeerEducatorForm = ({ navigation }) => {
     navigation.navigate('RefferalDetails', { data: dataWithNames });
   };
   
-
   const ReadOnlyPicker = React.memo(
     ({ label, value, items = [], error, disabled = false, onValueChange }) => {
       return (
@@ -364,12 +367,12 @@ const PeerEducatorForm = ({ navigation }) => {
   };
 
   const AvatarPicker = WithImageUpload(
-    ({ handleMediaUpload, value, error, onRemove }) => (
-      <View>
+    ({ handleMediaUpload, value, error, onRemove, disabled }) => (
+      <View pointerEvents={disabled ? 'none' : 'auto'}>
         <Text style={st.tx12}>Photo Capture *</Text>
   
         <Pressable onPress={handleMediaUpload}>
-          <View style={[st.photoContainer, { borderColor: error ? colors.red : '#ccc' }]}>
+          <View style={[st.photoContainer, { borderColor: error ? colors.red : '#ccc', backgroundColor: disabled ? colors.disabled : colors.white, }]}>
             {value?.length > 0 ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
                 {value.map((img, index) => (
@@ -420,7 +423,7 @@ const PeerEducatorForm = ({ navigation }) => {
   
   return (
     <CustomContainer>
-      <CustomHeader title="Peer Educator Reporting" onBackPress={() => navigation.goBack()} />
+      <CustomHeader title="Peer educator (Saathiya) activity reporting" onBackPress={() => navigation.goBack()} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -473,11 +476,12 @@ const PeerEducatorForm = ({ navigation }) => {
 
                     if (item.key === 'sathiyaName') {
                       dispatch(fetchMasters({ flag: 14, id: val })); // Gender
-
+                      dispatch(setPeerEducatorId(val))
                       setInputs(prev => ({
                         ...prev,
                         gender: '',
                       }));
+                      startBackgroundService(syncTaskName.syncPeerReportingCount)
                     }
                   }}
                 />
@@ -486,7 +490,7 @@ const PeerEducatorForm = ({ navigation }) => {
             </View>
             }
 
-            {isPeerEducator&&( 
+            {isPeerEducator && ( 
                 <View style={st.card}>
                   <PeerField label="जिला" value={peerEducatorDetails.districtName} />
                   <PeerField label="ब्लॉक" value={peerEducatorDetails.blockName} />
@@ -498,6 +502,12 @@ const PeerEducatorForm = ({ navigation }) => {
                 </View>
             )} 
 
+            {isReportingCount &&
+              <View>
+                <Text style={[st.error, st.txAlignC]}>This peer educator data has been already filled for this date. </Text>
+              </View>
+            } 
+
             <CustomDatePicker
               label="गतिविधि की तारीख"
               placeholder=""
@@ -505,12 +515,14 @@ const PeerEducatorForm = ({ navigation }) => {
               maximumDate={new Date()}
               iconName={'calendar'}
               {...dateFieldProps('activityDate', 'date')}
+              disabled={true}
             />
 
             <CustomPicker
               label={'गतिविधि का स्थान *'}
               items={pickerData.location}
               {...pickerFieldProps('location')}
+              disabled={isReportingCount}
             />
 
             {PICKERS.map(p => (
@@ -521,6 +533,7 @@ const PeerEducatorForm = ({ navigation }) => {
                 placeholder=""
                 required
                 {...multiSelectFieldProps(p.key)}
+                disable={isReportingCount}
               />
             ))}
 
@@ -550,7 +563,8 @@ const PeerEducatorForm = ({ navigation }) => {
                       }
                     }}
                     keyboardType="numeric"
-                    error={errors.participants?.[item.key]}   // 🔥
+                    error={errors.participants?.[item.key]}   
+                    disabled={isReportingCount}
                   />
                 </View>
               </View>
@@ -563,6 +577,7 @@ const PeerEducatorForm = ({ navigation }) => {
             label={'गतिविधि की अवधि *'}
             placeholder=''
             {...pickerFieldProps('duration')}
+            disabled={isReportingCount}
           />
 
           <CustomMultiSelect
@@ -571,6 +586,7 @@ const PeerEducatorForm = ({ navigation }) => {
             placeholder=""
             required
             {...multiSelectFieldProps('materialUsed')}
+            disable={isReportingCount}
           />
 
           <MyInput label="किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न *"
@@ -580,6 +596,7 @@ const PeerEducatorForm = ({ navigation }) => {
             inputsty={{ height: 120 }}
             inputTxt={{ textAlignVertical: 'top' }}
             keyboardType="default"
+            disabled={isReportingCount}
           />
           <Text style={[st.error, st.txAlignR]}>
             {inputs.questions?.length || 0}/100
@@ -592,6 +609,7 @@ const PeerEducatorForm = ({ navigation }) => {
             inputsty={{ height: 120 }}
             inputTxt={{ textAlignVertical: 'top' }}
             keyboardType="default"
+            disabled={isReportingCount}
           />
           <Text style={[st.error, st.txAlignR]}>
             {inputs.challenges?.length || 0}/100
@@ -604,6 +622,7 @@ const PeerEducatorForm = ({ navigation }) => {
             inputsty={{ height: 120 }}
             inputTxt={{ textAlignVertical: 'top' }}
             keyboardType="default"
+            disabled={isReportingCount}
           />
           <Text style={[st.error, st.txAlignR]}>
             {inputs.successStory?.length || 0}/100
@@ -614,14 +633,14 @@ const PeerEducatorForm = ({ navigation }) => {
               error={attachmentErr}
               onUpload={uploadProfileToServer}
               onRemove={removeImage}
+              disabled={isReportingCount}
             />
 
           <CustomButton title='Next'
             onPress={() =>
               onSave()
-              // navigation.navigate('RefferalDetails')
             }
-            disabled={isLoading}
+            disabled={isLoading || isReportingCount}
             loading={isLoading}
           />
 
@@ -631,7 +650,8 @@ const PeerEducatorForm = ({ navigation }) => {
   )
 }
 
-export default PeerEducatorForm
+export default PeerEducatorForm;
+
 const PARTICIPANTS = [
   { key: 'boys', label: 'किशोर *' },
   { key: 'girls', label: 'किशोरी *' },

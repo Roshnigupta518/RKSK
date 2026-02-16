@@ -216,7 +216,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
                             />
                             </View>
                            <View style={st.wdh90}>
-                            <Text style={[st.tx12, { color: colors.grey }]} numberOfLines={1} adjustsFontSizeToFit>
+                            <Text style={[st.tx12,st.txAlignC, { color: colors.grey }]} numberOfLines={1} adjustsFontSizeToFit>
                               {formatClockInDisplay(activiyDetails?.clockinTime)}
                             </Text>
                             </View>

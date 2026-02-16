@@ -154,18 +154,15 @@ const RefferalDetails = ({ navigation, route }) => {
             navigation.navigate('PeerEducator')
         } else {
             const newItem = {
-                // id: Date.now().toString(),
                 name: inputs.name,
                 gender: getLabelsFromValues(inputs.gender, genderData).join(''),
                 healthissue: inputs.healthissue,
                 referrals: selectedReferrals,
-                // IP: ipAddress
             };
 
             setReferralList(prev => [...prev, newItem]);
 
             // reset bottom sheet form
-            // setInputs(INITIALINPUT);
             setInputs(prev => ({
                 ...prev,
                 name: '',
@@ -211,6 +208,7 @@ const RefferalDetails = ({ navigation, route }) => {
     };
 
     const onSubmitAll = () => {
+        setIsLoading(true)
         console.log({inputs})
         if (!isChecked) {
             showConsentError()
@@ -225,7 +223,8 @@ const RefferalDetails = ({ navigation, route }) => {
             syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
             createdAt: new Date().toISOString(),
             retryCount: 0,
-            IP: ipAddress
+            IP: ipAddress,
+            id: 0
         };
 
         dispatch(setPeerReferralList(payload));
@@ -234,10 +233,11 @@ const RefferalDetails = ({ navigation, route }) => {
             screen: 'PeerEducator',
             // params: { referrals: payload },
         });
+        setIsLoading(false)
     };
 
     const notAddedReferral = () => {
-
+        setIsLoading(true)
         if (!isChecked) {
             showConsentError()
             return;
@@ -251,6 +251,8 @@ const RefferalDetails = ({ navigation, route }) => {
             syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
             createdAt: new Date().toISOString(),
             retryCount: 0,
+            id: 0,
+            IP: ipAddress,
         };
 
         dispatch(setPeerReferralList(payload));
@@ -260,6 +262,7 @@ const RefferalDetails = ({ navigation, route }) => {
         navigation.navigate('MainApp', {
             screen: 'PeerEducator',
         });
+        setIsLoading(false)
     }
 
     const renderText = (label, value) => {
@@ -292,7 +295,7 @@ const RefferalDetails = ({ navigation, route }) => {
                 {!showRefferals &&
                     <CustomPicker
                         items={booleanData}
-                        label={'क्या किसी किशोर किशोरी  को स्वास्थ संबंदी जाँच /उपचार /परामर्श हेतु रेफर किया गया था।'}
+                        label={'क्या किसी किशोर किशोरी  को स्वास्थ सम्बन्धी जाँच /उपचार /परामर्श हेतु रेफर किया गया था।'}
                         placeholder=''
                         {...pickerFieldProps('refer')}
                     />

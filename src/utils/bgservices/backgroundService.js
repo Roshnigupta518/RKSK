@@ -3,7 +3,7 @@ import {syncTaskName} from './backgroundTaskEnum';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { isUserLoggedIn } from '../../redux/store/getState';
-import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn,syncPeerEducatorFormData, syncPeerEducatorList, syncMastersData, syncPeerEducatorReferralList } from './syncTask';
+import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn,syncPeerEducatorFormData, syncPeerEducatorList, syncMastersData, syncPeerEducatorReferralList, syncPeerReportingCount } from './syncTask';
 import { processQueue } from './queueProcessor';
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
@@ -70,6 +70,7 @@ const checkIfTaskNotSyncedToday = async taskName => {
           try {
             // let isSyncDashboard = taskName == syncTaskName.syncDashboard || syncAll;
             // let isSyncProfile = taskName == syncTaskName.syncGetProfile || syncAll;
+            let isSyncPeerCount = taskName == syncTaskName.syncPeerReportingCount || syncAll;
             let isSyncATPList = taskName == syncTaskName.syncGetAtpList || syncAll;
             let isSyncActivityQueue = taskName == syncTaskName.syncAcitivityQueue || syncAll;
             let isSyncPeerEducatorList = taskName == syncTaskName.syncPeerEducatorList || syncAll;
@@ -97,6 +98,11 @@ const checkIfTaskNotSyncedToday = async taskName => {
             //   console.log('executing sync isSyncProfile');
             //   await syncProfileData();
             // }
+
+            if(isSyncPeerCount){
+              console.log('executing sync isSyncPeerCount')
+              await syncPeerReportingCount()
+            }
 
             if(isSyncMasters) {
               console.log('executing sync isSyncMasters');

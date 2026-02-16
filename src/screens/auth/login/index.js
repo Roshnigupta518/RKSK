@@ -32,13 +32,15 @@ const INITIALINPUT = {
   // password: '123456',
 
   //Trainer login
-  userName: 'Basoda#M1', //Jhabua#F2
-  password: 'Admin@123',
+  // userName: 'Jhabua#F2', //Basoda#M1
+  // password: 'Admin@123',
 
   // live trainer login
-//  userName: 'Ghughri#M2', 
-//  password: 'Admin@123',
+  //  userName: 'Ghughri#M2', 
+  //  password: 'Admin@123',
 
+  userName: '', 
+  password: '',
 };
 
 const Login = ({ navigation }) => {

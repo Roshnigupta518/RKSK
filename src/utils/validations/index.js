@@ -41,3 +41,8 @@ export const dateFormat = (value) => {
   const date = moment(value).format('DD-MM-YYYY');
   return date;
 }
+
+export const TodayDate = () => {
+  const date = moment().format('YYYY-MM-DD');
+  return date;
+}

@@ -114,13 +114,13 @@ export const useLocation = () => {
         setLoading(false);
         isRequesting.current = false;
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 1000,
-        forceRequestLocation: true,
-        showLocationDialog: true,
-      }
+      // {
+      //   enableHighAccuracy: true,
+      //   timeout: 100000,
+      //   maximumAge: 1000,
+      //   forceRequestLocation: true,
+      //   showLocationDialog: true,
+      // }
     );
   };
 

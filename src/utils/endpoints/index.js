@@ -11,6 +11,7 @@ class Endpoints {
   GET_MASTER = this.baseUrl + 'Masters?'
   GET_PEEREDUCATOR_REFERRAL_LIST = this.baseUrl + 'PeerEducator/GetPeerEducatorReportinFormList'
   SAVE_PEEREDICATOR_REFERRAL = this.baseUrl + 'PeerEducator/PeerForm'
+  PEER_REPORT_COUNT = this.baseUrl + 'PeerEducator/GetPeerEducatorReportingEntryCount'
 }
 
 export const API = new Endpoints();

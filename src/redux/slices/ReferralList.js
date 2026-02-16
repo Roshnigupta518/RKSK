@@ -45,12 +45,13 @@ const PeerReferralListSlice = createSlice({
     
 
     updateSavePeerReferralSyncStatus: (state, action) => {
-      const { syncStatus, clientId } = action.payload;
-      console.log({syncStatus, clientId})
+      const { syncStatus, clientId, id } = action.payload;
+      console.log({syncStatus, clientId, id})
       const itemToUpdate = state.data?.find(item => item.clientId === clientId);
       console.log({itemToUpdate})
       if (itemToUpdate) {
         itemToUpdate.syncStatus = syncStatus;
+        itemToUpdate.id = id
       }
     },
 

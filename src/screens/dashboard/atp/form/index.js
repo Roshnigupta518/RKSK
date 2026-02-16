@@ -87,7 +87,7 @@ const ATPForm = ({ navigation, route }) => {
       let tempSubAct =
         activiyDetails?.subacitivity?.map(item => ({
           label: item.name,
-          value: item.id ? item.id: 'Other' ,
+          value: item.id ,
         })) || [];
   
       // 3️⃣ Remove FILLED subactivities from dropdown
@@ -97,13 +97,13 @@ const ATPForm = ({ navigation, route }) => {
       console.log({tempSubAct, filledSubs})
   
       // 4️⃣ Always include "Other" if not already filled
-      const isOtherFilled = filledSubs.includes("Other");
-      if (!isOtherFilled) {
-        const exists = tempSubAct.some(i => i.value === "Other");
-        if (!exists) {
-          tempSubAct.push({ label: "Other", value: "Other" });
-        }
-      }
+      // const isOtherFilled = filledSubs.includes("Other");
+      // if (!isOtherFilled) {
+      //   const exists = tempSubAct.some(i => i.value === "Other");
+      //   if (!exists) {
+      //     tempSubAct.push({ label: "Other", value: "Other" });
+      //   }
+      // }
        console.log({tempSubAct})
       setSubActivity(tempSubAct);
     }
