@@ -38,6 +38,10 @@ const AcitivityComponent = ({ item, index, onPress }) => {
       <View style={st.mt_5} />
       <Text style={styles.title}>{index+1}. {item.visit_Purpose}</Text>
 
+       <FieldRow>
+        <Field label="Atp Id" value={item.atP_Id} />
+      </FieldRow>
+
       <FieldRow>
         <Field label="Asha" value={item.ashaNameEnglish} />
         <Field label="Village" value={item.villageName} alignRight />

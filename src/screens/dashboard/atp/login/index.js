@@ -371,14 +371,15 @@ const ATPDetailScreen = ({ navigation, route }) => {
                       <View style={st.row}>
                         <View style={st.wdh48}>
                           <Text style={st.tx12}>Image</Text>
-                          <Image source={{ uri: environment.imageUrl + (item.photo_Path?.uri || item.photo_Path) }} style={st.imageSty} />
+                          <Image source={{ uri: item.photo_Path?.uri ? item.photo_Path?.uri : environment.imageUrl+item.photo_Path  }} style={st.imageSty} />
                         </View>
                         <View style={[st.wdh48, { marginLeft: '2%' }]}>
                           <Text style={st.tx12}>Video</Text>
                           {showVideo && item.video_Path && (
                             <View>
                               <Video
-                                source={{ uri: environment.imageUrl + (item.video_Path?.uri || item.video_Path) }}
+                                // source={{ uri: environment.imageUrl + (item.video_Path?.uri || item.video_Path) }}
+                                source={{uri: item.video_Path?.uri ? item.video_Path?.uri : environment.imageUrl+item.video_Path }}
                                 controls
                                 paused={isVideoPaused}
                                 style={st.imageSty}

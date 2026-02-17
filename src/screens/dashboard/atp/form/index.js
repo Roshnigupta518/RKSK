@@ -183,7 +183,23 @@ const ATPForm = ({ navigation, route }) => {
         <Pressable onPress={handleMediaUpload}>
           <View style={[st.photoContainer, { borderColor: error ? colors.red : '#ccc' }]}>
             {value ? (
+              <View>
               <Image source={{ uri: value.uri }} style={[st.imageSty,{width:'100%'}]} />
+              <Pressable
+              onPress={() => setAttachment(null)}
+              style={{
+                position: 'absolute',
+                top: -6,
+                right: -6,
+                backgroundColor: '#fff',
+                borderRadius: 10,
+                padding: 2,
+                elevation: 3,
+              }}
+            >
+              <Icon name="x-circle" size={18} color={colors.blue} />
+            </Pressable>
+           </View>
             ) : (
               <View style={st.center}>
                 <Icon name={'camera'} size={20} color={colors.lightGrey} />
@@ -207,11 +223,27 @@ const ATPForm = ({ navigation, route }) => {
         <Pressable onPress={handleMediaUpload}>
           <View style={[st.photoContainer, { borderColor: error ? colors.red : '#ccc' }]}>
             {value ? (
+              <View>
               <Video source={{ uri: value.uri }} 
               style={[st.imageSty,{width:'100%'}]} 
               controls 
               paused={paused}
               />
+              <Pressable
+              onPress={() => setAttachedVideo(null)}
+              style={{
+                position: 'absolute',
+                top: -6,
+                right: -6,
+                backgroundColor: '#fff',
+                borderRadius: 10,
+                padding: 2,
+                elevation: 3,
+              }}
+            >
+              <Icon name="x-circle" size={18} color={colors.blue} />
+            </Pressable>
+           </View>
             ) : (
               <View style={st.center}>
                 <Icon name={'camera'} size={20} color={colors.lightGrey} />
@@ -479,6 +511,7 @@ const ATPForm = ({ navigation, route }) => {
     }));
   }, []);
 
+
   const isClockedIn = !!activiyDetails?.clockinTime;
 
   return (
@@ -565,7 +598,9 @@ const ATPForm = ({ navigation, route }) => {
                     error={attachmentErr ? 'Required' : ''}
                     onUpload={(res) => {
                       uploadProfileToServer(res)
-                    }} />
+                    }}
+                    onRemove={()=>setAttachment(null)}
+                    />
 
                 </View>
                 <View style={[st.wdh48, { marginLeft: "2%" }]}>
@@ -575,6 +610,7 @@ const ATPForm = ({ navigation, route }) => {
                     onUpload={(res) => {
                       uploadVideoToServer(res)
                     }}
+                    onRemove={()=>setAttachedVideo(null)}
                   />
                 </View>
               </View>

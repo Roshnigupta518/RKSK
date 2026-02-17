@@ -77,7 +77,7 @@ const PeerEducatorForm = ({ navigation }) => {
   const isReportingCount = peerEducatorReportingCount === 1
   const isTrainer = userLogin?.role === 'TrainerUser';
   const isPeerEducator = userLogin?.role === 'PeerEducater';
-  
+
   const pickerData = {
     district: districtList,
     block: blockByDistrict[inputs.district] || [],
