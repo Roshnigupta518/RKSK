@@ -74,7 +74,6 @@ const PeerEducatorForm = ({ navigation }) => {
   const userLogin = useAppSelector(state => state.login.data);
   const peerEducatorDetails = useAppSelector(state => state.peerEducatorList.data);
   const peerEducatorReportingCount = useAppSelector(state => state.peerReportingCount?.data?.reportingCount)
-console.log({peerEducatorDetails})
   const isReportingCount = peerEducatorReportingCount === 1
   const isTrainer = userLogin?.role === 'TrainerUser';
   const isPeerEducator = userLogin?.role === 'PeerEducater';
@@ -149,17 +148,8 @@ console.log({peerEducatorDetails})
         sathiyaName: String(peerEducatorDetails.id || ''),
         gender: peerEducatorDetails.genderId,
       }));
-
       startBackgroundService(syncTaskName.syncPeerReportingCount)
-      
-      // 🔁 Cascade API calls to populate dropdowns
-      // dispatch(fetchMasters({ flag: 3, id: peerEducatorDetails.districtId })); // block
-      // dispatch(fetchMasters({ flag: 4, id: peerEducatorDetails.blockId }));    // asha sahyogi
-      // dispatch(fetchMasters({ flag: 7, id: peerEducatorDetails.ashaFacilitatorId })); // asha
-      // dispatch(fetchMasters({ flag: 8, id: peerEducatorDetails.ashaId }));     // village
-      // dispatch(fetchMasters({ flag: 13, id: peerEducatorDetails.ashaId }));    // peer educator
-      // dispatch(fetchMasters({ flag: 14, id: peerEducatorDetails.id }));        // gender
-    }else{
+    } else{
       dispatch(clearPeerEducatorId())
     }
   }, [isPeerEducator, peerEducatorDetails]);
@@ -494,7 +484,7 @@ console.log({peerEducatorDetails})
                 <View style={st.card}>
                   <PeerField label="जिला" value={peerEducatorDetails.districtName} />
                   <PeerField label="ब्लॉक" value={peerEducatorDetails.blockName} />
-                  <PeerField label="आशा सुपरवाइजर का नाम" value={peerEducatorDetails.ashaFacilitatorId} />
+                  <PeerField label="आशा सुपरवाइजर का नाम" value={peerEducatorDetails.ashaSahyogi_Name} />
                   <PeerField label="आशा का नाम" value={peerEducatorDetails.ashaName} />
                   <PeerField label="ग्राम का नाम" value={peerEducatorDetails.villageName} />
                   <PeerField label="साथिया का नाम" value={peerEducatorDetails.peerEducatorName} />
