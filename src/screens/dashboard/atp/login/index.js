@@ -20,7 +20,6 @@ import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import FieldRow from '../../../../components/FieldRow';
 import { getPlanStatus } from '../../../../utils/helper';
-
 const ATPDetailScreen = ({ navigation, route }) => {
   const isFocused = useIsFocused();
 
@@ -261,6 +260,10 @@ const ATPDetailScreen = ({ navigation, route }) => {
         <View style={styles.detailCard}>
           <Text style={[styles.title, { color: colors.blue }]}>{activiyDetails.visit_Purpose}</Text>
           <FieldRow>
+            <Field label="Atp Id" value={activiyDetails.atP_Id} />
+          </FieldRow>
+
+          <FieldRow>
             <Field label="Start Date and Time" value={activiyDetails.visit_Start_Date} />
             <Field label="End Date and Time" value={activiyDetails.visit_End_Date} />
           </FieldRow>
@@ -337,7 +340,7 @@ const ATPDetailScreen = ({ navigation, route }) => {
                 {showVideo && activiyDetails.video_Path && (
                   <View>
                     <Video
-                      source={{ uri: environment.imageUrl + (activiyDetails.video_Path?.uri || activiyDetails.video_Path) }}
+                      source={{ uri: activiyDetails.video_Path?.uri ? activiyDetails.video_Path?.uri : environment.imageUrl + activiyDetails.video_Path  }}
                       controls
                       paused={isVideoPaused}
                       style={st.imageSty}

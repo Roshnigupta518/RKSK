@@ -25,6 +25,7 @@ import { reStartBackgroundService } from '../../../../utils/bgservices/backgroun
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum';
 import { addToQueue } from '../../../../redux/slices/queueSlice';
 import { ENUM } from '../../../../utils/bgservices/enum';
+import { RegexType } from '../../../../utils/validations/regex';
 
 const INITIALINPUT = {
   remark: '',
@@ -69,14 +70,20 @@ const App = ({ navigation, route }) => {
 
   const validation = () => {
     Keyboard.dismiss();
-    const emptyRemark = isEmpty(inputs?.remark);
 
     let isValid = true;
 
-    if (emptyRemark) {
-      handleError('*Required', 'remark');
+    const value = inputs?.remark?.trim();
+
+    if (!value) {
+      handleError(RegexType.remark.emptyError, 'remark');
       isValid = false;
-    } else {
+    } 
+    else if (!RegexType.remark.regex.test(value)) {
+      handleError(RegexType.remark.typeError, 'remark');
+      isValid = false;
+    } 
+    else {
       handleError('', 'remark');
     }
 

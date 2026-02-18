@@ -21,6 +21,8 @@ import { reStartBackgroundService } from '../../../../utils/bgservices/backgroun
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum';
 import { generateclientID } from '../../../../utils/helper';
 import CustomPicker from '../../../../components/customPicker';
+import { RegexType } from '../../../../utils/validations/regex';
+import { validateByRegex } from '../../../../utils/validations';
 
 const INITIALINPUT = {
   date: '',
@@ -284,15 +286,35 @@ const ATPForm = ({ navigation, route }) => {
       valid = false;
     }
 
-    if (inputs.meetings.includes('Other') && isEmpty(inputs.other)) {
-      tempErrors.other = errMsg;
-      valid = false;
-    }
+    // if (inputs.meetings.includes('Other') && isEmpty(inputs.other)) {
+    //   tempErrors.other = errMsg;
+    //   valid = false;
+    // }
 
-    if (isEmpty(inputs.activityDetails)) {
-      tempErrors.activityDetails = errMsg;
-      valid = false;
-    }
+    // ✅ meetings OTHER TEXT VALIDATION
+  if (inputs.meetings.includes('Other')) {
+    const isOtherValid = validateByRegex(
+      inputs.other,
+      RegexType.meetings,
+      'other',
+      tempErrors
+    );
+    if (!isOtherValid) valid = false;
+  }
+
+  // ✅ activityDetails REGEX VALIDATION
+  const isActivityValid = validateByRegex(
+    inputs.activityDetails,
+    RegexType.activityDetails,
+    'activityDetails',
+    tempErrors
+  );
+  if (!isActivityValid) valid = false;
+
+    // if (isEmpty(inputs.activityDetails)) {
+    //   tempErrors.activityDetails = errMsg;
+    //   valid = false;
+    // }
 
     if (inputs.meetings === 3 && isEmpty(inputs.other)) {
       tempErrors.other = errMsg;

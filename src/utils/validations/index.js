@@ -46,3 +46,18 @@ export const TodayDate = () => {
   const date = moment().format('YYYY-MM-DD');
   return date;
 }
+
+export const validateByRegex = (value, regexConfig, fieldName, tempErrors) => {
+  if (!value || value.trim().length === 0) {
+    tempErrors[fieldName] = regexConfig.emptyError;
+    return false;
+  }
+
+  if (!regexConfig.regex.test(value.trim())) {
+    tempErrors[fieldName] = regexConfig.typeError;
+    return false;
+  }
+
+  return true;
+};
+
