@@ -20,6 +20,7 @@ import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import FieldRow from '../../../../components/FieldRow';
 import { getPlanStatus } from '../../../../utils/helper';
+
 const ATPDetailScreen = ({ navigation, route }) => {
   const isFocused = useIsFocused();
 
@@ -358,7 +359,25 @@ const ATPDetailScreen = ({ navigation, route }) => {
                 return (
                   <View key={index}>
                     <View style={styles.detailCard}>
-                      <Text style={styles.title}>{item.name}</Text>
+                      {/* <Text style={styles.title}>{item.name}</Text> */}
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={styles.title}>{item.name}</Text>
+
+                        {item.isSynced ? (
+                          <Icon
+                            name="check-circle"
+                            size={18}
+                            color={colors.green}   // green
+                          />
+                        ) : (
+                          <Icon
+                            name="refresh-cw"
+                            size={18}
+                            color={colors.yellow}      // orange
+                          />
+                        )}
+                      </View>
+
                       <FieldRow>
                         <Field label="Entry Date and Time" value={item.activity_DateTime} />
                         <Field label="Entry End Date and Time" value={item.visit_Completion} />

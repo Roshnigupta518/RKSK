@@ -77,7 +77,7 @@ const checkIfTaskNotSyncedToday = async taskName => {
             let isSyncPeerReferralList = taskName == syncTaskName.syncPeerEducatorReferralList || syncAll;
             let isSyncMasters = taskName == syncTaskName.syncMasters || syncAll;
             let isSyncPeerEducatorFormData = taskName == syncTaskName.syncPeerEducatorFormData || syncAll;
-            // 
+             
 
             if (isAnythingPendingForSync) {
               isSyncActivityQueue = await checkIfTaskNotSyncedToday(

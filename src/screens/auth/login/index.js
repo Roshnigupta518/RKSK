@@ -32,7 +32,7 @@ const INITIALINPUT = {
   // password: '123456',
 
   //Trainer login
-  // userName: 'Basoda#M1', //Jhabua#F2
+  // userName: 'Jhabua#F2', //Basoda#M1 
   // password: 'Admin@123',
 
   // live trainer login
@@ -175,8 +175,13 @@ const Login = ({ navigation }) => {
       }
     } catch (e) {
       console.log('e login', e)
-      setIsLoading(false);
+      if(e.status == 401){
+        setVisible(true)
+        setMessage("Invalid ID or Password. Please try again.")
+      }
       handleAPIErrorResponse(e, 'Login');
+    }finally{
+      setIsLoading(false);
     }
   };
 
@@ -194,11 +199,13 @@ const Login = ({ navigation }) => {
     fetchIp();
   }, []);
 
+  const isButtonDisabled = isLoading || !isConnected;
+
   return (
     <>
       <ImageBackground source={ImageConstants.login_bg} style={st.container}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1 }}>
             
             <View style={[st.align_C,{marginTop:'30%'}]}>
@@ -242,7 +249,7 @@ const Login = ({ navigation }) => {
                   title="Login"
                   onPress={validation}
                   loading={isLoading}
-                  disabled={!isConnected || isLoading}
+                  disabled={isButtonDisabled}
                 />
               </View>
             </View>

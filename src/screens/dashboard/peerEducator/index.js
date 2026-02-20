@@ -21,7 +21,7 @@ const PeerEducator = ({ navigation }) => {
                         name="plus"
                         size={20}
                         color={colors.black}
-                      onPress={() => navigation.navigate('PeerEducatorForm')}
+                        onPress={() => navigation.navigate('PeerEducatorForm')}
                     />
                 </View>
             )
@@ -31,18 +31,26 @@ const PeerEducator = ({ navigation }) => {
     useEffect(() => {
         setPeerEducatorList(peerEducator);
     }, [peerEducator]);
-      
+
 
     const renderItem = ({ item, index }) => {
         return (
             <TouchableOpacity style={st.card} key={index}
-             onPress={()=>navigation.navigate('PeerDetails',{data:item})}>
+                onPress={() => navigation.navigate('PeerDetails', { data: item })}>
                 <IconStatus status={item.syncStatus} />
                 <Field label={'गतिविधि क्रमांक'} value={item.id} />
                 <Field label={'गतिविधि की तारीख'} value={dateFormat(item.activityDate)} />
                 <Field label={'ग्राम का नाम'} value={item.villageName} />
                 <Field label={'आशा का नाम'} value={item.ashaNameText || item.ashaName} />
                 <Field label={'साथिया का नाम'} value={item.sathiyaNameText || item.sathiyaName} />
+                {item.id == -1 &&
+                    <View style={st.warningBox}>
+                        <Icon name="alert-circle" size={16} color="#E59E0B" />
+                        <Text style={st.tx12}>
+                            {"  Already submitted entry for this date."}
+                        </Text>
+                    </View>
+                }
             </TouchableOpacity>
         )
     }
@@ -56,7 +64,7 @@ const PeerEducator = ({ navigation }) => {
                 contentContainerStyle={st.pd20}
                 ListEmptyComponent={() => <EmptyItem />}
                 ListHeaderComponent={() =>
-                    peerEducatorList.length > 0 && 
+                    peerEducatorList.length > 0 &&
                     <Text style={st.tx14}>
                         {`Total ${peerEducatorList.length} records`}
                     </Text>
@@ -67,10 +75,3 @@ const PeerEducator = ({ navigation }) => {
 }
 
 export default PeerEducator
-
-const data = [
-    { id: 1, date: '20 Dec 2025', village: 'Kolar1', asha: 'Asha Varma1', sathiya: 'Seema sharma1' },
-    { id: 2, date: '21 Dec 2025', village: 'Kolar2', asha: 'Asha Varma2', sathiya: 'Seema sharma2' },
-    { id: 3, date: '22 Dec 2025', village: 'Kolar3', asha: 'Asha Varma3', sathiya: 'Seema sharma3' },
-    { id: 4, date: '23 Dec 2025', village: 'Kolar4', asha: 'Asha Varma4', sathiya: 'Seema sharma4' }
-]

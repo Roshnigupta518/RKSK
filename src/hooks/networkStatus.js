@@ -1,19 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import NetInfo from '@react-native-community/netinfo';
 
 const useNetworkStatus = () => {
-    const [isConnected, setIsConnected] = useState(true); // Assuming network is initially connected
+  const [isConnected, setIsConnected] = useState(true);
+  const prevStatus = useRef(null);
 
-    useEffect(() => {
-        const unsubscribe = NetInfo.addEventListener(state => {
-            setIsConnected(state.isConnected);
-        });
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const currentStatus = !!state.isConnected;
 
-        // Clean up subscription when component unmounts
-        return () => unsubscribe();
-    }, []); // Empty dependency array to run effect only once when component mounts
+      // 🔥 Only update if actually changed
+      if (prevStatus.current !== currentStatus) {
+        prevStatus.current = currentStatus;
+        setIsConnected(currentStatus);
+      }
+    });
 
-    return isConnected;
+    return () => unsubscribe();
+  }, []);
+
+  return isConnected;
 };
 
 export default useNetworkStatus;
+

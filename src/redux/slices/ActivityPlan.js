@@ -9,38 +9,28 @@ const activityPlanSlice = createSlice({
    name:'activityPlan',
    initialState,
    reducers: {
-    // setActivityPlan: (state, action) => {
-    //   state.data = action.payload.map(item => {
-    //     const clockinSynced = item.mode >= 1;          // mode 1 or 2
-    //     const clockoutSynced = item.mode === 2;        // mode 2 only
-    //     const formSynced = item.activity_Id != null;   // form submitted
-
-    //     const clockinSyncStatus =
-    //   item.mode >= 1 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
-
-    // const clockoutSyncStatus =
-    //   item.mode === 2 ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
-
-    // const formSyncStatus =
-    //   item.activity_Id != null ? ENUM.SERVERSTATUS.COMPLETED : ENUM.SERVERSTATUS.PENDING;
-    
-    //     return {
-    //       ...item,
-    //       clockinSynced,
-    //       clockoutSynced,
-    //       formSynced,
-    //       clockinSyncStatus,
-    //       clockoutSyncStatus,
-    //       formSyncStatus,
-    //     };
-    //   });
-    // },
-
-   
     setActivityPlan: (state, action) => {
+
+      const isSubActivityFilled = (sub) => {
+        return Boolean(
+          sub.activity_DateTime ||
+          sub.visit_Completion ||
+          sub.activity_Details ||
+          sub.photo_Path ||
+          sub.video_Path ||
+          sub.meeting_Participant
+        );
+      };
 
       const serverItems = action.payload.map(item => ({
         ...item,
+         // ✅ Normalize subacitivity
+        subacitivity: item.subacitivity?.map(sub => ({
+          ...sub,
+          isSynced: isSubActivityFilled(sub),   // 👈 Dynamic check
+          serverSubActivityId: sub.subActivity_Id || null
+        })) || [],
+
         clockinSynced: item.mode >= 1,
         clockoutSynced: item.mode === 2,
         formSynced: item.activity_Id != null,
@@ -91,10 +81,35 @@ const activityPlanSlice = createSlice({
       } else {
         console.log("❌ No item found for atP_Id:", atP_Id);
       }
+    },
+
+    updateSubActivitySyncStatus: (state, action) => {
+      console.log('updateSubActivitySyncStatus updateSubActivitySyncStatus')
+      const { atP_Id, subId, serverSubActivityId } = action.payload;
+      console.log({atP_Id, subId, serverSubActivityId})
+      const planIndex = state.data.findIndex(
+        item => item.atP_Id == atP_Id
+      );
+     console.log({planIndex})
+      if (planIndex === -1) return;
+    
+      const subIndex = state.data[planIndex].subacitivity?.findIndex(
+        sub => sub.id == subId
+      );
+    console.log({subIndex})
+      if (subIndex === -1) return;
+    
+      state.data[planIndex].subacitivity[subIndex] = {
+        ...state.data[planIndex].subacitivity[subIndex],
+        isSynced: true,
+        serverSubActivityId: serverSubActivityId
+      };
+      console.log("🟢 AFTER UPDATE updateSubActivitySyncStatus:", JSON.parse(JSON.stringify(state.data[planIndex])));
     }
+    
   },
 })
 
-export const { setActivityPlan, updateActivityPlanItem } = activityPlanSlice.actions;
+export const { setActivityPlan, updateActivityPlanItem, updateSubActivitySyncStatus } = activityPlanSlice.actions;
 
 export default activityPlanSlice.reducer;

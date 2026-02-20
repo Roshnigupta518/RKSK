@@ -23,6 +23,7 @@ import { generateclientID } from '../../../../utils/helper';
 import CustomPicker from '../../../../components/customPicker';
 import { RegexType } from '../../../../utils/validations/regex';
 import { validateByRegex } from '../../../../utils/validations';
+import { shallowEqual } from 'react-redux';
 
 const INITIALINPUT = {
   date: '',
@@ -55,22 +56,22 @@ const ATPForm = ({ navigation, route }) => {
   const { atP_Id } = route.params;
 
   const activiyDetails = useSelector(
-    state => state.activityPlan.data.find(item => item.atP_Id == atP_Id)
-  );
-
-  console.log({ activiyDetails })
-
+    state => state.activityPlan.data.find(item => item.atP_Id == atP_Id),
+    shallowEqual
+   );
+  
   const dispatch = useDispatch()
   const userLogin = useSelector(state => state.login.data);
 
   useEffect(() => {
     if (activiyDetails) {
-        setInputs({
-        ...inputs,
+      setInputs(prev => ({
+        ...prev,
         planedActivity: activiyDetails?.visit_PurposeId_Id,
         visit_Purpose: activiyDetails?.visit_Purpose,
         other_Activity: activiyDetails?.other_Activity,
-      });
+      }));
+      
       
       // 1️⃣ Identify FILLED subactivities
       const filledSubs =
@@ -96,17 +97,7 @@ const ATPForm = ({ navigation, route }) => {
       tempSubAct = tempSubAct.filter(
         item => !filledSubs.includes(item.value)
       );
-      console.log({tempSubAct, filledSubs})
-  
-      // 4️⃣ Always include "Other" if not already filled
-      // const isOtherFilled = filledSubs.includes("Other");
-      // if (!isOtherFilled) {
-      //   const exists = tempSubAct.some(i => i.value === "Other");
-      //   if (!exists) {
-      //     tempSubAct.push({ label: "Other", value: "Other" });
-      //   }
-      // }
-       console.log({tempSubAct})
+     
       setSubActivity(tempSubAct);
     }
   }, [activiyDetails]);  
@@ -126,7 +117,7 @@ const ATPForm = ({ navigation, route }) => {
     setErrors(prev => ({ ...prev, [field]: errorMsg }));
   }, []);
 
-  const fieldProps = (field) => ({
+  const fieldProps = useCallback((field) => ({
     value: inputs[field],
     error: errors[field],
     onChangeText: (value) => {
@@ -137,7 +128,7 @@ const ATPForm = ({ navigation, route }) => {
       if (errors[field]) handleError('', field);
     },
     disabled: isLoading,
-  });
+  }), [inputs, errors, isLoading]);  
 
   const dateFieldProps = (field, mode = 'date') => ({
     value: inputs[field] ? new Date(inputs[field]) : new Date(),
@@ -159,7 +150,7 @@ const ATPForm = ({ navigation, route }) => {
       handleError('', field);
   
       // ✅ Other se kisi aur pe gaye to text clear
-      if (val !== 'Other') {
+      if (val !== 11) {
         handleOnchange('other_subActivity')('');
         handleError('', 'other_subActivity');
       }
@@ -344,7 +335,7 @@ const ATPForm = ({ navigation, route }) => {
     // ✅ Agar Activity me "Other" select hai → input bhi required
     if (
       inputs.planedActivity == 2 &&
-      inputs.selectedSubActivity === 'Other' &&
+      inputs.selectedSubActivity == 11 &&
       isEmpty(inputs.other_subActivity)
     ) {
       tempErrors.other_subActivity = errMsg;
@@ -387,7 +378,10 @@ const ATPForm = ({ navigation, route }) => {
       setIsLoading(true);
   
       const isValid = validateForm();
-      if (!isValid) return;
+      if (!isValid) {
+        setIsLoading(false);
+        return;
+      }
   
       const datePart = moment(inputs.date);
       const timePart = moment(inputs.time);
@@ -403,6 +397,7 @@ const ATPForm = ({ navigation, route }) => {
       // 🔥 Location check
       if (!location?.latitude && !location?.longitude) {
         locationHandle();
+        setIsLoading(false);
         return;
       }
   
@@ -427,12 +422,15 @@ const ATPForm = ({ navigation, route }) => {
           other_MeetingParticipant: inputs.other,
           latitude: location.latitude,
           longititude: location.longitude,
+          Address: locationArea,
           subacitivity_Id: generateclientID(userLogin.userId),
           activity_DateTime: ActivityDateTime,
           visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
+          isSynced: false,
+          serverSubActivityId: null
         };
   
-        if (inputs.selectedSubActivity === "Other") {
+        if (inputs.selectedSubActivity == 11) {
           subObj.SubActivity_Other = inputs.other_subActivity;
         }
   
@@ -469,7 +467,7 @@ const ATPForm = ({ navigation, route }) => {
         visit_Completion: moment().format('YYYY-MM-DD HH:mm:ss'),
         other_Activity: inputs.other_Activity,
         CreatedBy: userLogin.userId,
-        clientId: generateclientID(userLogin.userId),
+        clientId: activiyDetails.clientId || generateclientID(userLogin.userId),
         selectedSubActivity: inputs.selectedSubActivity,
         Subactivity_Other: inputs.other_subActivity,
         subacitivity: subactivityArray
@@ -523,7 +521,7 @@ const ATPForm = ({ navigation, route }) => {
       handleError('', 'meetings');
     }
 
-  }, []);
+  }, [handleError]);
 
   useEffect(() => {
     setInputs(prev => ({
@@ -540,7 +538,7 @@ const ATPForm = ({ navigation, route }) => {
     <CustomContainer>
       <CustomHeader title="Field activity form" onBackPress={() => navigation.goBack()} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
         keyboardShouldPersistTaps='handled'
         >
@@ -591,7 +589,7 @@ const ATPForm = ({ navigation, route }) => {
                 />
               ) : null}
 
-              {inputs?.selectedSubActivity === 'Other' &&
+              {inputs?.selectedSubActivity == 11 &&
                 <MyInput label="Other Activity *" {...fieldProps('other_subActivity')} />
               }
             </View>

@@ -182,7 +182,7 @@ const ATPListScreen = ({ navigation }) => {
     }
   }, [activityPlanList]);
 
-  console.log({ uniqueList })
+  // console.log({ uniqueList })
 
   const renderItem = ({ item, index }) => {
     return (

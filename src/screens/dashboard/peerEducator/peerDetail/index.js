@@ -1,4 +1,4 @@
-import { View, Image } from 'react-native'
+import { View, Image, Text } from 'react-native'
 import React, { useMemo } from 'react'
 import CustomHeader from '../../../../components/customHeader'
 import { CustomContainer, CustomContent } from '../../../../components/container'
@@ -7,6 +7,7 @@ import st from '../../../../global/styles'
 import { getLabelsFromValues } from '../../../../utils/helper'
 import { activityDuration, genderData } from '../../../../utils/staticJson'
 import { environment } from '../../../../utils/constant'
+import Icon from 'react-native-vector-icons/Feather'
 
 const formatDate = (iso) => {
     if (!iso) return '-'
@@ -42,7 +43,15 @@ const PeerDetails = ({ navigation, route }) => {
             />
 
             <CustomContent>
-                <View style={st.card}>                  
+                <View style={st.card}> 
+                {data.id == -1 &&
+                    <View style={st.warningBox}>
+                        <Icon name="alert-circle" size={16} color="#E59E0B" />
+                        <Text style={st.tx12}>
+                            {"  Already submitted entry for this date."}
+                        </Text>
+                    </View>
+                }                
                     <PeerField label="जिला" value={data.districtName} />
                     <PeerField label="विकासखंड/ब्लॉक" value={data.blockName} />
                     <PeerField label="आशा सुपरवाइजर का नाम" value={data.supervisorNameText || data.ashaSahyogi_Name} />
@@ -62,7 +71,7 @@ const PeerDetails = ({ navigation, route }) => {
                     <PeerField label="किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न" value={data.questions} />
                     <PeerField label="गतिविधि के दौरान आई चुनौतियां" value={data.challenges || data.challanges} />
                     <PeerField label="सफलता/अच्छा अनुभव" value={data.successStory} />
-                    <PeerField label="फोटो" value={data.attachment?.length ? `${data.attachment?.length} फोटो` : 'कोई फोटो नहीं'}/>
+                    <PeerField label="फोटो" value={(data.attachment?.length || data?.photo?.length) ? `${data.attachment?.length || data?.photo?.length} फोटो` : 'कोई फोटो नहीं'}/>
                     {data?.attachment?.length > 0 && (
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
                             {data.attachment.map((img, index) => (

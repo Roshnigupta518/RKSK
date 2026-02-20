@@ -10,12 +10,23 @@ const queueSlice = createSlice({
   initialState,
   reducers: {
     addToQueue: (state, action) => {
-      state.pending.push({
-        queueId: uuid.v4(),
-        ...action.payload,
-      });
+      const existing = state.pending.find(
+        item =>
+          item.type === action.payload.type &&
+          item.payload.atP_Id === action.payload.payload.atP_Id
+      );
+    
+      if (existing) {
+        // 🔁 Replace payload instead of pushing new
+        existing.payload = action.payload.payload;
+      } else {
+        state.pending.push({
+          queueId: uuid.v4(),
+          ...action.payload,
+        });
+      }
     },
-
+    
     removeFromQueue: (state, action) => {
       console.log('removed queue id', action.payload)
       state.pending = state.pending.filter(

@@ -31,6 +31,26 @@ const AcitivityComponent = ({ item, index, onPress }) => {
   const formUI = getSyncUI(item.formSyncStatus);
   const clockOutUI = getSyncUI(item.clockoutSyncStatus);
 
+  const isSubActivityPlan = item.visit_PurposeId_Id == 2;
+
+  let allFilledSynced = false;
+
+  if (isSubActivityPlan && item.subacitivity?.length > 0) {
+
+    const filledSubs = item.subacitivity.filter(sub =>
+      sub.photo_Path ||
+      sub.video_Path ||
+      sub.meeting_Participant ||
+      sub.activity_Details ||
+      sub.activity_DateTime ||
+      sub.visit_Completion
+    );
+
+    allFilledSynced =
+      filledSubs.length > 0 &&
+      filledSubs.every(sub => sub.isSynced === true);
+  }
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -68,14 +88,36 @@ const AcitivityComponent = ({ item, index, onPress }) => {
 
           </View>
 
-          {(item.activity_Id || item.clientId) && (
+          {/* {(item.activity_Id || item.clientId) && (
             <View style={styles.syncRow}>
               <Text style={styles.syncLabel}>Form:</Text>
               <Text style={[styles.syncStatus, { color: formUI.color }]}>
               {formUI.text}
             </Text>
             </View>
-          )}
+          )} */}
+
+            {(item.activity_Id || item.clientId || isSubActivityPlan) && (
+              <View style={styles.syncRow}>
+                <Text style={styles.syncLabel}>Form:</Text>
+
+                {isSubActivityPlan ? (
+                  allFilledSynced ? (
+                    <Text style={[styles.syncStatus, { color: colors.completed }]}>
+                      ✔ 
+                    </Text>
+                  ) : (
+                    <Text style={[styles.syncStatus, { color: colors.orange }]}>
+                      ⟳ 
+                    </Text>
+                  )
+                ) : (
+                  <Text style={[styles.syncStatus, { color: formUI.color }]}>
+                    {formUI.text}
+                  </Text>
+                )}
+              </View>
+            )}
 
           {item.clockoutTime && (
             <View style={styles.syncRow}>

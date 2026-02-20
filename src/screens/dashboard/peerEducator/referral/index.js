@@ -37,6 +37,7 @@ const RefferalDetails = ({ navigation, route }) => {
     const { data } = route.params || {}
 
     const sheetRef = useRef();
+    const submitLock = useRef(false);
     const dispatch = useAppDispatch()
     const ipAddress = useAppSelector(state => state.getIpAddress.data);
 
@@ -208,12 +209,16 @@ const RefferalDetails = ({ navigation, route }) => {
     };
 
     const onSubmitAll = () => {
-        setIsLoading(true)
-        console.log({inputs})
+        if (submitLock.current) return; // 🔥 prevent multiple clicks
+        submitLock.current = true;
+    
         if (!isChecked) {
-            showConsentError()
+            showConsentError();
+            submitLock.current = false;
             return;
         }
+    
+        setIsLoading(true);
 
         const payload = {
             ...data,
@@ -229,19 +234,25 @@ const RefferalDetails = ({ navigation, route }) => {
 
         dispatch(setPeerReferralList(payload));
         startBackgroundService(syncTaskName.syncPeerEducatorFormData)
-        navigation.navigate('MainApp', {
+        navigation.replace('MainApp', {
             screen: 'PeerEducator',
             // params: { referrals: payload },
         });
         setIsLoading(false)
+        submitLock.current = false;
     };
 
     const notAddedReferral = () => {
-        setIsLoading(true)
+        if (submitLock.current) return;
+        submitLock.current = true;
+
         if (!isChecked) {
-            showConsentError()
+            showConsentError();
+            submitLock.current = false;
             return;
         }
+
+        setIsLoading(true);
 
         const payload = {
             ...data,
@@ -259,10 +270,11 @@ const RefferalDetails = ({ navigation, route }) => {
 
         startBackgroundService(syncTaskName.syncPeerEducatorFormData)
 
-        navigation.navigate('MainApp', {
+        navigation.replace('MainApp', {
             screen: 'PeerEducator',
         });
         setIsLoading(false)
+        submitLock.current = false;
     }
 
     const renderText = (label, value) => {

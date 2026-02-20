@@ -10,7 +10,7 @@ import React from 'react';
 import st from '../../global/styles';
 import { colors } from '../../global';
 
-const Button = ({
+const Button = React.memo(({
   title,
   backgroundColor,
   onPress = () => {},
@@ -37,10 +37,10 @@ const Button = ({
           height: 50,
           borderWidth: 0.5,
           borderColor: colors.lightGrey,
-          shadowColor: colors.black,
-          shadowOpacity: 0.3,
-          shadowOffset: { width: 0, height: 0.5 },
-          shadowRadius: 8,
+          // shadowColor: colors.black,
+          // shadowOpacity: 0.3,
+          // shadowOffset: { width: 0, height: 0.5 },
+          // shadowRadius: 8,
           backgroundColor: finalBgColor,
           alignItems: 'center',
           justifyContent: 'center',
@@ -65,7 +65,7 @@ const Button = ({
         </Text>
       </View>
     </TouchableOpacity>
-  );
-};
+ );
+});
+export default React.memo(Button);
 
-export default Button;

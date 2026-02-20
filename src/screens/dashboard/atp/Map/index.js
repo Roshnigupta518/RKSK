@@ -266,7 +266,7 @@ const App = ({ navigation, route }) => {
               </View>
               <View style={st.wdh30}>
                 <Button
-                  // disabled={(locationArea) ? false : true}
+                  disabled={(locationArea) ? false : true}
                   loading={isLoading}
                   title={
                     !activiyDetails?.clockinTime ||

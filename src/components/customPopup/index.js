@@ -75,11 +75,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginLeft: 10,
     borderWidth:1,
-    borderColor:colors.orange,
+    borderColor:colors.blue,
     justifyContent:'center',
     alignItems:'center',
     borderRadius:5,
-    backgroundColor:colors.orange
+    backgroundColor:colors.blue
   },
   cancelText: {
     color: 'gray',

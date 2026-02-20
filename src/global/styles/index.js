@@ -168,7 +168,8 @@ export default StyleSheet.create({
       padding:10, 
       flexDirection:'row',
       backgroundColor:'#FFF8E5',
-      marginVertical:10
+      marginVertical:10,
+      alignItems:'center'
     },
     statusIconSty:{
       position:'absolute',

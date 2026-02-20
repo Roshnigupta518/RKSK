@@ -15,7 +15,7 @@ export const compressMedia = async (file) => {
             position: 'bottom',
           });
     
-      console.log('🖼️ Compressing image...');
+      // console.log('🖼️ Compressing image...');
       const compressedUri = await Image.compress(uri, {
         compressionMethod: 'auto',
         quality: 0.6,
@@ -39,7 +39,7 @@ export const compressMedia = async (file) => {
             text1: 'Compressing video...',
             position: 'bottom',
           });
-      console.log('🎥 Compressing video...');
+      // console.log('🎥 Compressing video...');
       const compressedUri = await Video.compress(
         uri,
         { 
@@ -47,7 +47,7 @@ export const compressMedia = async (file) => {
             bitrate: 1000000, // ~1 Mbps target bitrate
             maxSize: 720, // scale down to 720p
          },
-        (progress) => console.log(`Compression: ${Math.round(progress * 100)}%`)
+        // (progress) => console.log(`Compression: ${Math.round(progress * 100)}%`)
       );
 
       const stat = await RNFS.stat(compressedUri);
