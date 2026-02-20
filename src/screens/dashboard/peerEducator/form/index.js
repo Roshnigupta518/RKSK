@@ -11,7 +11,7 @@ import WithImageUpload from '../../../../HOC/ImageUploader';
 import Icon from 'react-native-vector-icons/Feather'
 import { colors } from '../../../../global'
 import { useAppSelector, useAppDispatch } from '../../../../hooks'
-import { fetchMasters } from '../../../../redux/slices/Masters'
+import { fetchAshaByVacantSupervisor, fetchMasters } from '../../../../redux/slices/Masters'
 import useNetworkStatus from '../../../../hooks/networkStatus'
 import { activityPlace, genderData, activityType, moduleData, comicBooks, activityToDo, activityDuration, contentUse } from '../../../../utils/staticJson'
 import CustomMultiSelect from '../../../../components/customMultiselect'
@@ -92,6 +92,8 @@ const PeerEducatorForm = ({ navigation }) => {
     module: moduleData || [],
     comicBook: comicBooks || [],
   };
+
+  console.log({pickerData})
 
   useEffect(() => {
     if (!districtList?.length && isConnected && !isPeerEducator) {
@@ -259,10 +261,13 @@ const PeerEducatorForm = ({ navigation }) => {
 
     // Normal fields (input + picker + date)
     REQUIRED_FIELDS.forEach(key => {
+      const value = inputs[key];
+    
       if (
-        !inputs[key] ||
-        (Array.isArray(inputs[key]) && inputs[key].length === 0) ||
-        (!Array.isArray(inputs[key]) && inputs[key].toString().trim() === '')
+        value === null ||
+        value === undefined ||
+        (Array.isArray(value) && value.length === 0) ||
+        (!Array.isArray(value) && value !== 0 && value.toString().trim() === '')
       ) {
         tempErrors[key] = 'Required';
         valid = false;
@@ -410,7 +415,7 @@ const PeerEducatorForm = ({ navigation }) => {
     ),
     'image'
   );
-  
+  console.log({peerEducatorDetails})
   return (
     <CustomContainer>
       <CustomHeader title="Peer educator (Saathiya) activity reporting" onBackPress={() => navigation.goBack()} />
@@ -442,7 +447,18 @@ const PeerEducatorForm = ({ navigation }) => {
                     handleError('', item.key);
 
                     if (item.key === 'supervisorName') {
-                      dispatch(fetchMasters({ flag: 7, id: val })); // ASHA by ASHA Sahyogi
+                      // dispatch(fetchMasters({ flag: 7, id: val })); // ASHA by ASHA Sahyogi
+                       console.log({val})
+                      if (val == 0) {
+                        // 🔥 vacant supervisor case
+                        dispatch(fetchAshaByVacantSupervisor({ 
+                          blockId: inputs.block 
+                        }));
+                      } else {
+                        // normal case
+                        dispatch(fetchMasters({ flag: 7, id: val }));
+                      }
+
                       setInputs(prev => ({
                         ...prev,
                         ashaName: '',
@@ -484,7 +500,8 @@ const PeerEducatorForm = ({ navigation }) => {
                 <View style={st.card}>
                   <PeerField label="जिला" value={peerEducatorDetails.districtName} />
                   <PeerField label="ब्लॉक" value={peerEducatorDetails.blockName} />
-                  <PeerField label="आशा सुपरवाइजर का नाम" value={peerEducatorDetails.ashaSahyogi_Name} />
+                  <PeerField label="आशा सुपरवाइजर का नाम" value={
+                    peerEducatorDetails?.ashaFacilitatorId == 0 ? 'Not available' : peerEducatorDetails.ashaSahyogi_Name} />
                   <PeerField label="आशा का नाम" value={peerEducatorDetails.ashaName} />
                   <PeerField label="ग्राम का नाम" value={peerEducatorDetails.villageName} />
                   <PeerField label="साथिया का नाम" value={peerEducatorDetails.peerEducatorName} />

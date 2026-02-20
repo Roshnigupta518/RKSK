@@ -143,7 +143,7 @@ export const getPeerEducatorReferralListHandle = async () => {
   }
 };
 
-const mapToPickerFormat = (arr = []) =>
+export const mapToPickerFormat = (arr = []) =>
   arr.map(item => ({
     label: item.name,
     value: String(item.id),
@@ -155,7 +155,16 @@ export const getMastersDataHandle = async ({ flag, id = 0, cluster = 0 }) => {
     const result = await getApi(url);
 
     if (result?.status === 200 && Array.isArray(result?.data)) {
-      const data = mapToPickerFormat(result.data);
+      // const data = mapToPickerFormat(result.data);
+      const data = mapToPickerFormat(result.data) || [];
+        let finalData = data;
+
+        if (flag === 4) {
+          finalData = [
+            { label: 'Not available', value: 0 },
+            ...(data || []),
+          ];
+        }
 
       // 1️⃣ Save to local storage
       let storageKey = '';
@@ -187,7 +196,7 @@ export const getMastersDataHandle = async ({ flag, id = 0, cluster = 0 }) => {
       }
 
       if (storageKey) {
-        await saveToLocal(storageKey, data);
+        await saveToLocal(storageKey, finalData);
       }
 
       // 2️⃣ Update redux
@@ -224,12 +233,12 @@ export const getMastersDataHandle = async ({ flag, id = 0, cluster = 0 }) => {
           setLocalMasters({
             type,
             id,
-            data,
+            finalData,
           })
         );
       }
 
-      return data;
+      return finalData;
     }
 
     console.warn('Unexpected response:', result);

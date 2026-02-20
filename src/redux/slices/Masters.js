@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getFromLocal, saveToLocal } from '../../utils/services/storage';
-import { getMastersDataHandle } from '../../utils/services';
+import { getMastersDataHandle, mapToPickerFormat } from '../../utils/services';
+import { getApi } from '../../utils/apicalls';
+import { API } from '../../utils/endpoints';
 
 export const fetchMasters = createAsyncThunk(
   'masters/fetchMasters',
@@ -9,6 +11,26 @@ export const fetchMasters = createAsyncThunk(
       const data = await getMastersDataHandle({ flag, id });
       return { flag, id, data };
     } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const fetchAshaByVacantSupervisor = createAsyncThunk(
+  'masters/fetchAshaByVacantSupervisor',
+  async ({ blockId }, { rejectWithValue }) => {
+    try {
+      console.log('fetchAshaByVacantSupervisor fetchAshaByVacantSupervisor')
+      
+      const url = `${API.GET_Asha_ByVacant_Ashasahyogi}?Ashasahyogiid=0&blockid=${blockId}`
+      const response = await getApi(url)
+
+      console.log({fetchAshaByVacantSupervisor:response})
+
+      const data = mapToPickerFormat(response.data || [])
+      return { blockId, data };
+    } catch (err) {
+      console.log({err})
       return rejectWithValue(err.message);
     }
   }
@@ -102,15 +124,25 @@ const MastersSlice = createSlice({
             saveToLocal(`BLOCK_${id}`, data);
             break;
 
-          case 7: // ASHA Sahyogi by Block
+            case 4: // ASHA Sahyogi by Block ✅
             state.ashaSahyogiByBlock[id] = data;
             saveToLocal(`ASHA_SAHYOGI_${id}`, data);
             break;
 
-          case 71: // ASHA by ASHA Sahyogi (if separate flag)
-            state.ashaBySahyogi[id] = data;
-            saveToLocal(`ASHA_${id}`, data);
-            break;
+          case 7:
+          state.ashaBySahyogi[id] = data;
+          saveToLocal(`ASHA_${id}`, data);
+          break;
+
+          // case 7: // ASHA Sahyogi by Block
+          //   state.ashaSahyogiByBlock[id] = data;
+          //   saveToLocal(`ASHA_SAHYOGI_${id}`, data);
+          //   break;
+
+          // case 71: // ASHA by ASHA Sahyogi (if separate flag)
+          //   state.ashaBySahyogi[id] = data;
+          //   saveToLocal(`ASHA_${id}`, data);
+          //   break;
 
           case 8: // Village by ASHA
             state.villageByAsha[id] = data;
@@ -130,6 +162,14 @@ const MastersSlice = createSlice({
       })
       .addCase(fetchMasters.rejected, state => {
         state.loading = false;
+      })
+      .addCase(fetchAshaByVacantSupervisor.fulfilled, (state, action) => {
+        const { blockId, data } = action.payload;
+      
+        // yaha id supervisor ka 0 hoga
+        state.ashaBySahyogi[0] = data;
+      
+        saveToLocal(`ASHA_0_${blockId}`, data);
       });
   },
 });

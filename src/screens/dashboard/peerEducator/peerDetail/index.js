@@ -54,7 +54,10 @@ const PeerDetails = ({ navigation, route }) => {
                 }                
                     <PeerField label="जिला" value={data.districtName} />
                     <PeerField label="विकासखंड/ब्लॉक" value={data.blockName} />
-                    <PeerField label="आशा सुपरवाइजर का नाम" value={data.supervisorNameText || data.ashaSahyogi_Name} />
+                    <PeerField label="आशा सुपरवाइजर का नाम" value={
+                        data?.ashA_Facilitator_Id == 0 ? 'Not available' :
+                        data.supervisorNameText || data.ashaSahyogi_Name
+                    } />
                     <PeerField label="आशा का नाम" value={data.ashaNameText || data.ashaName} />
                     <PeerField label="ग्राम का नाम" value={data.villageName} />
                     <PeerField label="साथिया का नाम" value={data.sathiyaNameText || data.sathiyaName} />
