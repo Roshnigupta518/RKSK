@@ -24,6 +24,7 @@ import CustomPicker from '../../../../components/customPicker';
 import { RegexType } from '../../../../utils/validations/regex';
 import { validateByRegex } from '../../../../utils/validations';
 import { shallowEqual } from 'react-redux';
+import { ENUM } from '../../../../utils/bgservices/enum';
 
 const INITIALINPUT = {
   date: '',
@@ -477,7 +478,8 @@ const ATPForm = ({ navigation, route }) => {
   
       dispatch(updateActivityPlanItem({
         atP_Id: activiyDetails.atP_Id,
-        newData: params
+        newData: params,
+        formSyncStatus : ENUM.SERVERSTATUS.INPROGRESS
       }));
   
       dispatch(addToQueue({

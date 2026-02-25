@@ -88,16 +88,7 @@ const AcitivityComponent = ({ item, index, onPress }) => {
 
           </View>
 
-          {/* {(item.activity_Id || item.clientId) && (
-            <View style={styles.syncRow}>
-              <Text style={styles.syncLabel}>Form:</Text>
-              <Text style={[styles.syncStatus, { color: formUI.color }]}>
-              {formUI.text}
-            </Text>
-            </View>
-          )} */}
-
-            {(item.activity_Id || item.clientId || isSubActivityPlan) && (
+            {(item.activity_Id || item.clientId || isSubActivityPlan) && (item.formSyncStatus !== ENUM.SERVERSTATUS.PENDING) && (
               <View style={styles.syncRow}>
                 <Text style={styles.syncLabel}>Form:</Text>
 

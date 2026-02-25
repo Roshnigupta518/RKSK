@@ -388,7 +388,11 @@ const ATPDetailScreen = ({ navigation, route }) => {
                         <Field label="Other Meeting Participants" value={item.other_MeetingParticipant} />
                       </FieldRow>
 
+                      <FieldRow>
                       <Field label="Activity Details" value={item.activity_Details} />
+                      {item.id == 11 && 
+                      <Field label="Sub Activity Other" value={item?.SubActivity_Other || item?.subactivity_Other} />}
+                      </FieldRow>
 
                       <View style={st.row}>
                         <View style={st.wdh48}>
