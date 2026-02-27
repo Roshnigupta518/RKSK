@@ -1,7 +1,7 @@
 import { atpFormRequest, activityLoginRequest } from "../services";
 import { updateActivityPlanItem, updateSubActivitySyncStatus } from "../../redux/slices/ActivityPlan";
 import { store } from "../../redux/store";
-import { removeFromQueue } from "../../redux/slices/queueSlice";
+import { addToQueue, removeFromQueue } from "../../redux/slices/queueSlice";
 import { reStartBackgroundService } from "./backgroundService";
 import { syncTaskName } from "./backgroundTaskEnum";
 import { ENUM } from "./enum";
@@ -25,8 +25,6 @@ export const processQueueItem = async (item) => {
     console.log({ item })
     console.log("Processing item:", item.type);
 
-    // 🔥 REMOVE IMMEDIATELY (VERY IMPORTANT)
-    store.dispatch(removeFromQueue(item.queueId));
 
     if (item.type === "CLOCK_IN") {
       try {
@@ -61,6 +59,22 @@ export const processQueueItem = async (item) => {
     if (item.type === "FORM") {
 
       if (!item) return;
+
+      const state = store.getState();
+
+      const plan = state.activityPlan.data.find(
+        p => p.atP_Id == item.payload.atP_Id
+      );
+
+      // ❌ Clock-In sync nahi hua
+      if (!plan?.clockinSynced) {
+
+        console.log("⛔ Skipping FORM → Clock-In not synced");
+       
+        processingIds.delete(item.queueId);
+       
+        return; // queue me rehne do
+       }
 
       try {
         const isSubActivityPlan = item.payload.PlannedActivity == 2;

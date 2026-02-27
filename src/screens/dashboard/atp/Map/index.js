@@ -108,14 +108,14 @@ const App = ({ navigation, route }) => {
         clockin_long: location.longitude,
         // updatedBy: userLogin.userId,
         "createdBy": userLogin.userId,
-        mode: 1
+        mode: 1,
+        clockinSyncStatus: ENUM.SERVERSTATUS.INPROGRESS,
+        clockinError: null
       };
   
       dispatch(updateActivityPlanItem({
         atP_Id: activiyDetails.atP_Id,
         newData: params,
-        clockinSyncStatus: ENUM.SERVERSTATUS.PENDING,
-        clockinError: null
       }));
   
       dispatch(addToQueue({
@@ -161,13 +161,13 @@ const App = ({ navigation, route }) => {
         "clockout_long": location?.longitude,
         "createdBy": userLogin.userId,
         "updatedBy": userLogin.userId,
-        "mode": 2
+        "mode": 2,
+        clockoutSyncStatus: ENUM.SERVERSTATUS.INPROGRESS,
       }
 
       dispatch(updateActivityPlanItem({
         atP_Id: activiyDetails.atP_Id,
         newData: params,
-        clockoutSyncStatus: ENUM.SERVERSTATUS.PENDING,
       }));
 
       dispatch(addToQueue({
@@ -266,7 +266,7 @@ const App = ({ navigation, route }) => {
               </View>
               <View style={st.wdh30}>
                 <Button
-                  disabled={(locationArea) ? false : true}
+                  // disabled={(locationArea) ? false : true}
                   loading={isLoading}
                   title={
                     !activiyDetails?.clockinTime ||

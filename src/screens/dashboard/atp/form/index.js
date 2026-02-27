@@ -471,7 +471,8 @@ const ATPForm = ({ navigation, route }) => {
         clientId: activiyDetails.clientId || generateclientID(userLogin.userId),
         selectedSubActivity: inputs.selectedSubActivity,
         Subactivity_Other: inputs.other_subActivity,
-        subacitivity: subactivityArray
+        subacitivity: subactivityArray,
+        formSyncStatus : ENUM.SERVERSTATUS.INPROGRESS
       };
 
       console.log({params})
@@ -479,7 +480,6 @@ const ATPForm = ({ navigation, route }) => {
       dispatch(updateActivityPlanItem({
         atP_Id: activiyDetails.atP_Id,
         newData: params,
-        formSyncStatus : ENUM.SERVERSTATUS.INPROGRESS
       }));
   
       dispatch(addToQueue({
