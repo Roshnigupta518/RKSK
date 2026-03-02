@@ -107,11 +107,12 @@ export const getPeerEducatorListHandle = async() => {
 }
 
 export const getPeerEducatorReferralListHandle = async () => {
+  const loginDetails = getLoginDetails()
   try {
     const state = store.getState().peerReferralList;
     const localList = state.data || [];
 
-    const url = `${API.GET_PEEREDUCATOR_REFERRAL_LIST}`;
+    const url = `${API.GET_PEEREDUCATOR_REFERRAL_LIST}?DistrictId=0&BlockId=0&TrainerID=${loginDetails.trainerId}&PeerEducatorId=${loginDetails.peerEducatorId}&AFId=0&ASHAId=0`;
     const result = await getApi(url);
 
     if (result?.status === 200) {

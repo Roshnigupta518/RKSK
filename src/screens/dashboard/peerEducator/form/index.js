@@ -666,6 +666,9 @@ const PARTICIPANTS = [
   { key: 'asha', label: 'आशा *' },
   { key: 'cho', label: 'कम्युनिटी हेल्थ ऑफिसर *' },
   { key: 'awc', label: 'आंगनवाड़ी कार्यकर्ता *' },
+  // { key: 'parents', label: 'अभिभावक *' },
+  // { key: 'ngo', label: 'NGO प्रशिक्षक *' },
+  // { key: 'teacher', label: 'शिक्षक *' },
 ];
 const PICKERS = [
   // { key: 'location', label: 'गतिविधि का स्थान *' },
@@ -721,4 +724,7 @@ const PARTICIPANT_KEYS = [
   'asha',
   'cho',
   'awc',
+  // 'parents',
+  // 'ngo', 
+  // 'teacher'
 ];

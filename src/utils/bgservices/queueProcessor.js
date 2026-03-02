@@ -78,6 +78,13 @@ export const processQueueItem = async (item) => {
 
       try {
         const isSubActivityPlan = item.payload.PlannedActivity == 2;
+        const userId = item.payload.CreatedBy || store.getState().login?.data?.userId;
+        
+        if (!userId) {
+          console.log("❌ CreatedBy Missing", item);
+          return;
+        }
+
         if (isSubActivityPlan) {
 
           const subActivities = item.payload.subacitivity || [];
@@ -103,7 +110,7 @@ export const processQueueItem = async (item) => {
             // 🔹 Common keys (always go)
             formdata.append("ATP_Id", item.payload.atP_Id);
             formdata.append("visit_PurposeId_Id", item.payload.PlannedActivity);
-            formdata.append("CreatedBy", item.payload.CreatedBy);
+            formdata.append("CreatedBy", userId);
 
             // 🔹 Subactivity specific
             formdata.append("SubActivity", sub.id);
@@ -197,7 +204,7 @@ export const processQueueItem = async (item) => {
           formdata.append("Other_Activity", item.payload.other_Activity || '');
           formdata.append("SubActivity", item.payload.selectedSubActivity || '');
           formdata.append("Subactivity_Other", item.payload.Subactivity_Other || '');
-          formdata.append('CreatedBy', item.payload.CreatedBy)
+          formdata.append('CreatedBy', userId)
 
           const response = await atpFormRequest(formdata);
           console.log({ response })

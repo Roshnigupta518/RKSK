@@ -62,6 +62,7 @@ const PeerDetails = ({ navigation, route }) => {
                     <PeerField label="ग्राम का नाम" value={data.villageName} />
                     <PeerField label="साथिया का नाम" value={data.sathiyaNameText || data.sathiyaName} />
                     <PeerField label="लिंग" value={data.genderText || data.gender} />
+                    <PeerField label={'गतिविधि क्रमांक'} value={data.id} />
                     <PeerField label="गतिविधि की तारीख" value={formatDate(data.activityDate)} />
                     <PeerField label="गतिविधि का स्थान" value={data.locationText || data.location} />
                     <PeerField label="गतिविधि का प्रकार" value={data.activityTypeText || data.activityType} />

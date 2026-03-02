@@ -453,6 +453,11 @@ const ATPForm = ({ navigation, route }) => {
           subactivityArray.push(subObj);
         }
       }
+
+      if (!userLogin?.userId) {
+        Alert.alert("Error", "User not logged in");
+        return;
+      }
   
       const params = {
         activity_DateTime: ActivityDateTime,
