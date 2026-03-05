@@ -8,7 +8,7 @@ import CustomDatePicker from '../../../../components/CustomDatePicker';
 import { family, colors } from '../../../../global';
 import st from '../../../../global/styles';
 import Icon from 'react-native-vector-icons/Feather'
-import { isEmpty } from '../../../../utils/validations';
+import { isEmpty, validateLocationBeforeSubmit } from '../../../../utils/validations';
 import WithImageUpload from '../../../../HOC/ImageUploader';
 import { useLocation } from '../../../../hooks/useLocation';
 import Video from 'react-native-video';
@@ -347,31 +347,6 @@ const ATPForm = ({ navigation, route }) => {
     return valid;
   };
 
-  const locationHandle = () => {
-    if (error == 'gps-off') {
-      Alert.alert(
-        'Location Required',
-        'Location permission is required to submit the form. Please enable location access in your device settings.',
-        [
-          {
-            text: 'OK',
-            onPress: async () => {
-              openLocationSettings();
-            },
-          },
-        ]
-      );
-
-    } else if (error == 'permissionDenied') {
-      permissionHandle()
-    } else{
-      Alert.alert(
-        'Location Not Captured',
-        'We could not detect your location. Please try again after moving to an open area.'
-      );
-    }
-  }
-
   const onSave = async () => {
     if (isLoading) return;
   
@@ -396,11 +371,21 @@ const ATPForm = ({ navigation, route }) => {
       const ActivityDateTime = combined.format('YYYY-MM-DD HH:mm:ss');
   
       // 🔥 Location check
-      if (!location?.latitude && !location?.longitude) {
-        locationHandle();
-        setIsLoading(false);
+      const isLocationValid = validateLocationBeforeSubmit({
+        location,
+        error,
+        getLocation,
+        openLocationSettings,
+        permissionHandle,
+    });
+
+    if (!isLocationValid) {
         return;
-      }
+    }
+
+    // ✅ location available
+    console.log(location.latitude, location.longitude);
+
   
       const existingSubs = activiyDetails?.subacitivity || [];
       let subactivityArray = [...existingSubs];

@@ -203,6 +203,7 @@ const WithMediaUpload = (WrappedComponent, mediaType = 'image') => {
 
     const {
       onUpload,   // ✅ PER ACTIVITY CALLBACK AAYEGA
+      showGallery = false,
     } = props;
 
     // ✅ Camera permission
@@ -254,6 +255,31 @@ const WithMediaUpload = (WrappedComponent, mediaType = 'image') => {
       });
     };
 
+        // ✅ Open gallery
+    const handleChooseFromGallery = async () => {
+      const options = {
+        // mediaType: mediaType === 'both' ? 'mixed' : mediaType,
+        mediaType: 'photo', 
+      };
+
+      launchImageLibrary(options, async res => {
+        if (res.errorCode) {
+          console.warn(res.errorCode);
+          return;
+        }
+
+        if (!res.didCancel && res.assets && res.assets[0]) {
+          const file = res.assets[0];
+          const compressedFile = await compressMedia(file);
+
+          // ✅ ✅ ✅ PER ACTIVITY UPLOAD
+          onUpload && onUpload(compressedFile);
+
+          setShowModal(false);
+        }
+      });
+    };
+
     return (
       <View>
         <WrappedComponent
@@ -275,6 +301,12 @@ const WithMediaUpload = (WrappedComponent, mediaType = 'image') => {
               title={'Capture from Camera'}
               onPress={handleCaptureMedia}
             />
+           {showGallery && (
+            <Authbtn
+              title={'Choose from Gallery'}
+              onPress={handleChooseFromGallery}
+            />
+          )}
           </View>
         </Alert>
       </View>

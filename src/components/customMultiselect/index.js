@@ -14,13 +14,16 @@ const CustomMultiSelect = ({
   single = false,
   required = false,
   error,
-  disable
+  disable,
+  showStar
 }) => {
   const hasError = typeof error === 'string' && error.length > 0;
   return (
     <View style={styles.container} pointerEvents={disable? 'none' : 'auto'}>
       
-      {label && <Text style={[styles.label]}>{label}</Text>}
+      {label && <Text style={[styles.label]}>{label}
+        {showStar?' *':''}
+        </Text>}
 
       <MultiSelect
         // hideTags

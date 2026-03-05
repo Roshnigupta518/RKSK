@@ -18,6 +18,8 @@ import { genderData } from '../../../../utils/staticJson'
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum'
 import { startBackgroundService } from '../../../../utils/bgservices/backgroundService'
 import PeerField from '../../../../components/peerField'
+import { useLocation } from '../../../../hooks/useLocation'
+import { validateLocationBeforeSubmit } from '../../../../utils/validations'
 
 const INITIALINPUT = {
     refer: '',
@@ -40,6 +42,8 @@ const RefferalDetails = ({ navigation, route }) => {
     const submitLock = useRef(false);
     const dispatch = useAppDispatch()
     const ipAddress = useAppSelector(state => state.getIpAddress.data);
+
+    const { location, error, locationArea, openLocationSettings, getLocation, permissionHandle } = useLocation();
 
     const handleOnchange = useCallback(
         (field) => (value) => {
@@ -169,8 +173,8 @@ const RefferalDetails = ({ navigation, route }) => {
                 name: '',
                 gender: '',
                 healthissue: '',
-              }));
-              
+            }));
+
             setSelectedReferrals([]);
         }
     }
@@ -209,15 +213,31 @@ const RefferalDetails = ({ navigation, route }) => {
     };
 
     const onSubmitAll = () => {
-        if (submitLock.current) return; // 🔥 prevent multiple clicks
+        if (submitLock.current) return;
         submitLock.current = true;
-    
+
+        const isLocationValid = validateLocationBeforeSubmit({
+            location,
+            error,
+            getLocation,
+            openLocationSettings,
+            permissionHandle,
+        });
+
+        if (!isLocationValid) {
+            submitLock.current = false; 
+            return;
+        }
+
+        // ✅ location available
+        console.log(location.latitude, location.longitude);
+
         if (!isChecked) {
             showConsentError();
             submitLock.current = false;
             return;
         }
-    
+
         setIsLoading(true);
 
         const payload = {
@@ -245,6 +265,24 @@ const RefferalDetails = ({ navigation, route }) => {
     const notAddedReferral = () => {
         if (submitLock.current) return;
         submitLock.current = true;
+
+        const isLocationValid = validateLocationBeforeSubmit({
+            location,
+            error,
+            getLocation,
+            openLocationSettings,
+            permissionHandle,
+        });
+
+        console.log({isLocationValid})
+
+        if (!isLocationValid) {
+            submitLock.current = false; // ✅ IMPORTANT
+            return;
+        }
+
+        // ✅ location available
+        console.log(location.latitude, location.longitude);
 
         if (!isChecked) {
             showConsentError();
@@ -315,7 +353,7 @@ const RefferalDetails = ({ navigation, route }) => {
 
                 {inputs.refer == 2 && renderConsent()}
 
-                {(inputs.refer && !showRefferals)  &&
+                {(inputs.refer && !showRefferals) &&
                     <Button title={inputs.refer == 2 ? 'Submit' : 'Add Referral'}
                         onPress={() => {
                             if (inputs.refer == 2) {
@@ -353,8 +391,8 @@ const RefferalDetails = ({ navigation, route }) => {
                     title="Add Referral Detail"
                     buttonText="Filter"
                     height={450}
-                    onClose={()=>sheetRef.current.close()}
-                    >
+                    onClose={() => sheetRef.current.close()}
+                >
 
                     <MyInput label="किशोर/किशोरी का नाम *"
                         {...fieldProps('name')}

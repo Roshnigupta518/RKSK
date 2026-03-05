@@ -255,9 +255,39 @@ const PeerEducatorForm = ({ navigation }) => {
     });
   };
 
+
+  const GROUP_MEETING_VALUE = 1; // ← change according to master value
+
+  const isGroupMeeting =
+    inputs?.activityType.includes(GROUP_MEETING_VALUE);
+
   const validateForm = () => {
     let tempErrors = {};
     let valid = true;
+
+if (isGroupMeeting) {
+
+  if (!inputs.module?.length) {
+    tempErrors.module = 'Required';
+    valid = false;
+  }
+
+  if (!inputs.comicBook?.length) {
+    tempErrors.comicBook = 'Required';
+    valid = false;
+  }
+
+  if (!inputs.activityMethod?.length) {
+    tempErrors.activityMethod = 'Required';
+    valid = false;
+  }
+
+   // ✅ NEW Validation
+   if (!inputs.materialUsed?.length) {
+    tempErrors.materialUsed = 'Required';
+    valid = false;
+  }
+}
 
     // Normal fields (input + picker + date)
     REQUIRED_FIELDS.forEach(key => {
@@ -416,6 +446,8 @@ const PeerEducatorForm = ({ navigation }) => {
     'image'
   );
   console.log({peerEducatorDetails})
+
+  
   return (
     <CustomContainer>
       <CustomHeader title="Peer educator (Saathiya) activity reporting" onBackPress={() => navigation.goBack()} />
@@ -541,6 +573,7 @@ const PeerEducatorForm = ({ navigation }) => {
                 required
                 {...multiSelectFieldProps(p.key)}
                 disable={isReportingCount}
+                showStar={isGroupMeeting}
               />
             ))}
 
@@ -588,7 +621,7 @@ const PeerEducatorForm = ({ navigation }) => {
           />
 
           <CustomMultiSelect
-            label={'सामग्री उपयोग *'}
+            label={`सामग्री उपयोग ${isGroupMeeting? '*':''}`}
             items={contentUse}
             placeholder=""
             required
@@ -641,6 +674,7 @@ const PeerEducatorForm = ({ navigation }) => {
               onUpload={uploadProfileToServer}
               onRemove={removeImage}
               disabled={isReportingCount}
+              showGallery={true}
             />
 
           <CustomButton title='Next'
@@ -666,16 +700,16 @@ const PARTICIPANTS = [
   { key: 'asha', label: 'आशा *' },
   { key: 'cho', label: 'कम्युनिटी हेल्थ ऑफिसर *' },
   { key: 'awc', label: 'आंगनवाड़ी कार्यकर्ता *' },
-  // { key: 'parents', label: 'अभिभावक *' },
-  // { key: 'ngo', label: 'NGO प्रशिक्षक *' },
-  // { key: 'teacher', label: 'शिक्षक *' },
+  { key: 'parents', label: 'अभिभावक *' },
+  { key: 'ngo', label: 'NGO प्रशिक्षक *' },
+  { key: 'teacher', label: 'शिक्षक *' },
 ];
 const PICKERS = [
   // { key: 'location', label: 'गतिविधि का स्थान *' },
   { key: 'activityType', label: 'गतिविधि का प्रकार *' },
-  { key: 'module', label: 'कौन-सा मॉड्यूल /विषय लिया गया? *' },
-  { key: 'comicBook', label: 'कौन-सी कॉमिक्स बुक का उपयोग किया गया? *' },
-  { key: 'activityMethod', label: 'गतिविधि कैसे की? *' },
+  { key: 'module', label: 'कौन-सा मॉड्यूल /विषय लिया गया?' },
+  { key: 'comicBook', label: 'कौन-सी कॉमिक्स बुक का उपयोग किया गया?' },
+  { key: 'activityMethod', label: 'गतिविधि कैसे की?' },
 ];
 
 const BASIC_PICKERS = [
@@ -704,13 +738,13 @@ const REQUIRED_FIELDS = [
   // PICKERS
   'location',
   'activityType',
-  'module',
-  'comicBook',
-  'activityMethod',
+  // 'module',
+  // 'comicBook',
+  // 'activityMethod',
 
   // OTHER PICKERS
   'duration',
-  'materialUsed',
+  // 'materialUsed',
 
   // TEXT INPUTS
   'questions',
@@ -724,7 +758,7 @@ const PARTICIPANT_KEYS = [
   'asha',
   'cho',
   'awc',
-  // 'parents',
-  // 'ngo', 
-  // 'teacher'
+  'parents',
+  'ngo', 
+  'teacher'
 ];

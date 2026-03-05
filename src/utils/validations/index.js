@@ -1,4 +1,5 @@
 import moment from "moment";
+import { Alert } from "react-native";
 
 export const isEmpty = (value) => {
   return !value || !value.toString().trim();
@@ -61,3 +62,42 @@ export const validateByRegex = (value, regexConfig, fieldName, tempErrors) => {
   return true;
 };
 
+
+export const validateLocationBeforeSubmit = ({
+  location,
+  error,
+  getLocation,
+  openLocationSettings,
+  permissionHandle,
+}) => {
+
+  if (!location) {
+
+    if (error === 'gps-off') {
+      Alert.alert(
+        'Location Required',
+        'Location permission is required to submit the form. Please enable location access in your device settings.',
+        [
+          {
+            text: 'OK',
+            onPress: () => openLocationSettings(),
+          },
+        ]
+      );
+    } 
+    else if (error === 'permissionDenied') {
+      permissionHandle();
+    } 
+    else {
+      Alert.alert(
+        'Location Not Captured',
+        'We could not detect your location. Please try again after moving to an open area.'
+      );
+    }
+
+    getLocation(); // retry location
+    return false;
+  }
+
+  return true;
+};
