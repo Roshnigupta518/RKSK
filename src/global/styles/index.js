@@ -176,4 +176,13 @@ export default StyleSheet.create({
       top:2,
       right:5,
     },
+    floatingbtn:{
+      marginRight: 15, width: 50, 
+      height: 50, borderRadius: 50, 
+      position: 'absolute', 
+      bottom: 30, right: 15, 
+      backgroundColor: colors.blue, 
+      justifyContent: 'center', 
+      alignItems: 'center'
+  }
 })

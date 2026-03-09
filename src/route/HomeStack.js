@@ -17,7 +17,9 @@ import PeerEducator from '../screens/dashboard/peerEducator';
 import PeerEducatorForm from '../screens/dashboard/peerEducator/form';
 import RefferalDetails from '../screens/dashboard/peerEducator/referral';
 import PeerDetails from '../screens/dashboard/peerEducator/peerDetail';
-
+import BrigadeForm from '../screens/dashboard/brigade/form';
+import BrigadeList from '../screens/dashboard/brigade/list';
+import BrigadeDetails from '../screens/dashboard/brigade/details';
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
@@ -34,6 +36,8 @@ const HomeStack = () => {
       <Stack.Screen name="PeerEducatorForm" component={PeerEducatorForm} />
       <Stack.Screen name="RefferalDetails" component={RefferalDetails} />
       <Stack.Screen name="PeerDetails" component={PeerDetails} />
+      <Stack.Screen name="BrigadeForm" component={BrigadeForm} />
+      <Stack.Screen name="BrigadeDetails" component={BrigadeDetails} />
     </Stack.Navigator>
   )
 }
@@ -99,6 +103,15 @@ const DrawerStack = () => {
           drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={PeerEducator}
+      />
+       <Drawer.Screen
+        name="BrigadeList"
+        options={{
+          title: 'Brigade List',
+          drawerLabel: 'Peer Educator Brigade',
+          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
+        }}
+        component={BrigadeList}
       />
       <Drawer.Screen
         name="Disclaimer"
