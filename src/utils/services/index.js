@@ -15,6 +15,7 @@ import { startBackgroundService } from '../bgservices/backgroundService'
 import { setPeerEducatorId, setPeerEducatorReportCount } from "../../redux/slices/peerReportingCount";
 import { incrementPeerBridageRetryCount, removePeerBridageByClientId, setPeerBridageList, updateSavePeerBridageSyncStatus } from "../../redux/slices/peerBrigade";
 import { setMaterialList } from "../../redux/slices/materials";
+import { setVideoList } from "../../redux/slices/awarenessVideo";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -517,7 +518,6 @@ export const getPeerBridageListHandle = async () => {
 };
 
 export const getIecMaterialListHandle = async() => {
-  const loginDetails = getLoginDetails()
   try {
     const url = `${API.GET_MATERIALS}`;
     const result = await getApi(url);
@@ -533,7 +533,19 @@ export const getIecMaterialListHandle = async() => {
   }
 }
 
-export const  getProfileDataHandle = async() => {
-
+export const  getAwarenessVideoListHandle = async() => {
+  try {
+    const url = `${API.GET_VIDEOS}`;
+    const result = await getApi(url);
+    console.log({getAwarenessVideoListHandle: result})
+    if (result?.status === 200) {
+      store.dispatch(setVideoList(result.data))
+    } else {
+      console.warn('get awareness video response:', result);
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+    return [];
+  }
 }
 

@@ -22,6 +22,8 @@ import BrigadeList from '../screens/dashboard/brigade/list';
 import BrigadeDetails from '../screens/dashboard/brigade/details';
 import Materials from '../screens/dashboard/materials';
 import ViewPdf from '../screens/dashboard/ViewPdf';
+import AwarenessVideo from '../screens/dashboard/videos';
+import ViewVdo from '../screens/dashboard/ViewVdo';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -42,6 +44,7 @@ const HomeStack = () => {
       <Stack.Screen name="BrigadeForm" component={BrigadeForm} />
       <Stack.Screen name="BrigadeDetails" component={BrigadeDetails} />
       <Stack.Screen name="ViewPdf" component={ViewPdf} />
+      <Stack.Screen name="ViewVdo" component={ViewVdo} />
     </Stack.Navigator>
   )
 }
@@ -95,6 +98,14 @@ const DrawerStack = () => {
           drawerLabel: 'IEC Materials',
         }}
         component={Materials}
+      />
+      <Drawer.Screen
+        name="AwarenessVideo"
+        options={{
+          title: 'Awareness Videos',
+          drawerLabel: 'Awareness Videos',
+        }}
+        component={AwarenessVideo}
       />
       <Drawer.Screen
         name="ATPListScreen"

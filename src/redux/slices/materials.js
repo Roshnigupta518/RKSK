@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-    data: false
+    data: []
   };
 
 const materialSlice = createSlice({

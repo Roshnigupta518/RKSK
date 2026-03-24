@@ -16,6 +16,7 @@ class Endpoints {
   SAVE_PEER_BRIGADE_FORM = this.baseUrl + 'PeerEducatorbrigade/InsertPeerEducator'
   GET_PEER_BRIGADE_LIST = this.baseUrl + 'PeerEducatorbrigade/GetPeerEducatorBrigadeMembers'
   GET_MATERIALS = this.baseUrl + 'PeerEducatorbrigade/IECDetails'
+  GET_VIDEOS = this.baseUrl + 'PeerEducatorbrigade/GetAwarenessVideo'
 }
 
 export const API = new Endpoints();

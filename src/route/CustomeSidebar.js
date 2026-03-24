@@ -111,6 +111,7 @@ const CustomSidebar = (props) => {
         {renderMenuItem("Profile", "user", "Profile", "#FB6F3D")}
         {renderMenuItem("Dashboard", "grid", "Dashboard", "#413DFB")}
         {renderMenuItem("IEC Materials", "file", "Materials", colors.yellow)}
+        {renderMenuItem("Awareness Video", "video", "AwarenessVideo", 'green')}
       </View>
 
       {/* -------- Menu Group 2 -------- */}

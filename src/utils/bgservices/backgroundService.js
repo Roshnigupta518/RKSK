@@ -3,7 +3,7 @@ import {syncTaskName} from './backgroundTaskEnum';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { isUserLoggedIn } from '../../redux/store/getState';
-import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn,syncPeerEducatorFormData, syncPeerEducatorList, syncMastersData, syncPeerEducatorReferralList, syncPeerReportingCount, syncPeerBrigadeList, syncPeerBrigadeFormData, syncIecMaterailList } from './syncTask';
+import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn,syncPeerEducatorFormData, syncPeerEducatorList, syncMastersData, syncPeerEducatorReferralList, syncPeerReportingCount, syncPeerBrigadeList, syncPeerBrigadeFormData, syncIecMaterailList, syncAwarenessVideoList } from './syncTask';
 import { processQueue } from './queueProcessor';
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
@@ -74,6 +74,7 @@ const checkIfTaskNotSyncedToday = async taskName => {
           try {
             // let isSyncDashboard = taskName == syncTaskName.syncDashboard || syncAll;
             let isSyncIecMaterial = taskName == syncTaskName.syncIecMaterialList || syncAll;
+            let isSyncAwarenessVideo = taskName == syncTaskName.syncAwarenessVideo || syncAll;
             let isSyncPeerCount = taskName == syncTaskName.syncPeerReportingCount || syncAll;
             let isSyncATPList = taskName == syncTaskName.syncGetAtpList || syncAll;
             let isSyncActivityQueue = taskName == syncTaskName.syncAcitivityQueue || syncAll;
@@ -99,6 +100,10 @@ const checkIfTaskNotSyncedToday = async taskName => {
             //   console.log('executing sync dashboard');
             //   await syncDashboard();
             // }
+
+            if(isSyncAwarenessVideo){
+              await syncAwarenessVideoList()
+            }
 
             if (isSyncIecMaterial) {
               console.log('executing sync isSyncProfile');

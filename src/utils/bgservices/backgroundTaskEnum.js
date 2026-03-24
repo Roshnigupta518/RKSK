@@ -11,6 +11,7 @@ export const syncTaskName = {
     syncPeerReportingCount: 'syncPeerReportingCount',
     syncPeerBrigadeForm : 'syncPeerBrigadeForm',
     syncPeerBrigadeList : 'syncPeerBrigadeList',
-    syncIecMaterialList : 'syncIecMaterialList'
+    syncIecMaterialList : 'syncIecMaterialList',
+    syncAwarenessVideo : 'syncAwarenessVideo'
   };
   

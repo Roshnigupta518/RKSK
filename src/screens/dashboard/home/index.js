@@ -17,6 +17,8 @@ const Dashboard = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false)
 
   const activityPlanList = useAppSelector(state => state.activityPlan.data);
+  const magList = useAppSelector(state => state.iecMaterialList.data);
+  const awarenessVideoList = useAppSelector(state => state.awarenessVideoList.data);
 
   const dashboardCounts = useMemo(() => {
     return calculateDashboardCounts(activityPlanList);
@@ -117,6 +119,18 @@ const Dashboard = ({ navigation }) => {
             )}
           </View>
         </View>
+
+        <View style={styles.row}>
+          {renderCard(magList?.length, `IEC Materials`, colors.orange,
+            () => navigation.navigate("Materials")
+          )}
+          <View style={{ marginTop: 30, width: '100%', marginLeft: 25 }}>
+            {renderCard(awarenessVideoList?.length, "Awareness Videos", colors.skyblue,
+                () => navigation.navigate("AwarenessVideo")
+            )}
+          </View>
+        </View>
+
       </View>
       </ScrollView>
       <ExitModal
