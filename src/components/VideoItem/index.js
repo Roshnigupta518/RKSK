@@ -16,11 +16,11 @@ const VideoItem = ({ item, index, onPress }) => {
                     {item?.youTube_Link && (
                         <Thumbnail
                             url={item.youTube_Link}
-                            imageWidth={100}
+                            imageWidth={"100%"}
                             imageHeight={100}
                             containerStyle={{
                                 backgroundColor: '#000',
-                                width: 100,
+                                width: '90%',
                                 height: 100,
                             }}
                             iconStyle={{

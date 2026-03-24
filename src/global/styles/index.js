@@ -111,7 +111,7 @@ export default StyleSheet.create({
     bordersty:{
       height:1,
       backgroundColor:colors.disabled,
-      marginVertical:15
+      marginVertical:10
     },
 
     inputContainer:{

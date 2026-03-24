@@ -50,7 +50,9 @@ const Dashboard = ({ navigation }) => {
         <Icon name="arrow-up-right" size={20} color="#fff" />
       </View>
   
-      <View style={st.mt_10}>
+      <View 
+      // style={st.mt_10}
+      >
         <Text style={styles.cardNumber}>{count}</Text>
   
         <View style={st.bordersty} />
@@ -102,7 +104,7 @@ const Dashboard = ({ navigation }) => {
             colors.orange,
             () => navigation.navigate("FilteredList", { filterType: "COMPLETED" })
             )}
-          <View style={{ marginTop: 30, width: '100%', marginLeft: 25 }}>
+          <View style={{ marginTop: 20, width: '100%', marginLeft: 25 }}>
             {renderCard(dashboardCounts?.scheduledToday, "Activities\nScheduled\nfor Today", colors.skyblue,
               () => navigation.navigate("FilteredList", { filterType: "TODAY" })
             )}
@@ -113,7 +115,7 @@ const Dashboard = ({ navigation }) => {
           {renderCard(dashboardCounts?.overdue, `Overdue\nActivities`, colors.blue,
             () => navigation.navigate("FilteredList", { filterType: "OVERDUE" })
           )}
-          <View style={{ marginTop: 30, width: '100%', marginLeft: 25 }}>
+          <View style={{ marginTop: 20, width: '100%', marginLeft: 25 }}>
             {renderCard(dashboardCounts?.onSchedule, "On-Schedule\nActivities", colors.red,
                 () => navigation.navigate("FilteredList", { filterType: "SCHEDULED" })
             )}
@@ -124,7 +126,7 @@ const Dashboard = ({ navigation }) => {
           {renderCard(magList?.length, `IEC Materials`, colors.orange,
             () => navigation.navigate("Materials")
           )}
-          <View style={{ marginTop: 30, width: '100%', marginLeft: 25 }}>
+          <View style={{ marginTop: 20, width: '100%', marginLeft: 25 }}>
             {renderCard(awarenessVideoList?.length, "Awareness Videos", colors.skyblue,
                 () => navigation.navigate("AwarenessVideo")
             )}
@@ -211,7 +213,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "47%",
-    height: 230,
+    height: 200,
     borderRadius: 20,
     padding: 15,
     justifyContent: "flex-start",
@@ -219,7 +221,7 @@ const styles = StyleSheet.create({
   cardArrow: {
     position: "absolute",
     right: 15,
-    top: 15,
+    top: 5,
     width: 40,
     height: 40,
     borderColor: colors.disabled,
@@ -235,7 +237,7 @@ const styles = StyleSheet.create({
     ...st.txbold
   },
   cardLabel: {
-    marginTop: 4,
+    // marginTop: 4,
     ...st.tx14,
     color: colors.white,
     lineHeight: 28,
