@@ -37,8 +37,8 @@ const PeerBridageListSlice = createSlice({
     
       //  Latest first sort (createdAt ya fallback pe)
       state.data.sort((a, b) => {
-        const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
-        const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
+        const dateA = new Date(a.createdOn || a.updatedAt || 0).getTime();
+        const dateB = new Date(b.createdOn || b.updatedAt || 0).getTime();
         return dateB - dateA;
       });
     },

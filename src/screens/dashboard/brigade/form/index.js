@@ -227,6 +227,8 @@ const BrigadeForm = ({ navigation }) => {
         if (!validateForm()) return;
         console.log({ inputs })
 
+        const qualification_temp = qualificationData.find((i)=>i.value === inputs.qualification)
+
         const payload = {
             "districtID": inputs.district,
             "districtName": getLabelsFromValues(inputs.district, pickerData.district).join(''),
@@ -246,8 +248,8 @@ const BrigadeForm = ({ navigation }) => {
             "brigadeMemberAge": inputs.age,
             "brigadeMemberMobile": inputs.mobile,
             "brigadeMemberGuardianName": inputs?.father,
-            "brigadeMemberEducation": inputs?.qualification,
-            "isSchoolGoing": inputs?.sch_options,
+            "brigadeMemberEducation": qualification_temp?.label,
+            "isSchoolGoing": inputs?.sch_options || 0,
             clientId: generateclientID(userLogin.userId),
             syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
             createdOn: new Date().toISOString(),
@@ -257,6 +259,7 @@ const BrigadeForm = ({ navigation }) => {
 
         dispatch(setPeerBridageList(payload))
         startBackgroundService(syncTaskName.syncPeerBrigadeForm)
+        navigation.goBack()
     }
 
     const ReadOnlyPicker = React.memo(

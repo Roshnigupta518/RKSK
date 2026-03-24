@@ -5,7 +5,7 @@ import { CustomContainer, CustomContent } from '../../../../components/container
 import PeerField from '../../../../components/peerField'
 import st from '../../../../global/styles'
 import { getLabelsFromValues } from '../../../../utils/helper'
-import { activityDuration, genderData, qualificationData } from '../../../../utils/staticJson'
+import { activityDuration, booleanData, genderData, qualificationData } from '../../../../utils/staticJson'
 import { environment } from '../../../../utils/constant'
 import Icon from 'react-native-vector-icons/Feather'
 
@@ -62,7 +62,7 @@ const PeerDetails = ({ navigation, route }) => {
                     <PeerField label="मोबाइल नंबर " value={data.brigadeMemberMobile} />
                     <PeerField label="पिता /अभिभावक का नाम" value={data.brigadeMemberGuardianName} />
                     <PeerField label="शैक्षणिक योग्यता" value={data.brigadeMemberEducation} />
-                    <PeerField label="विद्यालय जाने की स्थिति का प्रकार" value={getLabelsFromValues(data.brigadeMemberEducation, qualificationData)}/>
+                   {data.isSchoolGoing != 0 &&  <PeerField label="विद्यालय जाने की स्थिति का प्रकार" value={getLabelsFromValues(data.isSchoolGoing, booleanData)}/>}
                     <PeerField label="Entry by (Designation)" value={(data.designation)} />  
                     <PeerField label="Entry by (Name)" value={data.name} />
                     <PeerField label="Entry date"  value={formatDate(data.createdOn)}/>

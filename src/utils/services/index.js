@@ -448,7 +448,7 @@ export const saveSinglePeerBridageList = async(data) =>{
       store.dispatch(updateSavePeerBridageSyncStatus({
         syncStatus: ENUM.SERVERSTATUS.COMPLETED,
         clientId: data.clientId,
-        id: result.data.message
+        id: result.data.id
       }));
     
       Toast.show({
@@ -486,7 +486,7 @@ export const getPeerBridageListHandle = async () => {
     const state = store.getState().peerBrigadeList;
     const localList = state.data || [];
 
-    const url = `${API.GET_PEER_BRIGADE_LIST}?districtId=0&blockId=0&trainerId=${loginDetails.trainerId}&peerEducatorId=${loginDetails.peerEducatorId}&AFId=0&ASHAId=0&Mobile=0`;
+    const url = `${API.GET_PEER_BRIGADE_LIST}?districtId=0&blockId=0&trainerId=${loginDetails.trainerId}&peerEducatorId=${loginDetails.peerEducatorId}&AFId=0&ASHAId=0`;
     const result = await getApi(url);
     if (result?.status === 200) {
       const serverList = Array.isArray(result.data) ? result.data : [];

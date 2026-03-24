@@ -22,6 +22,8 @@ const BrigadeList = ({ navigation }) => {
     const [isLoading, setIsLoading] = useState(false)
     const [inputs, setInputs] = useState(INITIALINPUT);
     const [errors, setErrors] = useState(INITIALINPUT);
+    const [filteredList, setFilteredList] = useState([]);
+    const [isFilterApplied, setIsFilterApplied] = useState(false);
 
     const sheetRef = useRef();
 
@@ -93,17 +95,52 @@ const BrigadeList = ({ navigation }) => {
         disabled: isLoading,
     });
 
+    const applyFilters = () => {
+        let data = [...peerEducator];
+    
+        // 🔍 Name filter
+        if (inputs.name?.trim()) {
+            data = data.filter(item =>
+                item.brigadeMemberName?.toLowerCase().includes(inputs.name.trim().toLowerCase())
+            );
+        }
+    
+        // 📱 Mobile filter
+        if (inputs.mobile?.trim()) {
+            data = data.filter(item =>
+                item.brigadeMemberMobile?.includes(inputs.mobile.trim())
+            );
+        }
+    
+        // 📅 Date filter
+        if (inputs.fromdate) {
+            const from = new Date(inputs.fromdate).setHours(0, 0, 0, 0);
+            data = data.filter(item =>
+                new Date(item.createdOn).setHours(0, 0, 0, 0) >= from
+            );
+        }
+    
+        if (inputs.todate) {
+            const to = new Date(inputs.todate).setHours(23, 59, 59, 999);
+            data = data.filter(item =>
+                new Date(item.createdOn).setHours(0, 0, 0, 0) <= to
+            );
+        }
+    
+        return data;
+    };
+
     const onFilterApplyPress = () => {
-        // const result = applyFilters();
-        // setFilteredList(result);
-        // setIsFilterPressed(true);   // user actually applied filter
+        const result = applyFilters();
+        setFilteredList(result);
+        setIsFilterApplied(true);   // user actually applied filter
         sheetRef.current.close();
     };
 
     const clearFilters = () => {
         setInputs(INITIALINPUT);
         setFilteredList([]);
-        setIsFilterPressed(false);   //  filter removed
+        setIsFilterApplied(false);   //  filter removed
         sheetRef.current.close();
     };
 
@@ -128,7 +165,7 @@ const BrigadeList = ({ navigation }) => {
     return (
         <View style={st.container}>
             <FlatList
-                data={peerEducatorList}
+                data={isFilterApplied ? filteredList : peerEducatorList}
                 keyExtractor={(item) => item.clientId || item.id?.toString()}
                 renderItem={renderItem}
                 contentContainerStyle={st.pd20}
@@ -136,7 +173,7 @@ const BrigadeList = ({ navigation }) => {
                 ListHeaderComponent={() =>
                     peerEducatorList.length > 0 &&
                     <Text style={st.tx14}>
-                        {`Total ${peerEducatorList.length} records`}
+                        {`Total ${(isFilterApplied ? filteredList : peerEducatorList).length} records`}
                     </Text>
                 }
             />
