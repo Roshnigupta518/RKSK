@@ -17,7 +17,7 @@ const INITIALINPUT = {
 }
 
 const BrigadeList = ({ navigation }) => {
-    const peerEducator = useAppSelector(state => state.peerReferralList.data);
+    const peerEducator = useAppSelector(state => state.peerBrigadeList.data);
     const [peerEducatorList, setPeerEducatorList] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [inputs, setInputs] = useState(INITIALINPUT);
@@ -114,12 +114,12 @@ const BrigadeList = ({ navigation }) => {
                 onPress={() => navigation.navigate('BrigadeDetails', { data: item })}>
                 <IconStatus status={item.syncStatus} />
                 <Field label="Id" value={item.id} />
-                <Field label={'District/जिला'} value={item.ashaNameText || item.ashaName} />
-                <Field label={'ASHA/आशा का नाम'} value={item.villageName} />
-                <Field label={'Village/ग्राम का नाम'} value={item.sathiyaNameText || item.sathiyaName} />
-                <Field label={'Peer educator/साथिया का नाम'} value={item.id} />
-                <Field label={'Name/ब्रिगेड सदस्य का नाम'} value={dateFormat(item.activityDate)} />
-                <Field label="Registration Date" value={item.locationText || item.location} />
+                <Field label={'District/जिला'} value={item.districtName} />
+                <Field label={'ASHA/आशा का नाम'} value={item.asha} />
+                <Field label={'Village/ग्राम का नाम'} value={item.villageName} />
+                <Field label={'Peer educator/साथिया का नाम'} value={item.peerEducatorName} />
+                <Field label={'Name/ब्रिगेड सदस्य का नाम'} value={item.brigadeMemberName} />
+                <Field label="Registration Date" value={dateFormat(item.createdOn)} />
 
             </TouchableOpacity>
         )

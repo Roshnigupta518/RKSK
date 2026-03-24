@@ -13,6 +13,9 @@ class Endpoints {
   SAVE_PEEREDICATOR_REFERRAL = this.baseUrl + 'PeerEducator/PeerForm'
   PEER_REPORT_COUNT = this.baseUrl + 'PeerEducator/GetPeerEducatorReportingEntryCount'
   GET_Asha_ByVacant_Ashasahyogi = this.baseUrl + 'Masters/GetAsha_ByVacant_Ashasahyogi'
+  SAVE_PEER_BRIGADE_FORM = this.baseUrl + 'PeerEducatorbrigade/InsertPeerEducator'
+  GET_PEER_BRIGADE_LIST = this.baseUrl + 'PeerEducatorbrigade/GetPeerEducatorBrigadeMembers'
+  GET_MATERIALS = this.baseUrl + 'PeerEducatorbrigade/IECDetails'
 }
 
 export const API = new Endpoints();

@@ -25,3 +25,23 @@ export const isUserLoggedIn = () => {
     return savedPeerEducatorData;
   };
   
+
+  export const getSavedPeerBridageNotStarted = (isGetInProgress) => {
+    const data = store.getState().peerBrigadeList?.data
+    let savedPeerBrigadeData = data
+      ?.filter(res =>
+        res.syncStatus === ENUM.SERVERSTATUS.NOTSTARTED ||
+        res.syncStatus === ENUM.SERVERSTATUS.FAILED ||   
+        (isGetInProgress && res.syncStatus === ENUM.SERVERSTATUS.INPROGRESS)
+      );
+  
+    savedPeerBrigadeData?.sort((a, b) => {
+      const dateA = new Date(a.createdOn).getTime();
+      const dateB = new Date(b.createdOn).getTime();
+      return dateA < dateB ? 1 : -1;
+    });
+
+    console.log({data, savedPeerBrigadeData, isGetInProgress})
+  
+    return savedPeerBrigadeData;
+  };

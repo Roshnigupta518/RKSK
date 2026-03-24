@@ -1,8 +1,8 @@
 import { syncTaskName } from "./backgroundTaskEnum";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getDasboardDataHandle, getProfileDataHandle, getATPListRequest, getPeerEducatorListHandle, getMastersDataHandle, getPeerEducatorReferralListHandle, getPeerReportingCount } from "../services";
+import { getDasboardDataHandle, getProfileDataHandle, getATPListRequest, getPeerEducatorListHandle, getMastersDataHandle, getPeerEducatorReferralListHandle, getPeerReportingCount, savePeerBridageFormDatafromRedux, getPeerBridageListHandle } from "../services";
 import { processQueue } from "./queueProcessor";
-import { savePeerEducatorFormDatafromRedux } from "../services";
+import { savePeerEducatorFormDatafromRedux, getIecMaterialListHandle } from "../services";
 
 const setSyncStatus = async taskName => {
     const status = { lastSyncOn: new Date() };
@@ -39,6 +39,11 @@ export const syncPeerEducatorReferralList = async () => {
     await setSyncStatus(syncTaskName.syncPeerEducatorReferralList);
 };
 
+export const syncPeerBrigadeList = async () => {
+    getPeerBridageListHandle();
+    await setSyncStatus(syncTaskName.syncPeerBrigadeList);
+};
+
 export const syncMastersData = async () => {
     await getMastersDataHandle({ flag: 2, id: 0 }); // ONLY DISTRICT
     await setSyncStatus(syncTaskName.syncMasters);
@@ -58,4 +63,14 @@ export const syncPeerEducatorFormData = async(isSyncInProgress) => {
     await savePeerEducatorFormDatafromRedux(isSyncInProgress)
     await setSyncStatus(syncTaskName.syncPeerEducatorFormData);
 }
+
+export const syncPeerBrigadeFormData = async(isSyncInProgress) => {
+    await savePeerBridageFormDatafromRedux(isSyncInProgress)
+    await setSyncStatus(syncTaskName.syncPeerBrigadeForm);
+}
+
+export const syncIecMaterailList = async () => {
+    getIecMaterialListHandle();
+    await setSyncStatus(syncTaskName.syncIecMaterialList);
+};
 

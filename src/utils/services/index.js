@@ -7,12 +7,14 @@ import { setPeerEducatorList } from "../../redux/slices/peerEducatorList";
 import { setLocalMasters } from "../../redux/slices/Masters";
 import { saveToLocal } from "./storage";
 import { incrementPeerRetryCount, removePeerReferralByClientId, setPeerReferralList, updateSavePeerReferralSyncStatus } from "../../redux/slices/ReferralList";
-import { getSavedPeerEducatorNotStarted } from '../../redux/store/getState';
+import { getSavedPeerBridageNotStarted, getSavedPeerEducatorNotStarted } from '../../redux/store/getState';
 import { ENUM } from "../bgservices/enum";
 import Toast from "react-native-toast-message";
 import { syncTaskName } from "../../utils/bgservices/backgroundTaskEnum";
 import { startBackgroundService } from '../bgservices/backgroundService' 
 import { setPeerEducatorId, setPeerEducatorReportCount } from "../../redux/slices/peerReportingCount";
+import { incrementPeerBridageRetryCount, removePeerBridageByClientId, setPeerBridageList, updateSavePeerBridageSyncStatus } from "../../redux/slices/peerBrigade";
+import { setMaterialList } from "../../redux/slices/materials";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -259,6 +261,15 @@ export const savePeerEducatorFormDatafromRedux = async isSyncInProgrss => {
   }
 };
 
+export const savePeerBridageFormDatafromRedux = async isSyncInProgrss => {
+  const getSavedPeerBridagelistStarted =
+  getSavedPeerBridageNotStarted(isSyncInProgrss);
+
+  for (let i = 0; i < getSavedPeerBridagelistStarted?.length; i++) {
+    await saveSinglePeerBridageList(getSavedPeerBridagelistStarted[i]);
+  }
+};
+
 export const saveSinglePeerEducatorList = async (data) => {
   console.log({saveSinglePeerEducatorListapi: data})
   const loginDetails = getLoginDetails()
@@ -382,8 +393,144 @@ export const getPeerReportingCount = async() => {
 }
 }
 
-export const getDasboardDataHandle = async() => {
+export const saveSinglePeerBridageList = async(data) =>{
+  console.log({saveSinglePeerBridageListapi: data})
+  const loginDetails = getLoginDetails()
 
+  const MAX_RETRY = 3;
+
+  const currentRetry = data?.retryCount || 0;
+
+  if (currentRetry >= MAX_RETRY) {
+    console.warn('Max retry reached. Removing from list:', data.clientId);
+    store.dispatch(removePeerBridageByClientId({ clientId: data.clientId }));
+    return;
+  }
+
+  store.dispatch(updateSavePeerBridageSyncStatus({
+    syncStatus: ENUM.SERVERSTATUS.INPROGRESS,
+    clientId: data.clientId,
+  }));
+
+  const url = `${API.SAVE_PEER_BRIGADE_FORM}`;
+  const params = {
+    "id": 0,
+    "districtId": data.districtID,
+    "blockId": data.blockID,
+    "afId": data.ashaSahyogiID,
+    "ashaId": data.ashaId,
+    "villageId": data.villageID,
+    "peerEducaorId": data.peerEducatorId,
+    "trainerId": loginDetails.trainerId,
+    "limit": 0,
+    "brigadeMemberName": data.brigadeMemberName,
+    "brigadeMemberGender": data.brigadeMemberGenderId,
+    "brigadeMemberAge": data.brigadeMemberAge,
+    "brigadeMemberMobile": data.brigadeMemberMobile,
+    "brigadeMembergardianName": data.brigadeMemberGuardianName,
+    "brigadeMemberEducation": data.brigadeMemberEducation,
+    "isSchoolGoing": data.isSchoolGoing,
+    "ipAddress": data.IP,
+    "createdBy": loginDetails.userId,
+    "createdOn": data.createdOn,
+    "modifyBy": 0,
+    "modifyOn": data.createdOn,
+    // 'SyncStatus': data.syncStatus,
+    // 'ClientId': data.clientId
+  }
+ 
+  try {
+    const result = await postApiWithToken(url, params);
+    console.log('peerformresult', result)
+    if (result.status === 200) {
+      
+      store.dispatch(updateSavePeerBridageSyncStatus({
+        syncStatus: ENUM.SERVERSTATUS.COMPLETED,
+        clientId: data.clientId,
+        id: result.data.message
+      }));
+    
+      Toast.show({
+        type: "myCustomType",
+        text1: "Success",
+        text2: "Data Saved successfully",
+        position: 'bottom',
+        props: { key: 'success' },
+    });
+
+    }
+  } catch (e) {
+    
+    store.dispatch(incrementPeerBridageRetryCount({ clientId: data.clientId }));
+
+    const updatedItem = store.getState().peerBrigadeList.data.find(i => i.clientId === data.clientId);
+
+    if ((updatedItem?.retryCount || 0) >= MAX_RETRY) {
+      console.warn('Retry failed 3 times. Removing item:', data.clientId); 
+      store.dispatch(removePeerBridageByClientId({ clientId: data.clientId }));
+    } else {
+      store.dispatch(updateSavePeerBridageSyncStatus({
+        syncStatus: ENUM.SERVERSTATUS.FAILED,
+        clientId: data.clientId,
+      }));
+    }
+
+    handleAPIErrorResponse(e, 'save peer educator form data catch');
+  }
+}
+
+export const getPeerBridageListHandle = async () => {
+  const loginDetails = getLoginDetails()
+  try {
+    const state = store.getState().peerBrigadeList;
+    const localList = state.data || [];
+
+    const url = `${API.GET_PEER_BRIGADE_LIST}?districtId=0&blockId=0&trainerId=${loginDetails.trainerId}&peerEducatorId=${loginDetails.peerEducatorId}&AFId=0&ASHAId=0&Mobile=0`;
+    const result = await getApi(url);
+    if (result?.status === 200) {
+      const serverList = Array.isArray(result.data) ? result.data : [];
+
+      const serverIds = new Set(serverList.map(i => i.clientId));
+
+      // sirf unsynced local items rakho
+      const offlineItems = localList.filter(item =>
+        (item.syncStatus === ENUM.SERVERSTATUS.NOTSTARTED ||
+         item.syncStatus === ENUM.SERVERSTATUS.FAILED ||
+         item.syncStatus === ENUM.SERVERSTATUS.INPROGRESS) &&
+        !serverIds.has(item.clientId)
+      );
+
+      const mergedList = [
+        ...serverList.map(s => ({
+          ...s,
+          syncStatus: ENUM.SERVERSTATUS.COMPLETED,
+          retryCount: 0,
+        })),
+        ...offlineItems,
+      ];
+
+      store.dispatch(setPeerBridageList(mergedList));
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+  }
+};
+
+export const getIecMaterialListHandle = async() => {
+  const loginDetails = getLoginDetails()
+  try {
+    const url = `${API.GET_MATERIALS}`;
+    const result = await getApi(url);
+    console.log({getIecMaterialListHandle: result})
+    if (result?.status === 200) {
+      store.dispatch(setMaterialList(result.data))
+    } else {
+      console.warn('get materials Unexpected response:', result);
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+    return [];
+  }
 }
 
 export const  getProfileDataHandle = async() => {

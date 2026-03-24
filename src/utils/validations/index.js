@@ -49,12 +49,14 @@ export const TodayDate = () => {
 }
 
 export const validateByRegex = (value, regexConfig, fieldName, tempErrors) => {
-  if (!value || value.trim().length === 0) {
+  const val = value?.toString()?.trim();
+
+  if (!val) {
     tempErrors[fieldName] = regexConfig.emptyError;
     return false;
   }
 
-  if (!regexConfig.regex.test(value.trim())) {
+  if (!regexConfig.regex.test(val)) {
     tempErrors[fieldName] = regexConfig.typeError;
     return false;
   }

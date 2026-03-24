@@ -8,6 +8,9 @@ export const syncTaskName = {
     syncMasters : 'syncMasters',
     syncPeerEducatorReferralList : 'syncPeerEducatorReferralList',
     syncPeerEducatorFormData : 'syncPeerEducatorFormData',
-    syncPeerReportingCount: 'syncPeerReportingCount'
+    syncPeerReportingCount: 'syncPeerReportingCount',
+    syncPeerBrigadeForm : 'syncPeerBrigadeForm',
+    syncPeerBrigadeList : 'syncPeerBrigadeList',
+    syncIecMaterialList : 'syncIecMaterialList'
   };
   

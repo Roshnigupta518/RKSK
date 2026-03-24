@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, Platform, KeyboardAvoidingView } from 'react-native'
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { CustomContainer, CustomContent } from '../../../../components/container'
 import CustomHeader from '../../../../components/customHeader'
 import { useAppSelector, useAppDispatch } from '../../../../hooks'
@@ -7,6 +7,15 @@ import CustomPicker from '../../../../components/customPicker'
 import MyInput from '../../../../components/customInput';
 import { fetchAshaByVacantSupervisor, fetchMasters } from '../../../../redux/slices/Masters'
 import CustomButton from '../../../../components/customButton';
+import { booleanData, genderData, qualificationData } from '../../../../utils/staticJson'
+import useNetworkStatus from '../../../../hooks/networkStatus'
+import { validateByRegex } from '../../../../utils/validations'
+import { RegexType } from '../../../../utils/validations/regex'
+import { setPeerBridageList } from '../../../../redux/slices/peerBrigade'
+import { generateclientID, getLabelsFromValues } from '../../../../utils/helper'
+import { ENUM } from '../../../../utils/bgservices/enum'
+import { startBackgroundService } from '../../../../utils/bgservices/backgroundService'
+import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum'
 
 const INITIALINPUT = {
 
@@ -14,7 +23,9 @@ const INITIALINPUT = {
 
 const BrigadeForm = ({ navigation }) => {
     const userLogin = useAppSelector(state => state.login.data);
+    const ipAddress = useAppSelector(state => state.getIpAddress.data);
     const dispatch = useAppDispatch();
+    const isConnected = useNetworkStatus()
 
     const isPeerEducator = userLogin?.role === 'PeerEducater';
     const [inputs, setInputs] = useState(INITIALINPUT);
@@ -38,43 +49,68 @@ const BrigadeForm = ({ navigation }) => {
         asha: ashaBySahyogi[inputs.supervisorName] || [],     // Flag 7 
         village: villageByAsha[inputs.ashaName] || [],            // Flag 8
         sathiya: peerEducatorByAsha[inputs.ashaName] || [],       // Flag 13
-        gender: genderByPeerEducator[inputs.sathiyaName] || [],   // Flag 14
+        // gender: genderByPeerEducator[inputs.sathiyaName] || [],   // Flag 14
 
     };
 
     const handleOnchange = useCallback(
         (field) => (value) => {
             setInputs(prev => {
+                let updatedState;
+
                 if (field.includes('.')) {
                     const [parent, child] = field.split('.');
-                    return {
+                    updatedState = {
                         ...prev,
                         [parent]: {
                             ...prev[parent],
                             [child]: value,
                         },
                     };
+                } else {
+                    updatedState = { ...prev, [field]: value };
                 }
-                return { ...prev, [field]: value };
+
+                // ✅ SPECIAL LOGIC for qualification
+                if (field === 'qualification' && (value == 7 || value == 8)) {
+                    // updatedState.sch_status = '';
+                    updatedState.sch_options = '';
+                }
+
+                return updatedState;
             });
 
             // clear error for this field
             setErrors(prev => {
+                let updatedErrors;
+
                 if (field.includes('.')) {
                     const [parent, child] = field.split('.');
                     if (!prev[parent]?.[child]) return prev;
 
-                    return {
+                    updatedErrors = {
                         ...prev,
                         [parent]: {
                             ...prev[parent],
                             [child]: '',
                         },
                     };
+                } else {
+                    updatedErrors = prev[field]
+                        ? { ...prev, [field]: '' }
+                        : prev;
                 }
 
-                if (!prev[field]) return prev;
-                return { ...prev, [field]: '' };
+                // ✅ Clear dependent field errors also
+                if (field === 'qualification') {
+                    updatedErrors = {
+                        ...updatedErrors,
+                        sch_status: '',
+                        sch_options: '',
+                    };
+                }
+
+                return updatedErrors;
             });
         },
         []
@@ -106,6 +142,122 @@ const BrigadeForm = ({ navigation }) => {
         },
         disabled: isLoading,
     });
+
+    useEffect(() => {
+        if (!districtList?.length && isConnected && !isPeerEducator) {
+            dispatch(fetchMasters({ flag: 2, id: 0 }));
+        }
+    }, []);
+
+    useEffect(() => {
+        if (districtList?.length && userLogin?.districtId && !isPeerEducator) {
+            setInputs(prev => ({
+                ...prev,
+                district: userLogin.districtId,
+            }));
+
+            dispatch(fetchMasters({
+                flag: 3,
+                id: userLogin.districtId,
+            }));
+        }
+    }, [districtList]);
+
+    const blockList = blockByDistrict?.[inputs.district] || [];
+
+    useEffect(() => {
+        if (blockList.length && userLogin?.blockId && !isPeerEducator) {
+            setInputs(prev => ({
+                ...prev,
+                block: userLogin.blockId,
+            }));
+
+            dispatch(fetchMasters({
+                flag: 4,
+                id: userLogin.blockId,
+            }));
+        }
+    }, [blockList]);
+
+    const showSchoolField =
+    inputs?.qualification &&
+    inputs?.qualification != 7 &&
+    inputs?.qualification != 8;
+
+    const validateForm = () => {
+        let tempErrors = {};
+        let valid = true;
+
+        // 🔹 Picker validation
+        if (!isPeerEducator) {
+            if (!inputs.district) tempErrors.district = 'Please select district';
+            if (!inputs.block) tempErrors.block = 'Please select block';
+            if (!inputs.supervisorName) tempErrors.supervisorName = 'Please select supervisor';
+            if (!inputs.ashaName) tempErrors.ashaName = 'Please select ASHA';
+            if (!inputs.village) tempErrors.village = 'Please select village';
+            if (!inputs.sathiyaName) tempErrors.sathiyaName = 'Please select peer educator';
+        }
+
+        if (!inputs.gender) tempErrors.gender = 'Please select gender';
+        if (!inputs.qualification) tempErrors.qualification = 'Please select qualification';
+
+        // 🔹 Regex validation
+        if (!validateByRegex(inputs.name, RegexType.name, 'name', tempErrors)) valid = false;
+        if (!validateByRegex(inputs.father, RegexType.father, 'father', tempErrors)) valid = false;
+        if (!validateByRegex(inputs.mobile, RegexType.mobile, 'mobile', tempErrors)) valid = false;
+        if (!validateByRegex(inputs.age, RegexType.age, 'age', tempErrors)) valid = false;
+
+        // 🔹 Conditional fields
+        if (inputs?.qualification != 7 && inputs?.qualification != 8 ) {
+            if (!inputs.sch_options) {
+                tempErrors.sch_options = "Please select school status options";
+                valid = false;
+            }
+        }
+
+        setErrors(tempErrors);
+
+        // agar koi picker error hai to bhi false hona chahiye
+        if (Object.keys(tempErrors).length > 0) valid = false;
+
+        return valid;
+    };
+
+    const onSaveHandle = () => {
+        if (!validateForm()) return;
+        console.log({ inputs })
+
+        const payload = {
+            "districtID": inputs.district,
+            "districtName": getLabelsFromValues(inputs.district, pickerData.district).join(''),
+            "blockID": inputs.block,
+            "blockNameE": getLabelsFromValues(inputs.block, pickerData.block).join(''),
+            "ashaSahyogiID": inputs?.supervisorName,
+            "ashaSahyogi": getLabelsFromValues(inputs.supervisorName, pickerData.supervisor).join(''),
+            "ashaId": inputs?.ashaName,
+            "asha": getLabelsFromValues(inputs.ashaName, pickerData.asha).join(''),
+            "villageID": inputs?.village,
+            "villageName": getLabelsFromValues(inputs.village, pickerData.village).join(''),
+            "peerEducatorName": getLabelsFromValues(inputs.sathiyaName, pickerData.sathiya).join(''),
+            "peerEducatorId" : inputs?.sathiyaName ,
+            "brigadeMemberName": inputs?.name,
+            "brigadeMemberGender": getLabelsFromValues(inputs.gender, genderData).join(''),
+             brigadeMemberGenderId:inputs.gender,
+            "brigadeMemberAge": inputs.age,
+            "brigadeMemberMobile": inputs.mobile,
+            "brigadeMemberGuardianName": inputs?.father,
+            "brigadeMemberEducation": inputs?.qualification,
+            "isSchoolGoing": inputs?.sch_options,
+            clientId: generateclientID(userLogin.userId),
+            syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
+            createdOn: new Date().toISOString(),
+            retryCount: 0,
+            IP: ipAddress,
+        };
+
+        dispatch(setPeerBridageList(payload))
+        startBackgroundService(syncTaskName.syncPeerBrigadeForm)
+    }
 
     const ReadOnlyPicker = React.memo(
         ({ label, value, items = [], error, disabled = false, onValueChange }) => {
@@ -202,6 +354,20 @@ const BrigadeForm = ({ navigation }) => {
                             </View>
                         }
 
+                        {isPeerEducator && (
+                            <View style={st.card}>
+                                <PeerField label="जिला" value={peerEducatorDetails.districtName} />
+                                <PeerField label="ब्लॉक" value={peerEducatorDetails.blockName} />
+                                <PeerField label="आशा सुपरवाइजर का नाम" value={
+                                    peerEducatorDetails?.ashaFacilitatorId == 0 ? 'Not available' : peerEducatorDetails.ashaSahyogi_Name} />
+                                <PeerField label="आशा का नाम" value={peerEducatorDetails.ashaName} />
+                                <PeerField label="ग्राम का नाम" value={peerEducatorDetails.villageName} />
+                                <PeerField label="साथिया का नाम" value={peerEducatorDetails.peerEducatorName} />
+                                <PeerField label="लिंग" value={peerEducatorDetails.gender} />
+                            </View>
+                        )}
+
+
                         <MyInput label="Name/ब्रिगेड सदस्य का नाम *"
                             {...fieldProps('name')}
                             maxLength={30}
@@ -209,17 +375,22 @@ const BrigadeForm = ({ navigation }) => {
 
                         <CustomPicker
                             label={'Gender/लिंग *'}
-                            items={[]}
-                            {...pickerFieldProps('location')}
+                            items={genderData}
+                            {...pickerFieldProps('gender')}
                         />
+
                         <MyInput label="Age/आयु *"
                             {...fieldProps('age')}
-                            maxLength={3}
+                            keyboardType="numeric"
+                            maxLength={2}
                         />
+
                         <MyInput label="Mobile Number/मोबाइल नंबर *"
                             {...fieldProps('mobile')}
+                            keyboardType="numeric"
                             maxLength={10}
                         />
+
                         <MyInput label="Father / Guardian Name पिता / अभिभावक का नाम *"
                             {...fieldProps('father')}
                             maxLength={30}
@@ -227,19 +398,23 @@ const BrigadeForm = ({ navigation }) => {
 
                         <CustomPicker
                             label={'Educator Qualification/ शैक्षणिक योग्यता *'}
-                            items={[]}
+                            items={qualificationData}
                             {...pickerFieldProps('qualification')}
                         />
-                        <MyInput label="School Status/विद्यालय जाने की स्थिति *"
-                            {...fieldProps('sch_status')}
-                        />
-                        <MyInput label="School Status Options/ विद्यालय जाने की स्थिति का प्रकार *"
-                            {...fieldProps('sch_options')}
-                        />
+
+                            {showSchoolField &&
+                                <View>
+                                    <CustomPicker
+                                        label={'School Status Options/ विद्यालय जाने की स्थिति का प्रकार *'}
+                                        items={booleanData}
+                                        {...pickerFieldProps('sch_options')}
+                                    />
+                                </View>
+                            }
 
                         <CustomButton title='Add'
                             onPress={() =>
-                                navigation.goBack()
+                                onSaveHandle()
                             }
                             disabled={isLoading}
                             loading={isLoading}

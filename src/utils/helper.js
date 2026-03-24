@@ -1,5 +1,7 @@
 import { ENUM } from "./bgservices/enum";
 import { colors } from "../global";
+import { PermissionsAndroid, Platform, Alert } from "react-native";
+import ReactNativeBlobUtil from 'react-native-blob-util';
 
 export const getPickerImageResp = res => {
     const respArr = res.assets;
@@ -396,3 +398,106 @@ export const getLabelsFromValues = (values = [], items = []) => {
     })
     .filter(Boolean);
 };
+
+export const downloadFile = async (title, url) => {
+  const androidVersion =
+    Platform.OS === 'android' ? parseInt(Platform.Version, 10) : 0;
+
+  try {
+    if (
+      Platform.OS === 'ios' ||
+      (Platform.OS === 'android' && androidVersion >= 13)
+    ) {
+      // iOS and Android 13+ (No explicit permission needed)
+      return await initiateDownload(title, url);
+    } else {
+      // Android < 13 (Permission required)
+      const permissionGranted = await requestStoragePermission(t);
+      if (permissionGranted) {
+        return await initiateDownload(title, url);
+      } else {
+        Alert.alert(('Alert'), ('Permission Denied'), [{text: 'OK'}]);
+        throw new Error('Storage permission denied');
+      }
+    }
+  } catch (error) {
+    console.error('Download error:', error);
+    throw error;
+  }
+};
+
+// Request storage permission for Android < 13
+const requestStoragePermission = async t => {
+  try {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      {
+        title: 'Storage Permission',
+        message: 'Mannhitexternalstorage',
+        buttonNeutral: 'AskLater',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'Yes',
+      },
+    );
+
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
+  } catch (error) {
+    console.error('Error requesting permission:', error);
+    throw error;
+  }
+};
+
+// Handle the actual file download
+const initiateDownload = async (title, url) => {
+  try {
+    const date = new Date();
+    const {dirs} = ReactNativeBlobUtil.fs;
+
+    // Define the download path
+    // const path = `${dirs.DownloadDir}/${title}-${date.getTime()}.pdf`;
+
+    const fileName = `${title}-${Math.floor(
+      date.getTime() + date.getSeconds() / 2,
+    )}.pdf`;
+    // const filePath = `${dirs.DownloadDir}/${fileName}`;
+    const filePath = `/storage/emulated/0/Download/${fileName}`;
+
+    console.log('Download path resolved:', filePath);
+
+    // Configure download options
+    const options = {
+      fileCache: true,
+      trusty: true, 
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        mediaScannable: true,
+        title: title,
+        mime: 'application/pdf',
+        appendExt: 'pdf',
+        description: title,
+        path: filePath,
+      },
+    };
+
+    console.log('Download options:', options);
+
+    // Download the file
+    const res = await ReactNativeBlobUtil.config(options).fetch('GET', url);
+
+    console.log('PDF downloaded successfully:', res.path());
+
+    // Trigger media scan to make the file visible
+    await ReactNativeBlobUtil.fs.scanFile([
+      {path: res.path(), mime: 'application/pdf'},
+    ]);
+    console.log('Media scan triggered');
+
+    return res.path(); // Return the path of the downloaded file
+  } catch (error) {
+    console.error('Error during file download:', error);
+    throw error;
+  }
+};
+
+

@@ -17,19 +17,47 @@ const CustomSidebar = (props) => {
   const dispatch = useDispatch();
   const [logoutModal, setLogoutModal] = useState(false);
   const onBoarding = useSelector(state => state.login.data);
+  const currentRoute = props.state.routeNames[props.state.index];
 
-  const renderMenuItem = (label, icon, navigateTo, color) => (
-    <TouchableOpacity
-      style={styles.menuRow}
-      onPress={() => props.navigation.navigate(navigateTo)}
-    >
-      <View style={styles.iconBox}>
-        <Icon name={icon} size={20} color={color} />
-      </View>
-      <Text style={styles.menuLabel}>{label}</Text>
-      <Icon name="chevron-right" size={20} color={colors.gray} />
-    </TouchableOpacity>
-  );
+  const renderMenuItem = (label, icon, navigateTo, color) => {
+    const isActive = currentRoute === navigateTo;
+  
+    return (
+      <TouchableOpacity
+        style={[
+          styles.menuRow,
+          {
+            backgroundColor: isActive ? colors.blue : 'transparent',
+            borderRadius: 10,
+          },
+        ]}
+        onPress={() => props.navigation.navigate(navigateTo)}
+      >
+        <View style={styles.iconBox}>
+          <Icon
+            name={icon}
+            size={20}
+            color={ color}
+          />
+        </View>
+  
+        <Text
+          style={[
+            styles.menuLabel,
+            { color: isActive ? colors.white : colors.black },
+          ]}
+        >
+          {label}
+        </Text>
+  
+        <Icon
+          name="chevron-right"
+          size={20}
+          color={isActive ? colors.white : colors.gray}
+        />
+      </TouchableOpacity>
+    );
+  };
 
   const useHasPendingSync = () => {
     const activityQueue = useSelector(state => state.queue?.pending || []);
@@ -82,6 +110,7 @@ const CustomSidebar = (props) => {
       <View style={styles.card}>
         {renderMenuItem("Profile", "user", "Profile", "#FB6F3D")}
         {renderMenuItem("Dashboard", "grid", "Dashboard", "#413DFB")}
+        {renderMenuItem("IEC Materials", "file", "Materials", colors.yellow)}
       </View>
 
       {/* -------- Menu Group 2 -------- */}

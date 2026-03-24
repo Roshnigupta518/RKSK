@@ -20,6 +20,9 @@ import PeerDetails from '../screens/dashboard/peerEducator/peerDetail';
 import BrigadeForm from '../screens/dashboard/brigade/form';
 import BrigadeList from '../screens/dashboard/brigade/list';
 import BrigadeDetails from '../screens/dashboard/brigade/details';
+import Materials from '../screens/dashboard/materials';
+import ViewPdf from '../screens/dashboard/ViewPdf';
+
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
@@ -38,6 +41,7 @@ const HomeStack = () => {
       <Stack.Screen name="PeerDetails" component={PeerDetails} />
       <Stack.Screen name="BrigadeForm" component={BrigadeForm} />
       <Stack.Screen name="BrigadeDetails" component={BrigadeDetails} />
+      <Stack.Screen name="ViewPdf" component={ViewPdf} />
     </Stack.Navigator>
   )
 }
@@ -73,7 +77,6 @@ const DrawerStack = () => {
           headerShown: false,
           title: 'Dashboard',
           drawerLabel: 'Dashboard',
-          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={Home}
       />
@@ -82,16 +85,22 @@ const DrawerStack = () => {
         options={{
           title: 'Profile',
           drawerLabel: 'Profile',
-          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={Profile}
+      />
+      <Drawer.Screen
+        name="Materials"
+        options={{
+          title: 'IEC Materials',
+          drawerLabel: 'IEC Materials',
+        }}
+        component={Materials}
       />
       <Drawer.Screen
         name="ATPListScreen"
         options={{
           title: 'Activity Tour plan',
           drawerLabel: 'ATP',
-          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={ATPListScreen}
       />
@@ -100,7 +109,6 @@ const DrawerStack = () => {
         options={{
           title: 'Peer Educator',
           drawerLabel: 'Peer Educator',
-          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={PeerEducator}
       />
@@ -109,7 +117,6 @@ const DrawerStack = () => {
         options={{
           title: 'Brigade List',
           drawerLabel: 'Peer Educator Brigade',
-          drawerIcon: ({ color }) => <Icon name="home" size={22} color={color} />,
         }}
         component={BrigadeList}
       />
@@ -117,7 +124,6 @@ const DrawerStack = () => {
         name="Disclaimer"
         options={{
           drawerLabel: 'Disclaimer',
-          drawerIcon: ({ color }) => <Icon name="warning" size={22} color={color} />,
         }}
         component={Disclaimer}
       />
@@ -126,7 +132,6 @@ const DrawerStack = () => {
         options={{
           title: 'Privacy Policy',
           drawerLabel: 'Privacy Policy',
-          drawerIcon: ({ color }) => <Icon name="phonelink-lock" size={22} color={color} />,
         }}
         component={PrivacyPolicy}
       />

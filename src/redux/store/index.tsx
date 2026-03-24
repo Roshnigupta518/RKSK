@@ -21,6 +21,8 @@ import MastersSlice from '../slices/Masters';
 import PeerReferralList from '../slices/ReferralList';
 import ipAddressSlice from '../slices/getIpAddress';
 import PeerReportingCountSlice from '../slices/peerReportingCount';
+import PeerBrigadeSlice from '../slices/peerBrigade';
+import MaterialSlice from '../slices/materials';
 
 const authPersistConfig = {
     key: 'Login',
@@ -69,7 +71,18 @@ const authPersistConfig = {
     storage: AsyncStorage,
     whitelist: ['data'],
   };
-  
+
+  const peerBrigadeConfig = {
+    key: 'PeerBridageList',
+    storage: AsyncStorage,
+    whitelist: ['data'],
+  };
+
+  const materialsConfig = {
+    key: 'Materials',
+    storage: AsyncStorage,
+    whitelist: ['data'],
+  }
 
   const appReducer = combineReducers({
     login: persistReducer(authPersistConfig, loginSlice),
@@ -80,6 +93,8 @@ const authPersistConfig = {
     peerEducatorList: persistReducer(peerEducatorListConfig, PeerEducatorSlice),
     peerReferralList: persistReducer(peerReferralConfig, PeerReferralList),
     getIpAddress: persistReducer(ipAddressConfig, ipAddressSlice),
+    peerBrigadeList : persistReducer(peerBrigadeConfig, PeerBrigadeSlice),
+    iecMaterialList : persistReducer(materialsConfig, MaterialSlice),
     masters : MastersSlice,
     peerReportingCount: PeerReportingCountSlice
   })
