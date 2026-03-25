@@ -6,6 +6,7 @@ import MagazinesItem from '../../../components/MagazinesItem'
 import { useAppSelector } from '../../../hooks'
 import { startBackgroundService } from '../../../utils/bgservices/backgroundService'
 import { syncTaskName } from '../../../utils/bgservices/backgroundTaskEnum'
+import EmptyItem from '../../../components/emptyItem'
 
 const Materials = ({navigation}) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +38,7 @@ const Materials = ({navigation}) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        ListEmptyComponent={() => <EmptyItem/>}
       />
 
     </CustomContainer>

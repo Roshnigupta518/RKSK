@@ -5,6 +5,7 @@ import VideoItem from '../../../components/VideoItem'
 import { useAppSelector } from '../../../hooks'
 import { startBackgroundService } from '../../../utils/bgservices/backgroundService'
 import { syncTaskName } from '../../../utils/bgservices/backgroundTaskEnum'
+import EmptyItem from '../../../components/emptyItem'
 
 const AwarenessVideo = ({navigation}) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +41,7 @@ const AwarenessVideo = ({navigation}) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        ListEmptyComponent={() => <EmptyItem/>}
       />
 
     </CustomContainer>

@@ -123,14 +123,14 @@ const DrawerStack = () => {
         }}
         component={PeerEducator}
       />
-       <Drawer.Screen
+       {/* <Drawer.Screen
         name="BrigadeList"
         options={{
           title: 'Brigade List',
           drawerLabel: 'Peer Educator Brigade',
         }}
         component={BrigadeList}
-      />
+      /> */}
       <Drawer.Screen
         name="Disclaimer"
         options={{

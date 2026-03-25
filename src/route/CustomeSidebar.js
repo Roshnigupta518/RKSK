@@ -118,7 +118,7 @@ const CustomSidebar = (props) => {
       <View style={styles.card}>
         {renderMenuItem("Manage Activity", "calendar", "ATPListScreen", "#369BFF")}
         {renderMenuItem("Peer Educator Reporting", "command", "PeerEducator", "#2AE1E1")}
-        {renderMenuItem("Peer Educator Brigade", "codepen", "BrigadeList", "#2AE1E1")}
+        {/* {renderMenuItem("Peer Educator Brigade", "codepen", "BrigadeList", "#2AE1E1")} */}
         {renderMenuItem("Disclaimer", "alert-triangle", "Disclaimer", "#FB6D3A")}
         {renderMenuItem("Privacy Policy", "lock", "PrivacyPolicy", "#FB6D3A")}
         {/* {renderMenuItem("Notifications", "bell", "Notifications", "#413DFB")} */}
