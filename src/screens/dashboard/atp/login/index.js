@@ -446,6 +446,13 @@ const ATPDetailScreen = ({ navigation, route }) => {
           </View>
         )}
 
+        {activiyDetails.clockoutTime &&
+        <CustomButton
+          title="Activity Tracking"
+          onPress={() => navigation.navigate("Tracking")}
+        />
+        }
+
       </CustomContent>
     </CustomContainer>
   );

@@ -192,7 +192,9 @@ const BrigadeForm = ({ navigation }) => {
         if (!isPeerEducator) {
             if (!inputs.district) tempErrors.district = 'Please select district';
             if (!inputs.block) tempErrors.block = 'Please select block';
-            if (!inputs.supervisorName) tempErrors.supervisorName = 'Please select supervisor';
+            if (inputs.supervisorName === undefined || inputs.supervisorName === null || inputs.supervisorName === '') {
+                tempErrors.supervisorName = 'Please select supervisor';
+            }
             if (!inputs.ashaName) tempErrors.ashaName = 'Please select ASHA';
             if (!inputs.village) tempErrors.village = 'Please select village';
             if (!inputs.sathiyaName) tempErrors.sathiyaName = 'Please select peer educator';

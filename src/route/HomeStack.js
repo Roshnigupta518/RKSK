@@ -24,6 +24,7 @@ import Materials from '../screens/dashboard/materials';
 import ViewPdf from '../screens/dashboard/ViewPdf';
 import AwarenessVideo from '../screens/dashboard/videos';
 import ViewVdo from '../screens/dashboard/ViewVdo';
+import Tracking from '../screens/dashboard/tracking';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -45,6 +46,7 @@ const HomeStack = () => {
       <Stack.Screen name="BrigadeDetails" component={BrigadeDetails} />
       <Stack.Screen name="ViewPdf" component={ViewPdf} />
       <Stack.Screen name="ViewVdo" component={ViewVdo} />
+      <Stack.Screen name="Tracking" component={Tracking} />
     </Stack.Navigator>
   )
 }
@@ -123,14 +125,14 @@ const DrawerStack = () => {
         }}
         component={PeerEducator}
       />
-       {/* <Drawer.Screen
+       <Drawer.Screen
         name="BrigadeList"
         options={{
           title: 'Brigade List',
           drawerLabel: 'Peer Educator Brigade',
         }}
         component={BrigadeList}
-      /> */}
+      />
       <Drawer.Screen
         name="Disclaimer"
         options={{

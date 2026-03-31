@@ -436,8 +436,8 @@ export const saveSinglePeerBridageList = async(data) =>{
     "createdOn": data.createdOn,
     "modifyBy": 0,
     "modifyOn": data.createdOn,
-    // 'SyncStatus': data.syncStatus,
-    // 'ClientId': data.clientId
+    'syncStatus': ENUM.SERVERSTATUS.INPROGRESS,
+    'clientId': data.clientId
   }
  
   try {
