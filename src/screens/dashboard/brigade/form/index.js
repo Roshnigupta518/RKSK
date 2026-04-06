@@ -7,7 +7,7 @@ import CustomPicker from '../../../../components/customPicker'
 import MyInput from '../../../../components/customInput';
 import { fetchAshaByVacantSupervisor, fetchMasters } from '../../../../redux/slices/Masters'
 import CustomButton from '../../../../components/customButton';
-import { booleanData, genderData, qualificationData } from '../../../../utils/staticJson'
+import { ageData, booleanData, genderData, qualificationData, schStatusOption } from '../../../../utils/staticJson'
 import useNetworkStatus from '../../../../hooks/networkStatus'
 import { validateByRegex } from '../../../../utils/validations'
 import { RegexType } from '../../../../utils/validations/regex'
@@ -16,6 +16,9 @@ import { generateclientID, getLabelsFromValues } from '../../../../utils/helper'
 import { ENUM } from '../../../../utils/bgservices/enum'
 import { startBackgroundService } from '../../../../utils/bgservices/backgroundService'
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum'
+import st from '../../../../global/styles'
+import PeerField from '../../../../components/peerField'
+import { family } from '../../../../global'
 
 const INITIALINPUT = {
 
@@ -24,6 +27,7 @@ const INITIALINPUT = {
 const BrigadeForm = ({ navigation }) => {
     const userLogin = useAppSelector(state => state.login.data);
     const ipAddress = useAppSelector(state => state.getIpAddress.data);
+    const peerEducatorDetails = useAppSelector(state => state.peerEducatorList.data);
     const dispatch = useAppDispatch();
     const isConnected = useNetworkStatus()
 
@@ -179,6 +183,21 @@ const BrigadeForm = ({ navigation }) => {
         }
     }, [blockList]);
 
+    useEffect(() => {
+        if (isPeerEducator && peerEducatorDetails) {
+          setInputs(prev => ({
+            ...prev,
+            district: String(peerEducatorDetails.districtId || ''),
+            block: String(peerEducatorDetails.blockId || ''),
+            supervisorName: String(peerEducatorDetails.ashaFacilitatorId || ''),
+            ashaName: String(peerEducatorDetails.ashaId || ''),
+            village: String(peerEducatorDetails.villageId || ''),
+            sathiyaName: String(peerEducatorDetails.id || ''),
+            // gender: peerEducatorDetails.genderId,
+          }));
+        } 
+      }, [isPeerEducator, peerEducatorDetails]);
+
     const showSchoolField =
     inputs?.qualification &&
     inputs?.qualification != 7 &&
@@ -233,16 +252,16 @@ const BrigadeForm = ({ navigation }) => {
 
         const payload = {
             "districtID": inputs.district,
-            "districtName": getLabelsFromValues(inputs.district, pickerData.district).join(''),
+            "districtName": !isPeerEducator ? getLabelsFromValues(inputs.district, pickerData.district).join(''):peerEducatorDetails.districtName,
             "blockID": inputs.block,
-            "blockNameE": getLabelsFromValues(inputs.block, pickerData.block).join(''),
+            "blockNameE": !isPeerEducator ? getLabelsFromValues(inputs.block, pickerData.block).join(''): peerEducatorDetails.blockName,
             "ashaSahyogiID": inputs?.supervisorName,
-            "ashaSahyogi": getLabelsFromValues(inputs.supervisorName, pickerData.supervisor).join(''),
+            "ashaSahyogi": !isPeerEducator ?getLabelsFromValues(inputs.supervisorName, pickerData.supervisor).join(''): peerEducatorDetails.ashaSahyogi_Name,
             "ashaId": inputs?.ashaName,
-            "asha": getLabelsFromValues(inputs.ashaName, pickerData.asha).join(''),
+            "asha": !isPeerEducator ? getLabelsFromValues(inputs.ashaName, pickerData.asha).join(''): peerEducatorDetails.ashaName,
             "villageID": inputs?.village,
-            "villageName": getLabelsFromValues(inputs.village, pickerData.village).join(''),
-            "peerEducatorName": getLabelsFromValues(inputs.sathiyaName, pickerData.sathiya).join(''),
+            "villageName":  !isPeerEducator ? getLabelsFromValues(inputs.village, pickerData.village).join(''): peerEducatorDetails.villageName,
+            "peerEducatorName": !isPeerEducator ? getLabelsFromValues(inputs.sathiyaName, pickerData.sathiya).join(''): peerEducatorDetails.peerEducatorName,
             "peerEducatorId" : inputs?.sathiyaName ,
             "brigadeMemberName": inputs?.name,
             "brigadeMemberGender": getLabelsFromValues(inputs.gender, genderData).join(''),
@@ -361,14 +380,14 @@ const BrigadeForm = ({ navigation }) => {
 
                         {isPeerEducator && (
                             <View style={st.card}>
-                                <PeerField label="जिला" value={peerEducatorDetails.districtName} />
-                                <PeerField label="ब्लॉक" value={peerEducatorDetails.blockName} />
-                                <PeerField label="आशा सुपरवाइजर का नाम" value={
+                                <PeerField label="District/जिला" value={peerEducatorDetails.districtName} />
+                                <PeerField label="Block/विकासखंड" value={peerEducatorDetails.blockName} />
+                                <PeerField label="ASHA Supervisor/आशा सुपरवाइजर का नाम" value={
                                     peerEducatorDetails?.ashaFacilitatorId == 0 ? 'Not available' : peerEducatorDetails.ashaSahyogi_Name} />
-                                <PeerField label="आशा का नाम" value={peerEducatorDetails.ashaName} />
-                                <PeerField label="ग्राम का नाम" value={peerEducatorDetails.villageName} />
-                                <PeerField label="साथिया का नाम" value={peerEducatorDetails.peerEducatorName} />
-                                <PeerField label="लिंग" value={peerEducatorDetails.gender} />
+                                <PeerField label="ASHA/आशा का नाम" value={peerEducatorDetails.ashaName} />
+                                <PeerField label="Village/ग्राम का नाम" value={peerEducatorDetails.villageName} />
+                                <PeerField label="Peer educator/साथिया का नाम" value={peerEducatorDetails.peerEducatorName} />
+                                <PeerField label="Gender/लिंग" value={peerEducatorDetails.gender} />
                             </View>
                         )}
 
@@ -382,12 +401,20 @@ const BrigadeForm = ({ navigation }) => {
                             label={'Gender/लिंग *'}
                             items={genderData}
                             {...pickerFieldProps('gender')}
+                            fontFamily={family.regular}
                         />
 
-                        <MyInput label="Age/आयु *"
+                        {/* <MyInput label="Age/आयु *"
                             {...fieldProps('age')}
                             keyboardType="numeric"
                             maxLength={2}
+                        /> */}
+
+                        <CustomPicker
+                            label={'Age/आयु *'}
+                            items={ageData}
+                            {...pickerFieldProps('age')}
+                            fontFamily={family.regular}
                         />
 
                         <MyInput label="Mobile Number/मोबाइल नंबर *"
@@ -405,14 +432,16 @@ const BrigadeForm = ({ navigation }) => {
                             label={'Educator Qualification/ शैक्षणिक योग्यता *'}
                             items={qualificationData}
                             {...pickerFieldProps('qualification')}
+                            fontFamily={family.regular}
                         />
 
                             {showSchoolField &&
                                 <View>
                                     <CustomPicker
                                         label={'School Status Options/ विद्यालय जाने की स्थिति का प्रकार *'}
-                                        items={booleanData}
+                                        items={schStatusOption}
                                         {...pickerFieldProps('sch_options')}
+                                        fontFamily={family.regular}
                                     />
                                 </View>
                             }
