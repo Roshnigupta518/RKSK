@@ -2,7 +2,7 @@ import { syncTaskName } from "./backgroundTaskEnum";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDasboardDataHandle, getProfileDataHandle, getATPListRequest, getPeerEducatorListHandle, getMastersDataHandle, getPeerEducatorReferralListHandle, getPeerReportingCount, savePeerBridageFormDatafromRedux, getPeerBridageListHandle } from "../services";
 import { processQueue } from "./queueProcessor";
-import { savePeerEducatorFormDatafromRedux, getIecMaterialListHandle, getAwarenessVideoListHandle } from "../services";
+import { savePeerEducatorFormDatafromRedux, getIecMaterialListHandle, getAwarenessVideoListHandle, getProfileHandle } from "../services";
 
 const setSyncStatus = async taskName => {
     const status = { lastSyncOn: new Date() };
@@ -12,11 +12,6 @@ const setSyncStatus = async taskName => {
 export const syncDashboard = async () => {
     getDasboardDataHandle();
     await setSyncStatus(syncTaskName.syncDashboard);
-};
-
-export const syncProfileData = async () => {
-    getProfileDataHandle();
-    await setSyncStatus(syncTaskName.syncGetProfile);
 };
 
 export const syncPeerReportingCount = async() => {
@@ -77,5 +72,10 @@ export const syncIecMaterailList = async () => {
 export const syncAwarenessVideoList = async () => {
     getAwarenessVideoListHandle();
     await setSyncStatus(syncTaskName.syncAwarenessVideo);
+};
+
+export const syncProfileHandle = async () => {
+    getProfileHandle();
+    await setSyncStatus(syncTaskName.syncGetProfile);
 };
 

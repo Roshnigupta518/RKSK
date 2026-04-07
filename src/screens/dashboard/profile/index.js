@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { CustomContainer, CustomContent } from '../../../components/container'
 import st from '../../../global/styles'
 import { colors, wp } from '../../../global'
@@ -8,8 +8,9 @@ import Icon from 'react-native-vector-icons/Octicons';
 
 const Profile = () => {
   const onBoarding = useSelector(state => state.login.data);
+  const profileDetails = useSelector(state => state.getProfile.data);
 
-  console.log({onBoarding})
+  // console.log({profileDetails})
 
   const renderCard = (label, value) => {
     return(
@@ -49,24 +50,24 @@ const Profile = () => {
         </View>
         
         <View style={st.card}>
-         {renderCard('State','Madhya Pradesh')}
-         {renderCard('District','Rewa')}
-         {renderCard('Block','Gangaow')}
+         {renderCard('State',profileDetails.state)}
+         {renderCard('District',profileDetails.districtName)}
+         {renderCard('Block',profileDetails.blockName)}
         </View>
 
         <View style={st.card}>
-         {renderCard('Trainer type','01/02/1993')}
-         {renderCard('Name of Trainer','33 Years')}
+         {renderCard('Trainer type', profileDetails.Trainer_Type)}
+         {renderCard('Name of Trainer',profileDetails.Trainer_Name)}
         </View>
 
-        <View style={st.card}>
-         {renderCard('Date of Birth','01/02/1993')}
-         {renderCard('Age','33 Years')}
-        </View>
+        {/* <View style={st.card}>
+         {renderCard('Date of Birth',profileDetails.dob)}
+         {renderCard('Age',profileDetails.age)}
+        </View> */}
 
         <View style={st.card}>
-         {renderCard('Qualification','Graduation')}
-         {renderCard('Experience','10 Years')}
+         {/* {renderCard('Qualification',profileDetails.qualification)} */}
+         {renderCard('Experience',profileDetails.experience)}
         </View>
       </CustomContent>
     </CustomContainer>

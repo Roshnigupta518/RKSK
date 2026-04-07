@@ -6,14 +6,14 @@ import { clearLogin } from '../../redux/slices/login';
 export const getApi = async (api) => {
   const state = store.getState();
   const token = state?.login?.data?.jwtToken;
-
+  
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   };
-  console.log('📡 API Request:', api);
+  console.log('📡 API Request:', api, token);
   try {
     const response = await axios.get(api, config);
     return response; // returns full axios response (status, data, etc.)

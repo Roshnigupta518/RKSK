@@ -16,6 +16,7 @@ import { setPeerEducatorId, setPeerEducatorReportCount } from "../../redux/slice
 import { incrementPeerBridageRetryCount, removePeerBridageByClientId, setPeerBridageList, updateSavePeerBridageSyncStatus } from "../../redux/slices/peerBrigade";
 import { setMaterialList } from "../../redux/slices/materials";
 import { setVideoList } from "../../redux/slices/awarenessVideo";
+import { setProfileData } from "../../redux/slices/profile";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -546,6 +547,23 @@ export const  getAwarenessVideoListHandle = async() => {
   } catch (e) {
     handleAPIErrorResponse(e);
     return [];
+  }
+}
+
+export const getProfileHandle = async() => {
+  const loginDetails = getLoginDetails()
+  try {
+    const url = `${API.GET_PROFILE}TrainerID=${loginDetails.trainerId}`;
+    const result = await getApi(url);
+    console.log({getProfileHandle: result})
+    if (result?.status === 200) {
+      store.dispatch(setProfileData(result.data))
+    } else {
+      console.warn('get profile response:', result);
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+    return ;
   }
 }
 
