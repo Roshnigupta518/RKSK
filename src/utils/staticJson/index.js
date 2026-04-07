@@ -112,7 +112,7 @@ export const booleanData = [
 
 export const schStatusOption = [
     { "value": 1, "label": "School going" },
-    { "value": 2, "label": "School droput" },
+    { "value": 2, "label": "School dropout" },
 ]
 
 export const ageData = [

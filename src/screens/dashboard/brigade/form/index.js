@@ -193,7 +193,7 @@ const BrigadeForm = ({ navigation }) => {
             ashaName: String(peerEducatorDetails.ashaId || ''),
             village: String(peerEducatorDetails.villageId || ''),
             sathiyaName: String(peerEducatorDetails.id || ''),
-            // gender: peerEducatorDetails.genderId,
+            gender: peerEducatorDetails.genderId,
           }));
         } 
       }, [isPeerEducator, peerEducatorDetails]);
@@ -217,9 +217,9 @@ const BrigadeForm = ({ navigation }) => {
             if (!inputs.ashaName) tempErrors.ashaName = 'Please select ASHA';
             if (!inputs.village) tempErrors.village = 'Please select village';
             if (!inputs.sathiyaName) tempErrors.sathiyaName = 'Please select peer educator';
+            if (!inputs.gender) tempErrors.gender = 'Please select gender';
         }
 
-        if (!inputs.gender) tempErrors.gender = 'Please select gender';
         if (!inputs.qualification) tempErrors.qualification = 'Please select qualification';
 
         // 🔹 Regex validation
@@ -396,13 +396,14 @@ const BrigadeForm = ({ navigation }) => {
                             {...fieldProps('name')}
                             maxLength={30}
                         />
-
+                        
+                        {!isPeerEducator&&
                         <CustomPicker
                             label={'Gender/लिंग *'}
                             items={genderData}
                             {...pickerFieldProps('gender')}
                             fontFamily={family.regular}
-                        />
+                        />}
 
                         {/* <MyInput label="Age/आयु *"
                             {...fieldProps('age')}
