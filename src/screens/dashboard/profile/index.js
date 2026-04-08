@@ -5,6 +5,8 @@ import st from '../../../global/styles'
 import { colors, wp } from '../../../global'
 import { useSelector } from 'react-redux'
 import Icon from 'react-native-vector-icons/Octicons';
+import { ROLE } from '../../../utils/services'
+import { dateFormat } from '../../../utils/validations'
 
 const Profile = () => {
   const onBoarding = useSelector(state => state.login.data);
@@ -52,23 +54,30 @@ const Profile = () => {
         <View style={st.card}>
          {renderCard('State',profileDetails.state)}
          {renderCard('District',profileDetails.districtName)}
-         {renderCard('Block',profileDetails.blockName)}
+         {renderCard('Block',profileDetails.blockNameE)}
         </View>
-
+        {onBoarding.role != ROLE &&
         <View style={st.card}>
          {renderCard('Trainer type', profileDetails.Trainer_Type)}
          {renderCard('Name of Trainer',profileDetails.Trainer_Name)}
-        </View>
+        </View>}
 
-        {/* <View style={st.card}>
-         {renderCard('Date of Birth',profileDetails.dob)}
+        {onBoarding.role == ROLE &&
+        <View style={st.card}>
+         {renderCard('Training Status', profileDetails.trainingStatus)}
+         {renderCard('Peer Educator Name',profileDetails.peer_Educator_Name)}
+        </View>}
+        
+        {onBoarding.role == ROLE &&
+        <View style={st.card}>
+         {renderCard('Date of Birth',dateFormat(profileDetails.dob))}
          {renderCard('Age',profileDetails.age)}
-        </View> */}
-
+        </View>}
+        {onBoarding.role != ROLE &&
         <View style={st.card}>
          {/* {renderCard('Qualification',profileDetails.qualification)} */}
          {renderCard('Experience',profileDetails.experience)}
-        </View>
+        </View>}
       </CustomContent>
     </CustomContainer>
   )

@@ -22,6 +22,7 @@ const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
     return loginData;
 }
+export let ROLE = 'PeerEducater'
 
 export const getATPListRequest = async () => {
     const loginDetails = getLoginDetails()
@@ -92,7 +93,7 @@ export const appUpdateRequest = async() =>{
 
 export const getPeerEducatorListHandle = async() => {
   const loginDetails = getLoginDetails()
-  if(loginDetails.role == 'PeerEducater'){
+  if(loginDetails.role == ROLE){
   try {
     const url = `${API.GET_PEEREDUCATOR_LIST}?id=${loginDetails.peerEducatorId}`;
     const result = await getApi(url);
@@ -553,7 +554,12 @@ export const  getAwarenessVideoListHandle = async() => {
 export const getProfileHandle = async() => {
   const loginDetails = getLoginDetails()
   try {
-    const url = `${API.GET_PROFILE}TrainerID=${loginDetails.trainerId}`;
+    let url 
+    if(loginDetails.role == ROLE){
+     url = `${API.GET_PEER_PROFILE}ID=${loginDetails.peerEducatorId}`;
+    }else{
+     url = `${API.GET_PROFILE_Trainer}TrainerID=${loginDetails.trainerId}`;
+    }
     const result = await getApi(url);
     console.log({getProfileHandle: result})
     if (result?.status === 200) {

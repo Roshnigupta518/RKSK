@@ -17,7 +17,8 @@ class Endpoints {
   GET_PEER_BRIGADE_LIST = this.baseUrl + 'PeerEducatorbrigade/GetPeerEducatorBrigadeMembers'
   GET_MATERIALS = this.baseUrl + 'PeerEducatorbrigade/IECDetails'
   GET_VIDEOS = this.baseUrl + 'PeerEducatorbrigade/GetAwarenessVideo'
-  GET_PROFILE = this.baseUrl + 'ATP/GetProfile_Trainer?'
+  GET_PROFILE_Trainer = this.baseUrl + 'ATP/GetProfile_Trainer?'
+  GET_PEER_PROFILE = this.baseUrl + 'PeerEducator/GetProfile_PeerEducator?'
 }
 
 export const API = new Endpoints();
