@@ -573,3 +573,20 @@ export const getProfileHandle = async() => {
   }
 }
 
+export const checkBrigadeMobileNumberHandle = async(data) => {
+  try {
+    const url = `${API.VALIDATE_MOBILE}`;
+    console.log({url, data})
+    const result = await postApiWithToken(url, data);
+    console.log({getAwarenessVideoListHandle: result})
+    if (result?.status === 200) {
+      return result.data
+    } else {
+      console.warn('get awareness video response:', result);
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
+    return;
+  }
+}
+

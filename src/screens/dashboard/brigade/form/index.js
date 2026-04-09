@@ -19,6 +19,7 @@ import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum'
 import st from '../../../../global/styles'
 import PeerField from '../../../../components/peerField'
 import { family } from '../../../../global'
+import { checkBrigadeMobileNumberHandle } from '../../../../utils/services'
 
 const INITIALINPUT = {
 
@@ -34,6 +35,7 @@ const BrigadeForm = ({ navigation }) => {
     const isPeerEducator = userLogin?.role === 'PeerEducater';
     const [inputs, setInputs] = useState(INITIALINPUT);
     const [errors, setErrors] = useState(INITIALINPUT);
+    const [isMobileValid, setIsMobileValid] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const {
         districtList = [],
@@ -245,8 +247,24 @@ const BrigadeForm = ({ navigation }) => {
     };
 
     const onSaveHandle = () => {
+        // ❌ STOP if API error exists
+        if (errors.mobile) {
+            console.log('Mobile error exists, stop submit');
+            return;
+        }
+
         if (!validateForm()) return;
-        console.log({ inputs })
+
+        // ❌ Block submit if mobile invalid
+    if (!isMobileValid) {
+        handleError(
+          'This mobile number is already in use. Please enter a different number.',
+          'mobile'
+        );
+        return;
+    }
+
+        console.log({ inputs, errors })
 
         const qualification_temp = qualificationData.find((i)=>i.value === inputs.qualification)
 
@@ -282,6 +300,43 @@ const BrigadeForm = ({ navigation }) => {
         startBackgroundService(syncTaskName.syncPeerBrigadeForm)
         navigation.goBack()
     }
+
+    const handleMobileCheck = async (mobileNumber) => {
+        try {
+          if (!inputs.age || !inputs.gender) return;
+      
+          const payload = {
+            mobileNumber,
+            gender: inputs.gender,
+            age: inputs.age
+          };
+      
+          const response = await checkBrigadeMobileNumberHandle(payload);
+      
+          if (response?.isValid === false) {
+            handleError(
+              'This mobile number is already in use. Please enter a different number.',
+              'mobile'
+            );
+            setIsMobileValid(false); // ❌ invalid
+          } else {
+            setIsMobileValid(true); // ✅ valid
+          }
+      
+        } catch (error) {
+          console.log('Mobile Check Error:', error);
+        }
+      };
+
+      useEffect(() => {
+        if (
+          inputs.mobile?.length === 10 &&
+          inputs.age &&
+          inputs.gender
+        ) {
+          handleMobileCheck(inputs.mobile);
+        }
+      }, [inputs.age, inputs.gender]);
 
     const ReadOnlyPicker = React.memo(
         ({ label, value, items = [], error, disabled = false, onValueChange }) => {
@@ -418,19 +473,37 @@ const BrigadeForm = ({ navigation }) => {
                             fontFamily={family.regular}
                         />
 
-                        <MyInput label="Mobile Number/मोबाइल नंबर *"
+                        {/* <MyInput label="Mobile Number/मोबाइल नंबर *"
                             {...fieldProps('mobile')}
                             keyboardType="numeric"
                             maxLength={10}
-                        />
+                        /> */}
 
-                        <MyInput label="Father / Guardian Name पिता / अभिभावक का नाम *"
+                            <MyInput 
+                            label="Mobile Number/मोबाइल नंबर *"
+                            value={inputs.mobile}
+                            error={errors.mobile}
+                            keyboardType="numeric"
+                            maxLength={10}
+                            onChangeText={(value) => {
+                                handleOnchange('mobile')(value);
+
+                                // 🔥 API call when 10 digit
+                                if (value?.length === 10) {
+                                handleMobileCheck(value);
+                                }
+
+                                if (errors.mobile) handleError('', 'mobile');
+                            }}
+                            />
+
+                        <MyInput label="Father/Guardian Name पिता/अभिभावक का नाम *"
                             {...fieldProps('father')}
                             maxLength={30}
                         />
 
                         <CustomPicker
-                            label={'Educator Qualification/ शैक्षणिक योग्यता *'}
+                            label={'Educator Qualification/शैक्षणिक योग्यता *'}
                             items={qualificationData}
                             {...pickerFieldProps('qualification')}
                             fontFamily={family.regular}
@@ -439,7 +512,7 @@ const BrigadeForm = ({ navigation }) => {
                             {showSchoolField &&
                                 <View>
                                     <CustomPicker
-                                        label={'School Status Options/ विद्यालय जाने की स्थिति का प्रकार *'}
+                                        label={'School Status Options/विद्यालय जाने की स्थिति का प्रकार *'}
                                         items={schStatusOption}
                                         {...pickerFieldProps('sch_options')}
                                         fontFamily={family.regular}
