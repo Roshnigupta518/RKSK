@@ -30,24 +30,8 @@ const INITIALINPUT = {
   sathiyaName: '',
   gender: '',
   activityDate: '',
-  location: '',
-  activityType: [],
-  module: [],
-  comicBook: [],
-  activityMethod: [],
-  participants: {
-    boys: '',
-    girls: '',
-    supervisor: '',
-    asha: '',
-    cho: '',
-    awc: '',
-  },
-  duration: '',
-  materialUsed: [],
-  questions: '',
-  challenges: '',
-  successStory: '',
+
+ 
 };
 
 const PeerEducatorForm = ({ navigation }) => {
@@ -86,11 +70,6 @@ const PeerEducatorForm = ({ navigation }) => {
     village: villageByAsha[inputs.ashaName] || [],            // Flag 8
     sathiya: peerEducatorByAsha[inputs.ashaName] || [],       // Flag 13
     gender: genderByPeerEducator[inputs.sathiyaName] || [],   // Flag 14
-    location: activityPlace || [],
-    activityType: activityType || [],
-    activityMethod: activityToDo || [],
-    module: moduleData || [],
-    comicBook: comicBooks || [],
   };
 
   console.log({pickerData})
@@ -255,39 +234,9 @@ const PeerEducatorForm = ({ navigation }) => {
     });
   };
 
-
-  const GROUP_MEETING_VALUE = 1; // ← change according to master value
-
-  const isGroupMeeting =
-    inputs?.activityType.includes(GROUP_MEETING_VALUE);
-
   const validateForm = () => {
     let tempErrors = {};
     let valid = true;
-
-if (isGroupMeeting) {
-
-  if (!inputs.module?.length) {
-    tempErrors.module = 'Required';
-    valid = false;
-  }
-
-  if (!inputs.comicBook?.length) {
-    tempErrors.comicBook = 'Required';
-    valid = false;
-  }
-
-  if (!inputs.activityMethod?.length) {
-    tempErrors.activityMethod = 'Required';
-    valid = false;
-  }
-
-   // ✅ NEW Validation
-   if (!inputs.materialUsed?.length) {
-    tempErrors.materialUsed = 'Required';
-    valid = false;
-  }
-}
 
     // Normal fields (input + picker + date)
     REQUIRED_FIELDS.forEach(key => {
@@ -304,43 +253,9 @@ if (isGroupMeeting) {
       }
     });
 
-    // 🔹 Participants – EACH field required
-    PARTICIPANT_KEYS.forEach(key => {
-      const value = inputs.participants?.[key];
-    
-      if (value === '' || value === null || value === undefined) {
-        if (!tempErrors.participants) tempErrors.participants = {};
-        tempErrors.participants[key] = 'Required';
-        valid = false;
-      } 
-      else if (isNaN(value)) {
-        if (!tempErrors.participants) tempErrors.participants = {};
-        tempErrors.participants[key] = 'Only number allowed';
-        valid = false;
-      }
-      else if (!Number.isInteger(Number(value))) {
-        if (!tempErrors.participants) tempErrors.participants = {};
-        tempErrors.participants[key] = 'Decimal not allowed';
-        valid = false;
-      }
-      else if (Number(value) < 0) {
-        if (!tempErrors.participants) tempErrors.participants = {};
-        tempErrors.participants[key] = 'Value cannot be negative';
-        valid = false;
-      }
-    });
-
-    if (!attachment || attachment.length < 1) {
-      setAttachmentErr('Upload at least 1 photo');
-      valid = false;
-    } else if (attachment.length > 3) {
-      setAttachmentErr('You can upload maximum 3 photos');
-      valid = false;
-    } else {
-      setAttachmentErr('');
-    }
 
     setErrors(tempErrors);
+    console.log({tempErrors, valid})
     return valid;
   };  
 
@@ -350,8 +265,6 @@ if (isGroupMeeting) {
   
     const dataWithNames = {
       ...inputs,
-      attachment,
-  
       districtName: !isPeerEducator ? pickerData.district.find(i => i.value == inputs.district)?.label : peerEducatorDetails.districtName,
       blockName: !isPeerEducator ? pickerData.block.find(i => i.value == inputs.block)?.label : peerEducatorDetails.blockName,
       supervisorNameText: !isPeerEducator ? pickerData.supervisor.find(i => i.value == inputs.supervisorName)?.label : peerEducatorDetails.ashaSahyogi_Name,
@@ -359,13 +272,6 @@ if (isGroupMeeting) {
       villageName: !isPeerEducator ? pickerData.village.find(i => i.value == inputs.village)?.label : peerEducatorDetails.villageName,
       sathiyaNameText: !isPeerEducator ? pickerData.sathiya.find(i => i.value == inputs.sathiyaName)?.label : peerEducatorDetails.peerEducatorName,
       genderText: !isPeerEducator ? pickerData.gender.find(i => i.value == inputs.gender)?.label : peerEducatorDetails.gender,
-  
-      locationText: getLabelsFromValues(inputs.location, pickerData.location)?.join(','),
-      activityTypeText: getLabelsFromValues(inputs.activityType, pickerData.activityType)?.join(','),
-      moduleText: getLabelsFromValues(inputs.module, pickerData.module)?.join(','),
-      comicBookText: getLabelsFromValues(inputs.comicBook, pickerData.comicBook)?.join(','),
-      activityMethodText: getLabelsFromValues(inputs.activityMethod, pickerData.activityMethod)?.join(','),
-      materialUsedText: getLabelsFromValues(inputs.materialUsed, contentUse)?.join(','),
     };
   
     navigation.navigate('RefferalDetails', { data: dataWithNames });
@@ -447,10 +353,10 @@ if (isGroupMeeting) {
   );
   console.log({peerEducatorDetails})
 
-
+  
   return (
     <CustomContainer>
-      <CustomHeader title="Peer educator (Saathiya) activity reporting" onBackPress={() => navigation.goBack()} />
+      <CustomHeader title="Refferal Form" onBackPress={() => navigation.goBack()} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -556,132 +462,13 @@ if (isGroupMeeting) {
               {...dateFieldProps('activityDate', 'date')}
               disabled={true}
             />
-
-            <CustomPicker
-              label={'गतिविधि का स्थान *'}
-              items={pickerData.location}
-              {...pickerFieldProps('location')}
-              disabled={isReportingCount}
-            />
-
-            {PICKERS.map(p => (
-              <CustomMultiSelect
-                key={p.key}
-                label={p.label}
-                items={pickerData[p.key]}
-                placeholder=""
-                required
-                {...multiSelectFieldProps(p.key)}
-                disable={isReportingCount}
-                showStar={isGroupMeeting}
-              />
-            ))}
-
           </View>
-
-          <View style={[st.card]}>
-            <Text style={[st.tx14, st.txbold]}>प्रतिभागियों की संख्या *</Text>
-
-            {PARTICIPANTS.map(item => (
-              <View key={item.key} style={[st.row, st.align_C]}>
-                <View style={st.wdh50}>
-                  <Text style={st.tx12}>{item.label}</Text>
-                </View>
-                <View style={st.wdh50}>
-                  <MyInput
-                    value={inputs.participants[item.key]}
-                    onChangeText={val => {
-                      handleOnchange(`participants.${item.key}`)(val);
-                      if (errors.participants?.[item.key]) {
-                        setErrors(prev => ({
-                          ...prev,
-                          participants: {
-                            ...prev.participants,
-                            [item.key]: '',
-                          },
-                        }));
-                      }
-                    }}
-                    keyboardType="numeric"
-                    error={errors.participants?.[item.key]}   
-                    disabled={isReportingCount}
-                  />
-                </View>
-              </View>
-            ))}
-
-          </View>
-
-          <CustomPicker
-            items={activityDuration}
-            label={'गतिविधि की अवधि *'}
-            placeholder=''
-            {...pickerFieldProps('duration')}
-            disabled={isReportingCount}
-          />
-
-          <CustomMultiSelect
-            label={`सामग्री उपयोग ${isGroupMeeting? '*':''}`}
-            items={contentUse}
-            placeholder=""
-            required
-            {...multiSelectFieldProps('materialUsed')}
-            disable={isReportingCount}
-          />
-
-          <MyInput label="किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न *"
-            {...fieldProps('questions')}
-            multiline={true}
-            maxLength={100}
-            inputsty={{ height: 120 }}
-            inputTxt={{ textAlignVertical: 'top' }}
-            keyboardType="default"
-            disabled={isReportingCount}
-          />
-          <Text style={[st.error, st.txAlignR]}>
-            {inputs.questions?.length || 0}/100
-          </Text>
-
-          <MyInput label="गतिविधि के दौरान आई चुनौतियां *"
-            {...fieldProps('challenges')}
-            multiline={true}
-            maxLength={100}
-            inputsty={{ height: 120 }}
-            inputTxt={{ textAlignVertical: 'top' }}
-            keyboardType="default"
-            disabled={isReportingCount}
-          />
-          <Text style={[st.error, st.txAlignR]}>
-            {inputs.challenges?.length || 0}/100
-          </Text>
-
-          <MyInput label="सफलता/अच्छा अनुभव"
-            {...fieldProps('successStory')}
-            multiline={true}
-            maxLength={100}
-            inputsty={{ height: 120 }}
-            inputTxt={{ textAlignVertical: 'top' }}
-            keyboardType="default"
-            disabled={isReportingCount}
-          />
-          <Text style={[st.error, st.txAlignR]}>
-            {inputs.successStory?.length || 0}/100
-          </Text>
-
-            <AvatarPicker
-              value={attachment}
-              error={attachmentErr}
-              onUpload={uploadProfileToServer}
-              onRemove={removeImage}
-              disabled={isReportingCount}
-              showGallery={true}
-            />
 
           <CustomButton title='Next'
             onPress={() =>
               onSave()
             }
-            disabled={isLoading || isReportingCount}
+            disabled={isLoading}
             loading={isLoading}
           />
 
@@ -731,34 +518,7 @@ const REQUIRED_FIELDS = [
   'ashaName',
   'sathiyaName',
   'gender',
-
   // DATE
   'activityDate',
-
-  // PICKERS
-  'location',
-  'activityType',
-  // 'module',
-  // 'comicBook',
-  // 'activityMethod',
-
-  // OTHER PICKERS
-  'duration',
-  // 'materialUsed',
-
-  // TEXT INPUTS
-  'questions',
-  'challenges',
-  // 'successStory',
 ];
-const PARTICIPANT_KEYS = [
-  'boys',
-  'girls',
-  'supervisor',
-  'asha',
-  'cho',
-  'awc',
-  'parents',
-  'ngo', 
-  'teacher'
-];
+

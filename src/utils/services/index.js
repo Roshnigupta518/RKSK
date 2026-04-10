@@ -334,6 +334,14 @@ export const saveSinglePeerEducatorList = async (data) => {
   formData.append('TrainerId', loginDetails.trainerId || 0);
   formData.append('SupervisorName',data.supervisorName)
   formData.append('PeerEducatorId', data?.sathiyaName);
+
+  formData.append('NGOTrainer', parseInt(data.participants.ngo));
+  formData.append('Teacher', parseInt(data.participants.teacher));
+  formData.append('Guardian', parseInt(data.participants.parents));
+
+  formData.append('Address',data.locationArea)
+  formData.append('Latitude', data?.location.latitude);
+  formData.append('Longititude', data?.location.longitude);
   
   try {
     const result = await uploadApi(url, formData);

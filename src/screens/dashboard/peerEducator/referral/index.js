@@ -249,14 +249,15 @@ const RefferalDetails = ({ navigation, route }) => {
             createdAt: new Date().toISOString(),
             retryCount: 0,
             IP: ipAddress,
-            id: 0
+            id: 0,
+            location,
+            locationArea
         };
 
         dispatch(setPeerReferralList(payload));
         startBackgroundService(syncTaskName.syncPeerEducatorFormData)
         navigation.replace('MainApp', {
             screen: 'PeerEducator',
-            // params: { referrals: payload },
         });
         setIsLoading(false)
         submitLock.current = false;
@@ -302,6 +303,8 @@ const RefferalDetails = ({ navigation, route }) => {
             retryCount: 0,
             id: 0,
             IP: ipAddress,
+            location,
+            locationArea
         };
 
         dispatch(setPeerReferralList(payload));

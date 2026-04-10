@@ -22,7 +22,7 @@ const joinArray = (arr) => {
 
 const PeerDetails = ({ navigation, route }) => {
     const { data = {} } = route?.params || {}
-    console.log({ data })
+    // console.log({ data })
     const participantsText = useMemo(() => {
         if (!data.participants) return '-'
         return `
@@ -31,7 +31,10 @@ const PeerDetails = ({ navigation, route }) => {
             आशा सहयोगी: ${data.participants.supervisor || 0},
             आशा: ${data.participants.asha || 0},
             CHO: ${data.participants.cho || 0},
-            आंगनवाड़ी: ${data.participants.awc || 0}
+            अभिभावक: ${data.participants.parents || data.participants.guardian|| 0},
+            NGO प्रशिक्षक: ${data.participants.ngo || data.participants.ngoTrainer || 0},
+            शिक्षक: ${data.participants.teacher || 0},
+            आंगनवाड़ी: ${data.participants.awc || 0},
                 `.trim()
     }, [data.participants])
 
@@ -75,6 +78,12 @@ const PeerDetails = ({ navigation, route }) => {
                     <PeerField label="किशोर-किशोरियों द्वारा पूछे गए प्रमुख प्रश्न" value={data.questions} />
                     <PeerField label="गतिविधि के दौरान आई चुनौतियां" value={data.challenges || data.challanges} />
                     <PeerField label="सफलता/अच्छा अनुभव" value={data.successStory} />
+
+                    <PeerField label="अक्षांश" value={data.location?.latitude || data.latitude} />
+                    <PeerField label="देशान्तर" value={data.location?.longitude || data.longititude} />
+                    <PeerField label="पता" value={data?.locationArea || data.address} />
+
+
                     <PeerField label="फोटो" value={(data.attachment?.length || data?.photo?.length) ? `${data.attachment?.length || data?.photo?.length} फोटो` : 'कोई फोटो नहीं'}/>
                     {data?.attachment?.length > 0 && (
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>

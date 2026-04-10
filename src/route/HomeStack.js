@@ -25,6 +25,9 @@ import ViewPdf from '../screens/dashboard/ViewPdf';
 import AwarenessVideo from '../screens/dashboard/videos';
 import ViewVdo from '../screens/dashboard/ViewVdo';
 import Tracking from '../screens/dashboard/tracking';
+import RefferalList from '../screens/dashboard/refferals/list';
+import RefferalForm from '../screens/dashboard/refferals/form';
+import RefferalFormDetails from '../screens/dashboard/refferals/details'
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -47,6 +50,9 @@ const HomeStack = () => {
       <Stack.Screen name="ViewPdf" component={ViewPdf} />
       <Stack.Screen name="ViewVdo" component={ViewVdo} />
       <Stack.Screen name="Tracking" component={Tracking} />
+      <Stack.Screen name="RefferalForm" component={RefferalForm} />
+      <Stack.Screen name="RefferalFormDetails" component={RefferalFormDetails} />
+      {/* RefferalFormDetails */}
     </Stack.Navigator>
   )
 }
@@ -132,6 +138,14 @@ const DrawerStack = () => {
           drawerLabel: 'Peer Educator Brigade',
         }}
         component={BrigadeList}
+      />
+      <Drawer.Screen
+        name="RefferalList"
+        options={{
+          title: 'Refferal List',
+          drawerLabel: 'Refferal List',
+        }}
+        component={RefferalList}
       />
       <Drawer.Screen
         name="Disclaimer"
