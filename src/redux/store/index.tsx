@@ -18,7 +18,7 @@ import ActivityPlan from '../slices/ActivityPlan';
 import QueueSlice from '../slices/queueSlice';
 import PeerEducatorSlice from '../slices/peerEducatorList';
 import MastersSlice from '../slices/Masters';
-import PeerReferralList from '../slices/ReferralList';
+import PeerReferralList from '../slices/PeerReferralList';
 import ipAddressSlice from '../slices/getIpAddress';
 import PeerReportingCountSlice from '../slices/peerReportingCount';
 import PeerBrigadeSlice from '../slices/peerBrigade';

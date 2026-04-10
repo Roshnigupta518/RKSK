@@ -6,7 +6,7 @@ import { setActivityPlan } from "../../redux/slices/ActivityPlan";
 import { setPeerEducatorList } from "../../redux/slices/peerEducatorList";
 import { setLocalMasters } from "../../redux/slices/Masters";
 import { saveToLocal } from "./storage";
-import { incrementPeerRetryCount, removePeerReferralByClientId, setPeerReferralList, updateSavePeerReferralSyncStatus } from "../../redux/slices/ReferralList";
+import { incrementPeerRetryCount, removePeerReferralByClientId, setPeerReferralList, updateSavePeerReferralSyncStatus } from "../../redux/slices/PeerReferralList";
 import { getSavedPeerBridageNotStarted, getSavedPeerEducatorNotStarted } from '../../redux/store/getState';
 import { ENUM } from "../bgservices/enum";
 import Toast from "react-native-toast-message";
