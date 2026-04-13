@@ -10,7 +10,7 @@ import MyInput from '../../../../components/customInput'
 import CustomCheckbox from '../../../../components/CustomCheckbox'
 import st from '../../../../global/styles'
 import Toast from 'react-native-toast-message'
-import { setPeerReferralList } from '../../../../redux/slices/ReferralList'
+import { setPeerReferralList } from '../../../../redux/slices/PeerReferralList'
 import { useAppDispatch, useAppSelector } from '../../../../hooks'
 import { generateclientID, getLabelsFromValues } from '../../../../utils/helper';
 import { ENUM } from '../../../../utils/bgservices/enum'

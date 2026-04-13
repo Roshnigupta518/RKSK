@@ -334,6 +334,7 @@ const BrigadeForm = ({ navigation }) => {
           inputs.age &&
           inputs.gender
         ) {
+          handleError('','mobile');
           handleMobileCheck(inputs.mobile);
         }
       }, [inputs.age, inputs.gender]);
