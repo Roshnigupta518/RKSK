@@ -25,6 +25,7 @@ import PeerBrigadeSlice from '../slices/peerBrigade';
 import MaterialSlice from '../slices/materials';
 import AwarenessVideoSlice from '../slices/awarenessVideo';
 import ProfileSlice from '../slices/profile';
+import ReferralSlice from '../slices/referralList';
 
 const authPersistConfig = {
     key: 'Login',
@@ -97,6 +98,14 @@ const authPersistConfig = {
     whitelist: ['data'],
   }
 
+  const referralConfig = {
+    key: 'Profile',
+    storage: AsyncStorage,
+    whitelist: ['data'],
+  }
+
+  // ReferralSlice
+
   const appReducer = combineReducers({
     login: persistReducer(authPersistConfig, loginSlice),
     clockTime: persistReducer(clockPersistConfig, ClockTimeSlice),
@@ -107,6 +116,7 @@ const authPersistConfig = {
     peerReferralList: persistReducer(peerReferralConfig, PeerReferralList),
     getIpAddress: persistReducer(ipAddressConfig, ipAddressSlice),
     peerBrigadeList : persistReducer(peerBrigadeConfig, PeerBrigadeSlice),
+    ReferralList : persistReducer(referralConfig, ReferralSlice),
     iecMaterialList : persistReducer(materialsConfig, MaterialSlice),
     awarenessVideoList : persistReducer(awarenessConfig, AwarenessVideoSlice),
     getProfile : persistReducer(profileConfig, ProfileSlice),

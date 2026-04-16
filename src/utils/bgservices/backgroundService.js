@@ -3,7 +3,7 @@ import {syncTaskName} from './backgroundTaskEnum';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { isUserLoggedIn } from '../../redux/store/getState';
-import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn,syncPeerEducatorFormData, syncPeerEducatorList, syncMastersData, syncPeerEducatorReferralList, syncPeerReportingCount, syncPeerBrigadeList, syncPeerBrigadeFormData, syncIecMaterailList, syncAwarenessVideoList, syncProfileHandle } from './syncTask';
+import {  syncATPListData, syncDashboard, syncProfileData, syncATPFormData, syncATPFormClockOut, syncATPFormClockIn,syncPeerEducatorFormData, syncPeerEducatorList, syncMastersData, syncPeerEducatorReferralList, syncPeerReportingCount, syncPeerBrigadeList, syncPeerBrigadeFormData, syncIecMaterailList, syncAwarenessVideoList, syncProfileHandle, syncReferralFormData } from './syncTask';
 import { processQueue } from './queueProcessor';
 
 const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
@@ -45,7 +45,11 @@ const checkIfTaskNotSyncedToday = async taskName => {
       syncTaskName.syncPeerBrigadeForm,
     );
 
-    const isSyncPending = isSyncAcitivityQueue || isSyncPeerEducatorFormData || isSyncPeerBrigadeForm
+    const isSyncReferralForm = await checkIfTaskNotSyncedToday(
+      syncTaskName.syncReferralForm,
+    );
+
+    const isSyncPending = isSyncAcitivityQueue || isSyncPeerEducatorFormData || isSyncPeerBrigadeForm || isSyncReferralForm
     
     return isSyncPending
   };
@@ -82,6 +86,7 @@ const checkIfTaskNotSyncedToday = async taskName => {
             let isSyncPeerReferralList = taskName == syncTaskName.syncPeerEducatorReferralList || syncAll;
             let isSyncPeerBrigadeList = taskName == syncTaskName.syncPeerBrigadeList || syncAll;
             let isSyncPeerBrigadeForm = taskName == syncTaskName.syncPeerBrigadeForm || syncAll
+            let isSyncReferralForm = taskName == syncTaskName.syncReferralForm || syncAll
             let isSyncMasters = taskName == syncTaskName.syncMasters || syncAll;
             let isSyncPeerEducatorFormData = taskName == syncTaskName.syncPeerEducatorFormData || syncAll;
              
@@ -165,6 +170,14 @@ const checkIfTaskNotSyncedToday = async taskName => {
               await updateSyncNotification("Syncing atp Peer Educator Brigade form data...");
               await syncPeerBrigadeFormData(isSyncInProgress)
               console.log('completed sync syncPeerBrigadeForm');
+            }
+
+            if(isSyncReferralForm){
+              const isSyncInProgress = taskName == syncTaskName.syncReferralForm || isAnythingPendingForSync;
+              console.log('excuting syncReferralForm', isSyncInProgress)
+              await updateSyncNotification("Syncing atp Referral Detail form data...");
+              await syncReferralFormData(isSyncInProgress)
+              console.log('completed sync syncReferralForm');
             }
 
             if (await checkIfSyncPending()) {

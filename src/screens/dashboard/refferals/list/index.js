@@ -10,8 +10,10 @@ import { dateFormat } from '../../../../utils/validations'
 import IconStatus from '../../../../components/iconStatus'
 
 const RefferalList = ({ navigation }) => {
-    const peerEducator = useAppSelector(state => state.peerReferralList.data);
+    const peerEducator = useAppSelector(state => state.ReferralList.data);
     const [peerEducatorList, setPeerEducatorList] = useState([])
+
+    console.log({peerEducator})
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -37,11 +39,11 @@ const RefferalList = ({ navigation }) => {
             <TouchableOpacity style={st.card} key={index}
                 onPress={() => navigation.navigate('RefferalFormDetails', { data: item })}>
                 <IconStatus status={item.syncStatus} />
-                <Field label={'रेफरल आई डी'} value={item.villageName} />
-                <Field label={'आशा का नाम'} value={item.ashaNameText || item.ashaName} />
-                <Field label={'साथिया का नाम'} value={item.sathiyaNameText || item.sathiyaName} />
-                <Field label={'आशा सुपरवाइजर का नाम'} value={item.id} />
-                <Field label={'रेफेर करने की तारीख'} value={dateFormat(item.activityDate)} />
+                <Field label={'रेफरल आई डी'} value={item.id} />
+                <Field label={'आशा का नाम'} value={item.ashaNameText} />
+                <Field label={'साथिया का नाम'} value={item.sathiyaNameText} />
+                <Field label={'आशा सुपरवाइजर का नाम'} value={item.supervisorNameText} />
+                <Field label={'रेफेर करने की दिनांक'} value={dateFormat(item.activityDate)} />
             </TouchableOpacity>
         )
     }

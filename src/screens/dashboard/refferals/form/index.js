@@ -58,7 +58,6 @@ const PeerEducatorForm = ({ navigation }) => {
   const userLogin = useAppSelector(state => state.login.data);
   const peerEducatorDetails = useAppSelector(state => state.peerEducatorList.data);
   const peerEducatorReportingCount = useAppSelector(state => state.peerReportingCount?.data?.reportingCount)
-  const isReportingCount = peerEducatorReportingCount === 1
   const isTrainer = userLogin?.role === 'TrainerUser';
   const isPeerEducator = userLogin?.role === 'PeerEducater';
 
@@ -274,7 +273,7 @@ const PeerEducatorForm = ({ navigation }) => {
       genderText: !isPeerEducator ? pickerData.gender.find(i => i.value == inputs.gender)?.label : peerEducatorDetails.gender,
     };
   
-    navigation.navigate('RefferalDetails', { data: dataWithNames });
+    navigation.navigate('RefferalDetails', { data: dataWithNames, individualReferral: true });
   };
   
   const ReadOnlyPicker = React.memo(
@@ -353,7 +352,6 @@ const PeerEducatorForm = ({ navigation }) => {
   );
   console.log({peerEducatorDetails})
 
-  
   return (
     <CustomContainer>
       <CustomHeader title="Refferal Form" onBackPress={() => navigation.goBack()} />
@@ -447,20 +445,13 @@ const PeerEducatorForm = ({ navigation }) => {
                 </View>
             )} 
 
-            {isReportingCount &&
-              <View>
-                <Text style={[st.error, st.txAlignC]}>This peer educator data has been already filled for this date. </Text>
-              </View>
-            } 
-
             <CustomDatePicker
-              label="गतिविधि की तारीख"
+              label="रेफेर करने की दिनांक"
               placeholder=""
               minimumDate={new Date(1900, 0, 1)}
               maximumDate={new Date()}
               iconName={'calendar'}
               {...dateFieldProps('activityDate', 'date')}
-              disabled={true}
             />
           </View>
 

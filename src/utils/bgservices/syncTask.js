@@ -2,7 +2,7 @@ import { syncTaskName } from "./backgroundTaskEnum";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDasboardDataHandle, getProfileDataHandle, getATPListRequest, getPeerEducatorListHandle, getMastersDataHandle, getPeerEducatorReferralListHandle, getPeerReportingCount, savePeerBridageFormDatafromRedux, getPeerBridageListHandle } from "../services";
 import { processQueue } from "./queueProcessor";
-import { savePeerEducatorFormDatafromRedux, getIecMaterialListHandle, getAwarenessVideoListHandle, getProfileHandle } from "../services";
+import { savePeerEducatorFormDatafromRedux, getIecMaterialListHandle, getAwarenessVideoListHandle, getProfileHandle, saveReferralFormDatafromRedux } from "../services";
 
 const setSyncStatus = async taskName => {
     const status = { lastSyncOn: new Date() };
@@ -78,4 +78,9 @@ export const syncProfileHandle = async () => {
     getProfileHandle();
     await setSyncStatus(syncTaskName.syncGetProfile);
 };
+
+export const syncReferralFormData = async(isSyncInProgress) => {
+    await saveReferralFormDatafromRedux(isSyncInProgress)
+    await setSyncStatus(syncTaskName.syncReferralForm);
+}
 

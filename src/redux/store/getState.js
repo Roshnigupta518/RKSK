@@ -45,3 +45,24 @@ export const isUserLoggedIn = () => {
   
     return savedPeerBrigadeData;
   };
+
+  export const getSavedReferralNotStarted = (isGetInProgress) => {
+    const data = store.getState().ReferralList?.data
+    console.log({getSavedReferralNotStarted: data})
+    let savedReferralData = data
+      ?.filter(res =>
+        res.syncStatus === ENUM.SERVERSTATUS.NOTSTARTED ||
+        res.syncStatus === ENUM.SERVERSTATUS.FAILED ||   // include failed
+        (isGetInProgress && res.syncStatus === ENUM.SERVERSTATUS.INPROGRESS)
+      );
+  
+    savedReferralData?.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateA < dateB ? 1 : -1;
+    });
+
+    console.log({data, savedReferralData, isGetInProgress})
+  
+    return savedReferralData;
+  };

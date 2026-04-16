@@ -18,7 +18,7 @@ import { startBackgroundService } from '../../../../utils/bgservices/backgroundS
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum'
 import st from '../../../../global/styles'
 import PeerField from '../../../../components/peerField'
-import { family } from '../../../../global'
+import { colors, family } from '../../../../global'
 import { checkBrigadeMobileNumberHandle } from '../../../../utils/services'
 
 const INITIALINPUT = {
@@ -363,6 +363,7 @@ const BrigadeForm = ({ navigation }) => {
                 style={{ flex: 1 }}
                 keyboardShouldPersistTaps='handled'>
                 <CustomContent>
+                  
                     <View>
                         {!isPeerEducator &&
                             <View>
@@ -521,13 +522,21 @@ const BrigadeForm = ({ navigation }) => {
                                 </View>
                             }
 
+                     {!isConnected&&
+                    <View style={st.card}>
+                        <Text style={[st.tx10,{color:colors.blue}]}>
+                            Note: कोई इंटरनेट कनेक्शन नहीं है। कृपया सबमिशन जारी रखने के लिए इंटरनेट से कनेक्ट करें।
+                        </Text>
+                    </View> }
+
                         <CustomButton title='Add'
                             onPress={() =>
                                 onSaveHandle()
                             }
-                            disabled={isLoading}
+                            disabled={isLoading || !isConnected}
                             loading={isLoading}
                         />
+                    
                     </View>
                 </CustomContent>
             </KeyboardAvoidingView>

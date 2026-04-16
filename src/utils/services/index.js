@@ -7,7 +7,7 @@ import { setPeerEducatorList } from "../../redux/slices/peerEducatorList";
 import { setLocalMasters } from "../../redux/slices/Masters";
 import { saveToLocal } from "./storage";
 import { incrementPeerRetryCount, removePeerReferralByClientId, setPeerReferralList, updateSavePeerReferralSyncStatus } from "../../redux/slices/PeerReferralList";
-import { getSavedPeerBridageNotStarted, getSavedPeerEducatorNotStarted } from '../../redux/store/getState';
+import { getSavedPeerBridageNotStarted, getSavedPeerEducatorNotStarted, getSavedReferralNotStarted } from '../../redux/store/getState';
 import { ENUM } from "../bgservices/enum";
 import Toast from "react-native-toast-message";
 import { syncTaskName } from "../../utils/bgservices/backgroundTaskEnum";
@@ -17,6 +17,7 @@ import { incrementPeerBridageRetryCount, removePeerBridageByClientId, setPeerBri
 import { setMaterialList } from "../../redux/slices/materials";
 import { setVideoList } from "../../redux/slices/awarenessVideo";
 import { setProfileData } from "../../redux/slices/profile";
+import { incrementReferralRetryCount, removeReferralByClientId, updateSaveReferralSyncStatus } from "../../redux/slices/referralList";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -264,6 +265,15 @@ export const savePeerEducatorFormDatafromRedux = async isSyncInProgrss => {
   }
 };
 
+export const saveReferralFormDatafromRedux = async isSyncInProgrss => {
+  const getSavedReferrallistStarted =
+  getSavedReferralNotStarted(isSyncInProgrss);
+
+  for (let i = 0; i < getSavedReferrallistStarted?.length; i++) {
+    await saveSingleReferralIndividualList(getSavedReferrallistStarted[i]);
+  }
+};
+
 export const savePeerBridageFormDatafromRedux = async isSyncInProgrss => {
   const getSavedPeerBridagelistStarted =
   getSavedPeerBridageNotStarted(isSyncInProgrss);
@@ -340,8 +350,8 @@ export const saveSinglePeerEducatorList = async (data) => {
   formData.append('Guardian', parseInt(data.participants.parents));
 
   formData.append('Address',data.locationArea)
-  formData.append('Latitude', data?.location.latitude);
-  formData.append('Longititude', data?.location.longitude);
+  formData.append('Latitude', data?.location?.latitude);
+  formData.append('Longititude', data?.location?.longitude);
   
   try {
     const result = await uploadApi(url, formData);
@@ -595,6 +605,88 @@ export const checkBrigadeMobileNumberHandle = async(data) => {
   } catch (e) {
     handleAPIErrorResponse(e);
     return;
+  }
+}
+
+export const saveSingleReferralIndividualList = async(data) =>{
+  console.log({saveSingleReferralIndividualList: data})
+  const loginDetails = getLoginDetails()
+
+  const MAX_RETRY = 3;
+
+  const currentRetry = data?.retryCount || 0;
+
+  if (currentRetry >= MAX_RETRY) {
+    console.warn('Max retry reached. Removing from list:', data.clientId);
+    store.dispatch(removeReferralByClientId({ clientId: data.clientId }));
+    return;
+  }
+
+  store.dispatch(updateSaveReferralSyncStatus({
+    syncStatus: ENUM.SERVERSTATUS.INPROGRESS,
+    clientId: data.clientId,
+  }));
+
+  const url = `${API.SAVE_REFERRAL_FORM}`;
+  const params = {
+      "districtID": data.district,
+      "blockId": data.block,
+      "villageId": data.village,
+      "ashA_Facilitator_Id": data.supervisorName,
+      "ashaid": data.ashaName,
+      "name_of_Peer_Educator_Sathiya": data.sathiyaName,
+      "peer_Educator_Sathiya_Gender": data.gender,
+      "referral_user_type":'',
+      "refer_Date": data.activityDate,
+      "createdby": loginDetails.userId,
+      "ipAddress": data.IP,
+      "id": data.id || 0,
+      "childList": data.childList,
+      "latitude": data?.location?.latitude || 0,
+      "longititude": data?.location?.longitude || 0,
+      "address": data.locationArea || '',
+     'syncStatus': ENUM.SERVERSTATUS.INPROGRESS,
+     'clientId': data.clientId,
+     "isRefered": data.refer,
+  }
+ 
+  try {
+    const result = await postApiWithToken(url, params);
+    console.log('peerformresult', result)
+    if (result.status === 200) {
+      
+      store.dispatch(updateSaveReferralSyncStatus({
+        syncStatus: ENUM.SERVERSTATUS.COMPLETED,
+        clientId: data.clientId,
+        id: result.data.id
+      }));
+    
+      Toast.show({
+        type: "myCustomType",
+        text1: "Success",
+        text2: "Data Saved successfully",
+        position: 'bottom',
+        props: { key: 'success' },
+    });
+
+    }
+  } catch (e) {
+    
+    store.dispatch(incrementReferralRetryCount({ clientId: data.clientId }));
+
+    const updatedItem = store.getState().peerBrigadeList.data.find(i => i.clientId === data.clientId);
+
+    if ((updatedItem?.retryCount || 0) >= MAX_RETRY) {
+      console.warn('Retry failed 3 times. Removing item:', data.clientId); 
+      store.dispatch(removeReferralByClientId({ clientId: data.clientId }));
+    } else {
+      store.dispatch(updateSaveReferralSyncStatus({
+        syncStatus: ENUM.SERVERSTATUS.FAILED,
+        clientId: data.clientId,
+      }));
+    }
+
+    handleAPIErrorResponse(e, 'save peer educator form data catch');
   }
 }
 

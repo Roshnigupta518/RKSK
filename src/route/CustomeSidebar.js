@@ -62,10 +62,14 @@ const CustomSidebar = (props) => {
   const useHasPendingSync = () => {
     const activityQueue = useSelector(state => state.queue?.pending || []);
     const peerReferralQueue = useSelector(state => state.peerReferralList?.data || []);
+    const peerBrigadeList = useSelector(state => state.peerBrigadeList?.data || []);
+    const ReferralList = useSelector(state => state.ReferralList?.data || []);
 
     return (
       activityQueue?.length > 0 ||
-      peerReferralQueue.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED)
+      peerReferralQueue.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED) ||
+      peerBrigadeList.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED) ||
+      ReferralList.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED)
     );
   };
 
@@ -119,7 +123,7 @@ const CustomSidebar = (props) => {
         {renderMenuItem("Manage Activity", "calendar", "ATPListScreen", "#369BFF")}
         {renderMenuItem("Peer Educator Reporting", "command", "PeerEducator", "#2AE1E1")}
         {renderMenuItem("Peer Educator Brigade", "codepen", "BrigadeList", "#2AE1E1")}
-        {renderMenuItem("Refferal List", "dribbble", "RefferalList", "#2AE1E1")}
+        {renderMenuItem("Referral Details", "dribbble", "RefferalList", "#2AE1E1")}
         {renderMenuItem("Disclaimer", "alert-triangle", "Disclaimer", "#FB6D3A")}
         {renderMenuItem("Privacy Policy", "lock", "PrivacyPolicy", "#FB6D3A")}
         {/* {renderMenuItem("Notifications", "bell", "Notifications", "#413DFB")} */}

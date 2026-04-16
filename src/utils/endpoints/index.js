@@ -20,6 +20,7 @@ class Endpoints {
   GET_PROFILE_Trainer = this.baseUrl + 'ATP/GetProfile_Trainer?'
   GET_PEER_PROFILE = this.baseUrl + 'PeerEducator/GetProfile_PeerEducator?'
   VALIDATE_MOBILE = this.baseUrl + 'PeerEducatorbrigade/ValidateMobile'
+  SAVE_REFERRAL_FORM = this.baseUrl + 'PeerEducator/InsertReferralDetails'
 }
 
 export const API = new Endpoints();

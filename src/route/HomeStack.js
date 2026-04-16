@@ -142,8 +142,8 @@ const DrawerStack = () => {
       <Drawer.Screen
         name="RefferalList"
         options={{
-          title: 'Refferal List',
-          drawerLabel: 'Refferal List',
+          title: 'Referral Details',
+          drawerLabel: 'Referral Details',
         }}
         component={RefferalList}
       />

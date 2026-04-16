@@ -12,7 +12,7 @@ import st from '../../../../global/styles'
 import Toast from 'react-native-toast-message'
 import { setPeerReferralList } from '../../../../redux/slices/PeerReferralList'
 import { useAppDispatch, useAppSelector } from '../../../../hooks'
-import { generateclientID, getLabelsFromValues } from '../../../../utils/helper';
+import { generateclientID, getLabelsFromValues, getValuesFromLabels } from '../../../../utils/helper';
 import { ENUM } from '../../../../utils/bgservices/enum'
 import { genderData } from '../../../../utils/staticJson'
 import { syncTaskName } from '../../../../utils/bgservices/backgroundTaskEnum'
@@ -20,6 +20,7 @@ import { startBackgroundService } from '../../../../utils/bgservices/backgroundS
 import PeerField from '../../../../components/peerField'
 import { useLocation } from '../../../../hooks/useLocation'
 import { validateLocationBeforeSubmit } from '../../../../utils/validations'
+import { setIndividualReferralList } from '../../../../redux/slices/referralList'
 
 const INITIALINPUT = {
     refer: '',
@@ -36,7 +37,7 @@ const RefferalDetails = ({ navigation, route }) => {
     const [referralList, setReferralList] = useState([]);
     const [isChecked, setIsChecked] = useState(false);
     const userLogin = useAppSelector(state => state.login.data);
-    const { data } = route.params || {}
+    const { data, individualReferral } = route.params || {}
 
     const sheetRef = useRef();
     const submitLock = useRef(false);
@@ -225,11 +226,10 @@ const RefferalDetails = ({ navigation, route }) => {
         });
 
         if (!isLocationValid) {
-            submitLock.current = false; 
+            submitLock.current = false;
             return;
         }
 
-        // ✅ location available
         console.log(location.latitude, location.longitude);
 
         if (!isChecked) {
@@ -239,26 +239,60 @@ const RefferalDetails = ({ navigation, route }) => {
         }
 
         setIsLoading(true);
+        try {
+            if (individualReferral) {
 
-        const payload = {
-            ...data,
-            refer: inputs.refer,
-            referrals: referralList,
-            clientId: generateclientID(userLogin.userId),
-            syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
-            createdAt: new Date().toISOString(),
-            retryCount: 0,
-            IP: ipAddress,
-            id: 0,
-            location,
-            locationArea
-        };
+                const updatedData = referralList.map(item => ({
+                    child_Name: item.name,
+                    child_Gender: getValuesFromLabels(item.gender, genderData).join(''),
+                    problem_subject: item.healthissue,
+                    reffered_To: item.referrals.join(", ")
+                }));
 
-        dispatch(setPeerReferralList(payload));
-        startBackgroundService(syncTaskName.syncPeerEducatorFormData)
-        navigation.replace('MainApp', {
-            screen: 'PeerEducator',
-        });
+                const payload = {
+                    ...data,
+                    refer: inputs.refer,
+                    childList: updatedData,
+                    clientId: generateclientID(userLogin.userId),
+                    syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
+                    createdAt: new Date().toISOString(),
+                    retryCount: 0,
+                    IP: ipAddress,
+                    id: 0,
+                    location,
+                    locationArea
+                };
+
+                dispatch(setIndividualReferralList(payload))
+                startBackgroundService(syncTaskName.syncReferralForm)
+
+                navigation.replace('MainApp', {
+                    screen: 'RefferalList',
+                });
+            } else {
+                const payload = {
+                    ...data,
+                    refer: inputs.refer,
+                    referrals: referralList,
+                    clientId: generateclientID(userLogin.userId),
+                    syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
+                    createdAt: new Date().toISOString(),
+                    retryCount: 0,
+                    IP: ipAddress,
+                    id: 0,
+                    location,
+                    locationArea
+                };
+                dispatch(setPeerReferralList(payload));
+                startBackgroundService(syncTaskName.syncPeerEducatorFormData)
+                navigation.replace('MainApp', {
+                    screen: 'PeerEducator',
+                });
+            }
+        } catch (e) {
+            console.log('referral', e)
+        }
+
         setIsLoading(false)
         submitLock.current = false;
     };
@@ -275,7 +309,7 @@ const RefferalDetails = ({ navigation, route }) => {
             permissionHandle,
         });
 
-        console.log({isLocationValid})
+        console.log({ isLocationValid })
 
         if (!isLocationValid) {
             submitLock.current = false; // ✅ IMPORTANT
@@ -292,28 +326,55 @@ const RefferalDetails = ({ navigation, route }) => {
         }
 
         setIsLoading(true);
+        try {
+            if (individualReferral) {
+                const payload = {
+                    ...data,
+                    refer: inputs.refer,
+                    childList: [],
+                    clientId: generateclientID(userLogin.userId),
+                    syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
+                    createdAt: new Date().toISOString(),
+                    retryCount: 0,
+                    IP: ipAddress,
+                    id: 0,
+                    location,
+                    locationArea
+                };
 
-        const payload = {
-            ...data,
-            refer: inputs.refer,
-            referrals: [],
-            clientId: generateclientID(userLogin.userId),
-            syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
-            createdAt: new Date().toISOString(),
-            retryCount: 0,
-            id: 0,
-            IP: ipAddress,
-            location,
-            locationArea
-        };
+                dispatch(setIndividualReferralList(payload))
+                startBackgroundService(syncTaskName.syncReferralForm)
 
-        dispatch(setPeerReferralList(payload));
+                navigation.replace('MainApp', {
+                    screen: 'RefferalList',
+                });
+            } else {
 
-        startBackgroundService(syncTaskName.syncPeerEducatorFormData)
+                const payload = {
+                    ...data,
+                    refer: inputs.refer,
+                    referrals: [],
+                    clientId: generateclientID(userLogin.userId),
+                    syncStatus: ENUM.SERVERSTATUS.NOTSTARTED,
+                    createdAt: new Date().toISOString(),
+                    retryCount: 0,
+                    id: 0,
+                    IP: ipAddress,
+                    location,
+                    locationArea
+                };
 
-        navigation.replace('MainApp', {
-            screen: 'PeerEducator',
-        });
+                dispatch(setPeerReferralList(payload));
+
+                startBackgroundService(syncTaskName.syncPeerEducatorFormData)
+
+                navigation.replace('MainApp', {
+                    screen: 'PeerEducator',
+                });
+            }
+        } catch (e) {
+            console.log('referral error', e)
+        }
         setIsLoading(false)
         submitLock.current = false;
     }

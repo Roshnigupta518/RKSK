@@ -41,21 +41,19 @@ const PeerDetails = ({ navigation, route }) => {
                     <PeerField label="ग्राम का नाम" value={data.villageName} />
                     <PeerField label="साथिया का नाम" value={data.sathiyaNameText || data.sathiyaName} />
                     <PeerField label="लिंग" value={data.genderText || data.gender} />
-                    <PeerField label="गतिविधि की तारीख" value={formatDate(data.activityDate)} />
-                    {data.referrals?.length > 0 &&
-                    data.referrals.map((ref, index) => (
-                        <View key={index} style={[st.card, { marginTop: 10 }]}>
-                            <PeerField label="किशोर/किशोरी का नाम" value={ref.name} />
-                            <PeerField label="लिंग" value={getLabelsFromValues(ref.gender, genderData)}/>
-                            <PeerField label="समस्या/विषय" value={ref.healthissue} />
-                            {ref.referrals?.length > 0 && (
-                                <PeerField label="किसको रेफर किया" value={ref.referrals.join(', ')}/>
-                            )}
-                        </View>
-                    ))}
+                    <PeerField label="रेफेर करने की दिनांक" value={formatDate(data.activityDate)} />
                 </View>
 
-              
+                {data.childList?.length > 0 &&
+                    data.childList.map((ref, index) => (
+                        <View key={index} style={[st.card, { marginTop: 10 }]}>
+                            <PeerField label="किशोर/किशोरी का नाम" value={ref.child_Name} />
+                            <PeerField label="लिंग" value={getLabelsFromValues(ref.child_Gender, genderData)}/>
+                            <PeerField label="समस्या/विषय" value={ref.problem_subject} />
+                            <PeerField label="किसको रेफर किया" value={ref.reffered_To}/>
+                         
+                        </View>
+                    ))}
             </CustomContent>
         </CustomContainer>
     )

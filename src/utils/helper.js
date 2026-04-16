@@ -399,6 +399,32 @@ export const getLabelsFromValues = (values = [], items = []) => {
     .filter(Boolean);
 };
 
+export const getValuesFromLabels = (values = [], items = []) => {
+  if (!Array.isArray(values)) values = [values];
+
+  return values
+    .map(val => {
+      const strVal = String(val).toLowerCase();
+
+      const found = items.find(i => {
+        const valueKey = i.value ?? i.id;
+        const labelKey = i.label ?? i.name;
+
+        return (
+          valueKey, labelKey
+        );
+      });
+
+      if (found) {
+        return found.value ?? found.id;
+      }
+
+      // fallback → raw value
+      return String(val);
+    })
+    .filter(Boolean);
+};
+
 export const downloadFile = async (title, url) => {
   const androidVersion =
     Platform.OS === 'android' ? parseInt(Platform.Version, 10) : 0;
