@@ -47,7 +47,7 @@ export const isUserLoggedIn = () => {
   };
 
   export const getSavedReferralNotStarted = (isGetInProgress) => {
-    const data = store.getState().ReferralList?.data || []
+    const data = store.getState().ReferralList?.data 
     console.log({getSavedReferralNotStarted: data})
     let savedReferralData = data?.filter(res =>
         res.syncStatus === ENUM.SERVERSTATUS.NOTSTARTED ||
@@ -56,12 +56,12 @@ export const isUserLoggedIn = () => {
       );
   
     savedReferralData?.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
+      const dateA = new Date(a.createdDate).getTime();
+      const dateB = new Date(b.createdDate).getTime();
       return dateA < dateB ? 1 : -1;
     });
 
-    console.log({data, savedReferralData, isGetInProgress})
+    console.log({data, isGetInProgress})
   
     return savedReferralData;
   };

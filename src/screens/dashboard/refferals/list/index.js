@@ -30,9 +30,23 @@ const RefferalList = ({ navigation }) => {
         });
     }, []);
 
+    // useEffect(() => {
+    //     setPeerEducatorList(peerEducator);
+    // }, [peerEducator]);
+
     useEffect(() => {
-        setPeerEducatorList(peerEducator);
-    }, [peerEducator]);
+        if (peerEducator?.length > 0) {
+          const sortedData = [...peerEducator].sort((a, b) => {
+            const dateA = new Date(a.createdDate);
+            const dateB = new Date(b.createdDate);
+            return dateB - dateA; // latest first
+          });
+      
+          setPeerEducatorList(sortedData);
+        } else {
+          setPeerEducatorList([]);
+        }
+      }, [peerEducator]);
 
     const renderItem = ({ item, index }) => {
         return (

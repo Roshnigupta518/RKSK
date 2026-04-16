@@ -697,7 +697,7 @@ export const getIndividualReferralListHandle = async() => {
     const localList = state.data || [];
 
     // const url = `${API.GET_REFERRAL_DETAILS}?DistrictId=0&BlockId=0&TrainerID=${loginDetails.trainerId}&PeerEducatorId=${loginDetails.peerEducatorId}&AFId=0&ASHAId=0`;
-    const url = `${API.GET_REFERRAL_DETAILS}?Id=0&districtId=0&blockId=0&villageid=0&Ashaid=0&AFId=0`;
+    const url = `${API.GET_REFERRAL_DETAILS}?Id=0&districtId=0&blockId=0&villageid=0&Ashaid=0&AFId=0&PeereducatorId=${loginDetails.peerEducatorId}&trainerid=${loginDetails.trainerId}`;
     const result = await getApi(url);
 
     if (result?.status === 200) {
