@@ -47,10 +47,9 @@ export const isUserLoggedIn = () => {
   };
 
   export const getSavedReferralNotStarted = (isGetInProgress) => {
-    const data = store.getState().ReferralList?.data
+    const data = store.getState().ReferralList?.data || []
     console.log({getSavedReferralNotStarted: data})
-    let savedReferralData = data
-      ?.filter(res =>
+    let savedReferralData = data?.filter(res =>
         res.syncStatus === ENUM.SERVERSTATUS.NOTSTARTED ||
         res.syncStatus === ENUM.SERVERSTATUS.FAILED ||   // include failed
         (isGetInProgress && res.syncStatus === ENUM.SERVERSTATUS.INPROGRESS)

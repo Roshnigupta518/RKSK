@@ -13,6 +13,7 @@ export const syncTaskName = {
     syncPeerBrigadeList : 'syncPeerBrigadeList',
     syncIecMaterialList : 'syncIecMaterialList',
     syncAwarenessVideo : 'syncAwarenessVideo',
-    syncReferralForm : 'syncReferralForm'
+    syncReferralForm : 'syncReferralForm',
+    syncIndividualReferralList : 'syncIndividualReferralList'
   };
   

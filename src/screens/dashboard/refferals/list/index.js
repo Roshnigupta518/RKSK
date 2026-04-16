@@ -39,11 +39,11 @@ const RefferalList = ({ navigation }) => {
             <TouchableOpacity style={st.card} key={index}
                 onPress={() => navigation.navigate('RefferalFormDetails', { data: item })}>
                 <IconStatus status={item.syncStatus} />
-                <Field label={'रेफरल आई डी'} value={item.id} />
-                <Field label={'आशा का नाम'} value={item.ashaNameText} />
-                <Field label={'साथिया का नाम'} value={item.sathiyaNameText} />
-                <Field label={'आशा सुपरवाइजर का नाम'} value={item.supervisorNameText} />
-                <Field label={'रेफेर करने की दिनांक'} value={dateFormat(item.activityDate)} />
+                <Field label={'रेफरल आई डी'} value={item.id || item.refferal_Id} />
+                <Field label={'आशा का नाम'} value={item.ashaNameText || item.ashaNameEnglish} />
+                <Field label={'साथिया का नाम'} value={item.sathiyaNameText || item.name_of_Peer_Educator_Sathiya} />
+                <Field label={'आशा सुपरवाइजर का नाम'} value={item.supervisorNameText || item.ashA_Sahyogi_Name} />
+                <Field label={'रेफेर करने की दिनांक'} value={dateFormat(item.activityDate || item.activity_Date)} />
             </TouchableOpacity>
         )
     }

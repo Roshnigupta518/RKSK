@@ -17,7 +17,7 @@ import { incrementPeerBridageRetryCount, removePeerBridageByClientId, setPeerBri
 import { setMaterialList } from "../../redux/slices/materials";
 import { setVideoList } from "../../redux/slices/awarenessVideo";
 import { setProfileData } from "../../redux/slices/profile";
-import { incrementReferralRetryCount, removeReferralByClientId, updateSaveReferralSyncStatus } from "../../redux/slices/referralList";
+import { incrementReferralRetryCount, removeReferralByClientId, setIndividualReferralList, updateSaveReferralSyncStatus } from "../../redux/slices/referralList";
 
 const getLoginDetails = () => {
     const loginData = store.getState().login?.data;
@@ -687,6 +687,45 @@ export const saveSingleReferralIndividualList = async(data) =>{
     }
 
     handleAPIErrorResponse(e, 'save peer educator form data catch');
+  }
+}
+
+export const getIndividualReferralListHandle = async() => {
+  const loginDetails = getLoginDetails()
+  try {
+    const state = store.getState().ReferralList;
+    const localList = state.data || [];
+
+    // const url = `${API.GET_REFERRAL_DETAILS}?DistrictId=0&BlockId=0&TrainerID=${loginDetails.trainerId}&PeerEducatorId=${loginDetails.peerEducatorId}&AFId=0&ASHAId=0`;
+    const url = `${API.GET_REFERRAL_DETAILS}?Id=0&districtId=0&blockId=0&villageid=0&Ashaid=0&AFId=0`;
+    const result = await getApi(url);
+
+    if (result?.status === 200) {
+      const serverList = Array.isArray(result.data) ? result.data : [];
+
+      const serverIds = new Set(serverList.map(i => i.clientId));
+
+      // sirf unsynced local items rakho
+      const offlineItems = localList.filter(item =>
+        (item.syncStatus === ENUM.SERVERSTATUS.NOTSTARTED ||
+         item.syncStatus === ENUM.SERVERSTATUS.FAILED ||
+         item.syncStatus === ENUM.SERVERSTATUS.INPROGRESS) &&
+        !serverIds.has(item.clientId)
+      );
+
+      const mergedList = [
+        ...serverList.map(s => ({
+          ...s,
+          syncStatus: ENUM.SERVERSTATUS.COMPLETED,
+          retryCount: 0,
+        })),
+        ...offlineItems,
+      ];
+
+      store.dispatch(setIndividualReferralList(mergedList));
+    }
+  } catch (e) {
+    handleAPIErrorResponse(e);
   }
 }
 

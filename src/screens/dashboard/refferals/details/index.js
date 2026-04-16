@@ -30,18 +30,18 @@ const PeerDetails = ({ navigation, route }) => {
             <CustomContent>
                 <View style={st.card}> 
                        
-                    <PeerField label={'रेफरल आई डी'} value={data.id} />
-                    <PeerField label="जिला" value={data.districtName} />
-                    <PeerField label="विकासखंड/ब्लॉक" value={data.blockName} />
+                    <PeerField label={'रेफरल आई डी'} value={data.id || data.refferal_Id} />
+                    <PeerField label="जिला" value={data.districtName } />
+                    <PeerField label="विकासखंड/ब्लॉक" value={data.blockName || data.blockNameE} />
                     <PeerField label="आशा सुपरवाइजर का नाम" value={
                         data?.ashA_Facilitator_Id == 0 ? 'Not available' :
-                        data.supervisorNameText || data.ashaSahyogi_Name
+                        data.supervisorNameText || data.ashaSahyogi_Name || data.ashA_Sahyogi_Name
                     } />
-                    <PeerField label="आशा का नाम" value={data.ashaNameText || data.ashaName} />
+                    <PeerField label="आशा का नाम" value={data.ashaNameText || data.ashaNameEnglish} />
                     <PeerField label="ग्राम का नाम" value={data.villageName} />
-                    <PeerField label="साथिया का नाम" value={data.sathiyaNameText || data.sathiyaName} />
-                    <PeerField label="लिंग" value={data.genderText || data.gender} />
-                    <PeerField label="रेफेर करने की दिनांक" value={formatDate(data.activityDate)} />
+                    <PeerField label="साथिया का नाम" value={data.sathiyaNameText || data.name_of_Peer_Educator_Sathiya} />
+                    <PeerField label="लिंग" value={data.genderText || data.peer_Educator_Sathiya_Gender} />
+                    <PeerField label="रेफेर करने की दिनांक" value={formatDate(data.activityDate || data.activity_Date)} />
                 </View>
 
                 {data.childList?.length > 0 &&

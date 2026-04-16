@@ -99,12 +99,10 @@ const authPersistConfig = {
   }
 
   const referralConfig = {
-    key: 'Profile',
+    key: 'ReferralList',
     storage: AsyncStorage,
     whitelist: ['data'],
   }
-
-  // ReferralSlice
 
   const appReducer = combineReducers({
     login: persistReducer(authPersistConfig, loginSlice),

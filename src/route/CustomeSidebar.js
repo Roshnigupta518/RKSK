@@ -67,9 +67,9 @@ const CustomSidebar = (props) => {
 
     return (
       activityQueue?.length > 0 ||
-      peerReferralQueue.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED) ||
-      peerBrigadeList.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED) ||
-      ReferralList.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED)
+      peerReferralQueue?.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED) ||
+      peerBrigadeList?.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED) ||
+      ReferralList?.some(i => i.syncStatus !== ENUM.SERVERSTATUS.COMPLETED)
     );
   };
 
