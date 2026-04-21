@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, FlatList } from 'react-native'
-import React, { useCallback, useState, useRef } from 'react'
+import React, { useCallback, useState, useRef, useEffect } from 'react'
 import { CustomContainer, CustomContent } from '../../../../components/container'
 import CustomHeader from '../../../../components/customHeader'
 import CustomPicker from '../../../../components/customPicker'
@@ -86,6 +86,15 @@ const RefferalDetails = ({ navigation, route }) => {
     const handleError = useCallback((errorMsg, field) => {
         setErrors(prev => ({ ...prev, [field]: errorMsg }));
     }, []);
+
+    useEffect(()=>{
+       if(individualReferral){
+        setInputs(prev => ({
+            ...prev,
+            refer: 1,
+          }));
+       }
+    },[])
 
     const pickerFieldProps = (field) => ({
         selectedValue: inputs[field],
@@ -241,7 +250,7 @@ const RefferalDetails = ({ navigation, route }) => {
         setIsLoading(true);
         try {
             if (individualReferral) {
-
+               console.log({referralList})
                 const updatedData = referralList.map(item => ({
                     child_Name: item.name,
                     child_Gender: getValuesFromLabels(item.gender, genderData).join(''),
@@ -409,15 +418,16 @@ const RefferalDetails = ({ navigation, route }) => {
                 {!showRefferals &&
                     <CustomPicker
                         items={booleanData}
-                        label={'क्या किसी किशोर किशोरी  को स्वास्थ सम्बन्धी जाँच /उपचार /परामर्श हेतु रेफर किया गया था।'}
+                        label={individualReferral ?  'रेफर किए गए किशोर/किशोरी विवरण जोड़ें |' :`क्या किसी किशोर किशोरी  को स्वास्थ सम्बन्धी जाँच /उपचार /परामर्श हेतु रेफर किया गया था।`}
                         placeholder=''
                         {...pickerFieldProps('refer')}
+                        disabled={individualReferral}
                     />
                 }
 
                 {inputs.refer == 2 && renderConsent()}
 
-                {(inputs.refer && !showRefferals) &&
+                {(inputs.refer && !showRefferals)  &&
                     <Button title={inputs.refer == 2 ? 'Submit' : 'Add Referral'}
                         onPress={() => {
                             if (inputs.refer == 2) {

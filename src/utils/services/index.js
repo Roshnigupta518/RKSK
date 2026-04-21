@@ -349,9 +349,10 @@ export const saveSinglePeerEducatorList = async (data) => {
   formData.append('Teacher', parseInt(data.participants.teacher));
   formData.append('Guardian', parseInt(data.participants.parents));
 
-  formData.append('Address',data.locationArea)
-  formData.append('Latitude', data?.location?.latitude);
-  formData.append('Longititude', data?.location?.longitude);
+  formData.append('Address',data.locationArea || 'xyz')
+  formData.append('Latitude', data?.location?.latitude || 0);
+  formData.append('Longititude', data?.location?.longitude || 0);
+  formData.append('ActivityOther',data.activityTypeOther)
   
   try {
     const result = await uploadApi(url, formData);
@@ -696,7 +697,6 @@ export const getIndividualReferralListHandle = async() => {
     const state = store.getState().ReferralList;
     const localList = state.data || [];
 
-    // const url = `${API.GET_REFERRAL_DETAILS}?DistrictId=0&BlockId=0&TrainerID=${loginDetails.trainerId}&PeerEducatorId=${loginDetails.peerEducatorId}&AFId=0&ASHAId=0`;
     const url = `${API.GET_REFERRAL_DETAILS}?Id=0&districtId=0&blockId=0&villageid=0&Ashaid=0&AFId=0&PeereducatorId=${loginDetails.peerEducatorId}&trainerid=${loginDetails.trainerId}`;
     const result = await getApi(url);
 

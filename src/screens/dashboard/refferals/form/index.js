@@ -275,6 +275,15 @@ const PeerEducatorForm = ({ navigation }) => {
   
     navigation.navigate('RefferalDetails', { data: dataWithNames, individualReferral: true });
   };
+
+  useEffect(() => {
+    if (!inputs.gender && pickerData?.gender?.length > 0) {
+      setInputs(prev => ({
+        ...prev,
+        gender: pickerData.gender[0]?.value // 👈 first option auto select
+      }));
+    }
+  }, [pickerData.gender]);
   
   const ReadOnlyPicker = React.memo(
     ({ label, value, items = [], error, disabled = false, onValueChange }) => {

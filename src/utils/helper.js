@@ -404,22 +404,17 @@ export const getValuesFromLabels = (values = [], items = []) => {
 
   return values
     .map(val => {
-      const strVal = String(val).toLowerCase();
+      const strVal = String(val).toLowerCase().trim();
 
       const found = items.find(i => {
-        const valueKey = i.value ?? i.id;
-        const labelKey = i.label ?? i.name;
-
-        return (
-          valueKey, labelKey
-        );
+        const labelKey = String(i.label ?? i.name).toLowerCase().trim();
+        return labelKey === strVal; // ✅ proper comparison
       });
 
       if (found) {
         return found.value ?? found.id;
       }
 
-      // fallback → raw value
       return String(val);
     })
     .filter(Boolean);

@@ -22,7 +22,7 @@ const joinArray = (arr) => {
 
 const PeerDetails = ({ navigation, route }) => {
     const { data = {} } = route?.params || {}
-    // console.log({ data })
+    console.log({ data })
     const participantsText = useMemo(() => {
         if (!data.participants) return '-'
         return `
@@ -69,6 +69,9 @@ const PeerDetails = ({ navigation, route }) => {
                     <PeerField label="गतिविधि की तारीख" value={formatDate(data.activityDate)} />
                     <PeerField label="गतिविधि का स्थान" value={data.locationText || data.location} />
                     <PeerField label="गतिविधि का प्रकार" value={data.activityTypeText || data.activityType} />
+                   {(data.activityTypeOther || data.activityOther )&&
+                    <PeerField label="अन्य" value={data.activityTypeOther || data.activityOther} />
+                    } 
                     <PeerField label="कौन-सा मॉड्यूल/विषय लिया गया?" value={data.moduleText || data.module} />
                     <PeerField label="कौन-सी कॉमिक्स बुक का उपयोग किया गया?" value={data.comicBookText || data.comicBook} />
                     <PeerField label="गतिविधि कैसे की?" value={data.activityMethodText || data.activityMethod} />
@@ -126,8 +129,14 @@ const PeerDetails = ({ navigation, route }) => {
                     )}
                 </View>
 
-                {data.referrals?.length > 0 &&
-                    data.referrals.map((ref, index) => (
+                <View style={st.card}>
+                <PeerField label={'क्या किसी किशोर किशोरी को स्वास्थ सम्बन्धी जाँच /उपचार /परामर्श हेतु रेफर किया गया था।'} 
+                value={(data?.referrals?.length || data?.referralsJson?.length)>0 ? 'हाँ' : 'नहीं'} />
+                </View>
+
+
+                {(data?.referrals?.length || data?.referralsJson?.length) > 0 &&
+                    (data?.referrals || data?.referralsJson).map((ref, index) => (
                         <View key={index} style={[st.card, { marginTop: 10 }]}>
                             <PeerField label="किशोर/किशोरी का नाम" value={ref.name} />
                             <PeerField label="लिंग" value={getLabelsFromValues(ref.gender, genderData)}/>

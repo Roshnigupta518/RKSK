@@ -1,7 +1,7 @@
 export const genderData = [
-    { "value": 1, "label": "Male" },
-    { "value": 2, "label": "Female" },
-    { "value": 3, "label": "Other" }
+    { "value": 1, "label": "किशोर" },
+    { "value": 2, "label": "किशोरी" },
+    { "value": 3, "label": "अन्य" }
 ]
 
 export const activityPlace = [

@@ -19,7 +19,7 @@ const CustomHeader = ({ title, onBackPress, rightIcon, onRightPress, primaryScre
 
       {/* Title */}
       <View style={[st.wdh80, st.align_C]}>
-        <Text style={[st.tx16, { color: colors.white }]} numberOfLines={1} adjustsFontSizeToFit>{title}</Text>
+        <Text style={[st.tx16,st.txAlignC, { color: colors.white }]} numberOfLines={2} adjustsFontSizeToFit>{title}</Text>
       </View>
 
       {/* Right Icon/Action */}
