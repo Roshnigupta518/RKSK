@@ -120,7 +120,7 @@ const CustomSidebar = (props) => {
 
       {/* -------- Menu Group 2 -------- */}
       <View style={styles.card}>
-        {renderMenuItem("Manage Activity", "calendar", "ATPListScreen", "#369BFF")}
+        {onBoarding.trainerId != '0' && renderMenuItem("Manage Activity", "calendar", "ATPListScreen", "#369BFF")}
         {renderMenuItem("Peer Educator Reporting", "command", "PeerEducator", "#2AE1E1")}
         {renderMenuItem("Peer Educator Brigade", "codepen", "BrigadeList", "#2AE1E1")}
         {renderMenuItem("Referral Details", "dribbble", "RefferalList", "#2AE1E1")}
