@@ -6,7 +6,7 @@ class Endpoints {
   GET_ATP = this.baseUrl + 'ATP/GetATVPlanDetails?'
   ATP_POST = this.baseUrl + 'ATP/uploadActivity'
   Activity_Login = this.baseUrl + 'ATP/FiledActivityTimeTracking'
-  GET_VERSION = this.baseUrl + ''
+  GET_VERSION = this.baseUrl + 'PeerEducatorbrigade/GetVersion'
   GET_PEEREDUCATOR_LIST = this.baseUrl + 'PeerEducator/GetPeerEducatorForEdit'
   GET_MASTER = this.baseUrl + 'Masters?'
   GET_PEEREDUCATOR_REFERRAL_LIST = this.baseUrl + 'PeerEducator/GetPeerEducatorReportinFormList'

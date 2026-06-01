@@ -104,7 +104,7 @@ const index = () => {
           onPress={openGPSSettings}
         />
       )}
-    {/* <AppUpdateChecker /> */}
+    <AppUpdateChecker />
   </NavigationContainer>
   )
 }

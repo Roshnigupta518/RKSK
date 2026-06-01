@@ -8,10 +8,10 @@ const AppUpdateChecker = () => {
   const getLatestVersionFromServer = async () => {
     try {
       const result = await appUpdateRequest();
-      console.log({result})
-      const data = result?.data;
-      // return data[0]?.versionName;
-      return 1.1
+      // console.log({getLatestVersionFromServer:result})
+      const data = result?.versionNo;
+      return data;
+      // return '1.0.11'
     } catch (e) {
       alert(e)
     }
