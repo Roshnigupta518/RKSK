@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  RKSK production server (rksk.nhmmp.gov.in) IIS pe deploy hai aur uska TLS binding
+  intermediate CA nahi bhejta – sirf leaf certificate serve hota hai.
+  Browser aur Postman AIA-fetch se intermediate le lete hain, lekin Android/OkHttp
+  AIA fetching support nahi karta, isliye handshake fail hota hai aur app se
+  koi bhi API request server tak pahunch hi nahi paati (login "hang" ho jata hai).
+
+  Workaround: GlobalSign ka intermediate cert app ke andar bundle karke additional
+  trust anchor bana diya, taaki OkHttp chain khud complete kar sake.
+  System ke default CAs + user CAs bhi trusted rahenge (existing behaviour intact).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+            <certificates src="@raw/globalsign_r3_ev_tls_ca_2025"/>
+        </trust-anchors>
+    </base-config>
+
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">rksk.nhmmp.gov.in</domain>
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="@raw/globalsign_r3_ev_tls_ca_2025"/>
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
