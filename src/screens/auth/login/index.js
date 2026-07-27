@@ -26,6 +26,7 @@ import { onLogin } from '../../../utils/bgservices/tiggerfunction';
 import useNetworkStatus from '../../../hooks/networkStatus';
 import { setIpAddressLogin } from '../../../redux/slices/getIpAddress';
 import { SecureTokenService } from '../../../utils/security';
+import { logger } from '../../../utils/logger';
 
 const INITIALINPUT = {
   //Peer educator login
@@ -93,7 +94,10 @@ const Login = ({ navigation }) => {
         peerEducatorId,
       };
     } catch (error) {
-      console.error('Invalid token', error);
+      // F-05: never print the token itself or the raw error payload — the
+      // jwtDecode error message can echo the input string. Log only the
+      // error class.
+      logger.error('Invalid token', { name: error?.name, message: error?.message });
       return null;
     }
   };
@@ -138,7 +142,8 @@ const Login = ({ navigation }) => {
       const hash = await sha256(pass);
       return hash;
     } catch (error) {
-      console.log('Error hashing password:', error);
+      // F-05: never let the error object echo the plaintext password.
+      logger.error('Error hashing password:', { name: error?.name, message: error?.message });
       return null;
     }
   };
@@ -160,7 +165,9 @@ const Login = ({ navigation }) => {
     try {
       setIsLoading(true);
       const result = await postApi(url, params);
-      console.log({ result })
+      // F-05: full login response contains the raw JWT — never log it.
+      // Log only the transport status.
+      logger.info('Login response received', { status: result?.status });
       if (result?.status == 200) {
         const data = result.data;
         const userData = await decodeToken(data.token);
@@ -182,7 +189,9 @@ const Login = ({ navigation }) => {
         setMessage(result.data.message)
       }
     } catch (e) {
-      console.log('e login', e)
+      // F-05: `e` is an axios error whose config contains the plaintext
+      // credentials we just POSTed. Log only status + message.
+      logger.error('Login request failed', { status: e?.status, message: e?.message });
       if(e.status == 401){
         setVisible(true)
         setMessage("Invalid ID or Password. Please try again.")
@@ -200,7 +209,7 @@ const Login = ({ navigation }) => {
         const ip = await DeviceInfo.getIpAddress(); 
         setIpAddress(ip);
       } catch (error) {
-        console.log('Error fetching IP:', error);
+        logger.warn('Error fetching IP:', { message: error?.message });
       }
     };
 
