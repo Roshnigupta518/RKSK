@@ -2,35 +2,38 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { store } from '../../redux/store';
 import { clearLogin } from '../../redux/slices/login';
+import { SecureTokenService } from '../security';
+
+// F-04: the JWT no longer lives in redux-persist / AsyncStorage. Every
+// authenticated request reads it from the Keychain-backed
+// SecureTokenService (in-memory cached, Keychain-backed for cold starts).
+const readAuthToken = async () => {
+  const token = await SecureTokenService.getToken();
+  return token || '';
+};
 
 export const getApi = async (api) => {
-  const state = store.getState();
-  const token = state?.login?.data?.jwtToken;
-  
+  const token = await readAuthToken();
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   };
-  console.log('📡 API Request:', api, token);
   try {
     const response = await axios.get(api, config);
-    return response; // returns full axios response (status, data, etc.)
+    return response;
   } catch (error) {
     const status = error?.response?.status;
     console.log('API Error:', status, error?.message);
-    handleAuthorization(status);
-    // Forward the error to the caller
+    await handleAuthorization(status);
     throw error.response || error;
   }
 };
 
 export const postApi = async (api, data) => {
-  console.log({api, data})
   const config = {
     headers: {
-      // Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json',
     },
   };
@@ -38,18 +41,15 @@ export const postApi = async (api, data) => {
     axios
       .post(api, data, config)
       .then(resolve)
-      .catch(err => {
+      .catch(async (err) => {
+        await handleAuthorization(err.response?.status);
         reject(err.response);
-        handleAuthorization(err.response?.status);
       });
   });
 };
 
 export const postApiWithToken = async (api, data) => {
-  console.log({ api, data })
-  const state = store.getState()
-  const token = state.login.data.jwtToken;
-  console.log({token})
+  const token = await readAuthToken();
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -58,21 +58,17 @@ export const postApiWithToken = async (api, data) => {
   };
   try {
     const response = await axios.post(api, data, config);
-    return response; // returns full axios response (status, data, etc.)
+    return response;
   } catch (error) {
     const status = error?.response?.status;
     console.log('API Error:', status, error?.message);
-    handleAuthorization(status);
-    // Forward the error to the caller
+    await handleAuthorization(status);
     throw error.response || error;
   }
 };
 
 export const uploadApi = async (api, data) => {
-  console.log({api, data})
-  const state = store.getState()
-  const token = state.login.data.jwtToken;
-  console.log({token})
+  const token = await readAuthToken();
   const config = {
     headers: {
       Accept: 'application/json',
@@ -83,66 +79,59 @@ export const uploadApi = async (api, data) => {
 
   try {
     const response = await axios.post(api, data, config);
-    return response; // returns full axios response (status, data, etc.)
+    return response;
   } catch (error) {
     const status = error?.response?.status;
     console.log('API Error:', status, error?.message);
-    handleAuthorization(status);
-    // Forward the error to the caller
+    await handleAuthorization(status);
     throw error.response || error;
   }
 };
 
 export const putApi = async (api, data) => {
-  console.log('put edit api calling')
-  console.log({api, data})
-  const state = store.getState()
-  const token = state.login.data.data.token;
+  const token = await readAuthToken();
   const config = {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'multipart/form-data',
-      Authorization: 'Bearer ' + token,
+      Authorization: `Bearer ${token}`,
     },
   };
   return new Promise((resolve, reject) => {
     axios
       .put(api, data, config)
       .then(resolve)
-      .catch(err => {
+      .catch(async (err) => {
+        await handleAuthorization(err.response?.status);
         reject(err.response);
-        handleAuthorization(err.response?.status);
       });
   });
 };
 
 export const deleteApi = async (api, data) => {
-  const state = store.getState()
-  const token = state.login?.token;
+  const token = await readAuthToken();
   const config = {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + '',
+      Authorization: `Bearer ${token}`,
     },
   };
   return new Promise((resolve, reject) => {
     axios
-      .delete(api, data, config)
+      .delete(api, { ...config, data })
       .then(resolve)
-      .catch(err => {
+      .catch(async (err) => {
+        await handleAuthorization(err.response?.status);
         reject(err.response);
-        handleAuthorization(err.response?.status);
       });
   });
 };
 
-const handleAuthorization = (status) => {
+const handleAuthorization = async (status) => {
   if (status === 401) {
-    console.log('🔐 Unauthorized, clearing login...');
     store.dispatch(clearLogin());
-    AsyncStorage.clear();
+    await SecureTokenService.clearToken();
+    await AsyncStorage.clear();
   }
 };
-
-

@@ -25,6 +25,7 @@ import { wp } from '../../../global';
 import { onLogin } from '../../../utils/bgservices/tiggerfunction';
 import useNetworkStatus from '../../../hooks/networkStatus';
 import { setIpAddressLogin } from '../../../redux/slices/getIpAddress';
+import { SecureTokenService } from '../../../utils/security';
 
 const INITIALINPUT = {
   //Peer educator login
@@ -32,15 +33,15 @@ const INITIALINPUT = {
   // password: '123456',
 
   //Trainer login
-  // userName: 'Jhabua#F2', //Basoda#M1  
-  // password: 'Admin@123',
+  userName: 'Jhabua#F2', //Basoda#M1  
+  password: 'Admin@123',
 
   // live trainer login
   //  userName: 'Ghughri#M2', 
   //  password: 'Admin@123',
 
-  userName: '', 
-  password: '',
+  // userName: '', 
+  // password: '',
 };
 
 const Login = ({ navigation }) => {
@@ -63,22 +64,23 @@ const Login = ({ navigation }) => {
   };
 
 // console.log({isConnected})
-  const decodeToken = async(token) => {
+  // F-04: return the non-secret profile claims. The raw JWT itself is
+  // routed to Keychain via SecureTokenService in handlePress(), never
+  // included in the payload dispatched to redux-persist.
+  const decodeToken = async (token) => {
     try {
       const decoded = jwtDecode(token);
-      console.log('Decoded token:', decoded);
-  
-      const userId = decoded.sub;           
-      const email = decoded.email;         
-      const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];  
+
+      const userId = decoded.sub;
+      const email = decoded.email;
+      const role = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
       const divisionId = decoded.DivisionId;
       const districtId = decoded.DistrictId;
       const blockId = decoded.BlockId;
       const trainerId = decoded.TrainerId;
       const ngoId = decoded.NGOId;
       const peerEducatorId = decoded.PeerEducatorId;
-      const jwtToken = token
-  
+
       return {
         userId,
         email,
@@ -88,8 +90,7 @@ const Login = ({ navigation }) => {
         blockId,
         trainerId,
         ngoId,
-        jwtToken,
-        peerEducatorId
+        peerEducatorId,
       };
     } catch (error) {
       console.error('Invalid token', error);
@@ -163,11 +164,18 @@ const Login = ({ navigation }) => {
       if (result?.status == 200) {
         const data = result.data;
         const userData = await decodeToken(data.token);
-        console.log({ userData });
-        dispatch(setLogin(userData))
+        if (!userData) {
+          setIsLoading(false);
+          setVisible(true);
+          setMessage('Invalid session token received. Please try again.');
+          return;
+        }
+        // F-04: JWT goes to Keychain; only non-secret profile claims to redux.
+        await SecureTokenService.setToken(data.token);
+        dispatch(setLogin(userData));
         setIsLoading(false);
-        setInputs(INITIALINPUT)
-        onLogin()
+        setInputs(INITIALINPUT);
+        onLogin();
       } else {
         setIsLoading(false);
         setVisible(true)

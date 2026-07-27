@@ -12,6 +12,8 @@ import ConfirmPopup from '../components/ExitModal';
 import { useState } from 'react';
 import {persistor, store} from '../redux/store';
 import { ENUM } from '../utils/bgservices/enum';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SecureTokenService } from '../utils/security';
 
 const CustomSidebar = (props) => {
   const dispatch = useDispatch();
@@ -80,18 +82,23 @@ const CustomSidebar = (props) => {
   : "Are you sure you want to logout?";
 
   
-  const handleConfirm = () => {
-    dispatch(clearLogin())
+  // F-04: logout must scrub the JWT from Keychain in addition to purging
+  // the encrypted redux-persist store and any stray AsyncStorage keys.
+  const handleConfirm = async () => {
+    dispatch(clearLogin());
     setLogoutModal(false);
-     
-  store.dispatch({ type: 'RESET_ALL' });
 
-  persistor.purge().then(() => {
-    console.log('🔁 Persisted storage purged!');
-    // Navigate to login or reset app state
-  });
+    store.dispatch({ type: 'RESET_ALL' });
 
-  props.navigation.closeDrawer();
+    try {
+      await SecureTokenService.clearToken();
+      await persistor.purge();
+      await AsyncStorage.clear();
+    } catch (e) {
+      // Best-effort teardown; UI navigation still proceeds.
+    }
+
+    props.navigation.closeDrawer();
   };
 
   return (
