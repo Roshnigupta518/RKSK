@@ -106,13 +106,32 @@ packagingOptions {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-          release {
+        release {
+            // Release keystore properties are loaded from ~/.gradle/gradle.properties
+            // (per-user, outside VCS) or from ORG_GRADLE_PROJECT_* env vars on CI.
+            // See android/SIGNING.md for setup instructions.
             if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
                 storeFile file(MYAPP_UPLOAD_STORE_FILE)
                 storePassword MYAPP_UPLOAD_STORE_PASSWORD
                 keyAlias MYAPP_UPLOAD_KEY_ALIAS
                 keyPassword MYAPP_UPLOAD_KEY_PASSWORD
             }
+
+            // F-07 hardening: explicitly enable modern APK Signature Schemes and
+            // DISABLE v1 (JAR signing). v1 is vulnerable to the Janus attack
+            // (CVE-2017-13156) which lets an attacker prepend a malicious DEX
+            // to a signed APK without invalidating the v1 signature. Because
+            // this project's minSdkVersion is 24 (Android 7.0) and every
+            // supported device enforces v2+ verification, v1 provides zero
+            // additional coverage and only widens the attack surface.
+            //
+            //   v2 (whole-file) → API 24+ (Android 7.0)
+            //   v3 (key rotation support) → API 28+ (Android 9)
+            //   v4 (incremental install, produces .apk.idsig sidecar) → API 30+
+            enableV1Signing = false
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = true
         }
     }
     buildTypes {
@@ -120,13 +139,54 @@ packagingOptions {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Conditionally attach the release signingConfig. When the upload
+            // keystore properties aren't present (e.g. a dev machine that only
+            // builds debug, or `./gradlew clean`), we simply don't wire signing
+            // in — the release APK would end up unsigned. That silent path is
+            // then turned into a loud failure by the gradle.taskGraph.whenReady
+            // guard below, but only when a release-signing task is actually
+            // scheduled to execute. This keeps clean/debug/sync flows working.
+            if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-            signingConfig signingConfigs.release
         }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// F-07 hardening: reject release builds if the upload keystore isn't configured.
+//
+// This runs at execution time (after the task graph is resolved) rather than at
+// configuration time, so it does NOT interfere with:
+//     ./gradlew clean         ./gradlew tasks
+//     ./gradlew assembleDebug ./gradlew installDebug
+//     Android Studio Gradle sync / IDE project imports
+//
+// It ONLY fails the build when Gradle is about to run a release-signing task
+// (assembleRelease, bundleRelease, packageRelease, signRelease, installRelease,
+// or the validateSigningRelease preflight) without the required credentials.
+// -----------------------------------------------------------------------------
+gradle.taskGraph.whenReady { taskGraph ->
+    if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+        return
+    }
+    def releaseSigningTaskPrefixes = [
+        'assemble', 'bundle', 'package', 'install', 'sign', 'validateSigning',
+    ]
+    def usesReleaseSigning = taskGraph.allTasks.any { task ->
+        def n = task.name
+        return n.endsWith('Release') && releaseSigningTaskPrefixes.any { p -> n.startsWith(p) }
+    }
+    if (usesReleaseSigning) {
+        throw new GradleException(
+            'Release keystore not configured. Set MYAPP_UPLOAD_STORE_FILE, ' +
+            'MYAPP_UPLOAD_KEY_ALIAS, MYAPP_UPLOAD_STORE_PASSWORD and ' +
+            'MYAPP_UPLOAD_KEY_PASSWORD in ~/.gradle/gradle.properties ' +
+            '(or as ORG_GRADLE_PROJECT_* environment variables on CI). ' +
+            'See android/SIGNING.md for setup instructions.'
+        )
     }
 }
 

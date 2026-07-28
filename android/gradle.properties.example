@@ -1,0 +1,34 @@
+# =============================================================================
+# EXAMPLE — copy the four MYAPP_UPLOAD_* entries below into your PER-USER
+# Gradle properties file at:
+#
+#     ~/.gradle/gradle.properties          (Linux / macOS)
+#     %USERPROFILE%\.gradle\gradle.properties   (Windows)
+#
+# That file is NOT committed to source control and stays on your dev machine
+# only. Do NOT paste real credentials into this .example file or into any
+# project-tracked file.
+#
+# See android/SIGNING.md for full instructions, including how to generate an
+# organisation-owned upload keystore and enable Play App Signing.
+# =============================================================================
+
+# Absolute path to the release/upload keystore file.
+# Keep the keystore itself outside the repo (e.g. ~/keys/rksk-upload.keystore).
+MYAPP_UPLOAD_STORE_FILE=/absolute/path/to/rksk-upload.keystore
+
+# Alias of the private key inside the keystore.
+MYAPP_UPLOAD_KEY_ALIAS=upload
+
+# Strong passwords from a password manager — MINIMUM 16 characters, mixed
+# case + digits + symbols. Do NOT reuse other passwords. Do NOT use "123456",
+# "password", the app name, "upload", or any dictionary word.
+#
+# PKCS12 caveat: the STORE_PASSWORD and KEY_PASSWORD must be IDENTICAL,
+# because the PKCS12 keystore format (the modern default for keytool)
+# does not support different passwords for the store and its key entries.
+# If they differ, the release signing task will fail with the misleading
+# error "Get Key failed: Given final block not properly padded". See
+# android/SIGNING.md for the full explanation.
+MYAPP_UPLOAD_STORE_PASSWORD=REPLACE_WITH_STRONG_PASSWORD
+MYAPP_UPLOAD_KEY_PASSWORD=REPLACE_WITH_STRONG_PASSWORD
