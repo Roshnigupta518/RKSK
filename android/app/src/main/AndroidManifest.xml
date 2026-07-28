@@ -1,4 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.rkskmp">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.rkskmp">
 
     <uses-permission android:name="android.permission.INTERNET" />
      <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -31,6 +33,33 @@
           android:name="com.asterinet.react.bgactions.RNBackgroundActionsTask"
           android:foregroundServiceType="dataSync"
         />
+
+        <!--
+            F-06 hardening: react-native-webview ships a FileProvider whose default
+            @xml/file_provider_paths maps `<external-path path="."/>` — i.e. the
+            entire shared external storage root. We override the meta-data via
+            manifest merger (`tools:replace="android:resource"`) so this provider
+            binds to our narrow @xml/rksk_webview_file_paths, which only exposes
+            the app-private external files directory that RNCWebView actually
+            writes captured media into.
+
+            The authority (`${applicationId}.fileprovider`) is kept because the
+            library's runtime code hardcodes `getPackageName() + ".fileprovider"`
+            in RNCWebViewModuleImpl.getOutputUri(). The duplicate-authority half
+            of F-06 is resolved by removing react-native-send-intent from the
+            dependency tree, so no other library now competes for this authority.
+        -->
+        <provider
+            android:name="com.reactnativecommunity.webview.RNCWebViewFileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true"
+            tools:replace="android:authorities,android:exported,android:grantUriPermissions">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/rksk_webview_file_paths"
+                tools:replace="android:resource" />
+        </provider>
 
        <meta-data
      android:name="com.google.android.geo.API_KEY"

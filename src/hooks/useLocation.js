@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react';
 import Geolocation from '@react-native-community/geolocation';
 import { PermissionsAndroid, Platform, Alert, Linking, AppState } from 'react-native';
 import Geocoder from 'react-native-geocoder-reborn';
-import SendIntentAndroid from 'react-native-send-intent';
 
 export const useLocation = () => {
   const [location, setLocation] = useState(null);
@@ -29,7 +28,12 @@ export const useLocation = () => {
 
   const openLocationSettings = () => {
     if (Platform.OS === 'android') {
-      SendIntentAndroid.openSettings('android.settings.LOCATION_SOURCE_SETTINGS');
+      // Linking.sendIntent is Android-only and replaces react-native-send-intent
+      // for this narrow use-case. Wrapped in a promise chain so a missing
+      // activity never crashes the caller.
+      Linking.sendIntent('android.settings.LOCATION_SOURCE_SETTINGS').catch(() => {
+        Linking.openSettings();
+      });
     } else {
       Linking.openURL('app-settings:');
     }

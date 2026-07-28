@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PermissionsAndroid, Platform, Linking } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import SendIntentAndroid from 'react-native-send-intent';
 
 export default function useLocationStatus() {
   const [hasPermission, setHasPermission] = useState(true);
@@ -53,7 +52,12 @@ export default function useLocationStatus() {
   // --- OPEN SETTINGS FUNCTIONS ---
   const openGPSSettings = () => {
     if (Platform.OS === 'android') {
-      SendIntentAndroid.openSettings('android.settings.LOCATION_SOURCE_SETTINGS');
+      // Linking.sendIntent is Android-only and replaces react-native-send-intent
+      // for this narrow use-case. Wrapped so a missing activity falls back to
+      // the app-level settings screen instead of throwing.
+      Linking.sendIntent('android.settings.LOCATION_SOURCE_SETTINGS').catch(() => {
+        Linking.openSettings();
+      });
     } else {
       Linking.openURL('app-settings:');
     }

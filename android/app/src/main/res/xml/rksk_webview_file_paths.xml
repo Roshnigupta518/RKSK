@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    FileProvider paths for react-native-webview's RNCWebViewFileProvider.
+
+    This file intentionally overrides the library-supplied `@xml/file_provider_paths`
+    (which uses `<external-path path="."/>` and exposes the whole shared external
+    storage root: /storage/emulated/0/). The override is bound in AndroidManifest.xml
+    via `tools:replace="android:resource"` on the provider's <meta-data>.
+
+    RNCWebViewModuleImpl.getCapturedFile() on API 23+ writes captured images/videos
+    only into `context.getExternalFilesDir(null)`, which is the app-private external
+    files directory (auto-wiped on uninstall, not accessible to other apps on
+    modern Android). Mapping the FileProvider to just that directory is sufficient
+    for camera/gallery upload flows and closes the CWE-200 / CWE-552 exposure
+    reported as F-06.
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-files-path
+        name="shared"
+        path="." />
+</paths>
