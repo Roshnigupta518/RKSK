@@ -61,9 +61,23 @@
                 tools:replace="android:resource" />
         </provider>
 
-       <meta-data
-     android:name="com.google.android.geo.API_KEY"
-     android:value="AIzaSyARAwP9SIAcyIFHdrrYbXA8a7EJe5nGV0o"/>
+        <!--
+            F-08 hardening: the Google Maps SDK for Android reads its API key
+            from this meta-data at runtime, so the string MUST end up in the
+            packaged APK. What we control is that the string never lives in
+            source control.
+
+            The value is injected at build time via manifestPlaceholders
+            configured in android/app/build.gradle. Developers set
+            GOOGLE_MAPS_API_KEY in ~/.gradle/gradle.properties (per-user,
+            outside VCS); CI supplies it via ORG_GRADLE_PROJECT_GOOGLE_MAPS_API_KEY.
+            See android/SECRETS.md for setup and for the Cloud Console
+            restrictions that keep the key useless if it is extracted from
+            a released APK.
+        -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${GOOGLE_MAPS_API_KEY}" />
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"

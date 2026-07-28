@@ -84,6 +84,16 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 21
         versionName "1.0.13"
+
+        // F-08: inject Google Maps API key at build time so it never lives
+        // in source control. Developers set GOOGLE_MAPS_API_KEY in
+        // ~/.gradle/gradle.properties; CI supplies ORG_GRADLE_PROJECT_GOOGLE_MAPS_API_KEY.
+        // If neither is present, we substitute a syntactically valid but
+        // deliberately non-functional placeholder so debug builds still
+        // assemble cleanly on a fresh checkout (Maps tiles simply won't
+        // render until the real key is supplied). See android/SECRETS.md.
+        def googleMapsApiKey = project.findProperty('GOOGLE_MAPS_API_KEY') ?: 'MISSING_GOOGLE_MAPS_API_KEY'
+        manifestPlaceholders = [GOOGLE_MAPS_API_KEY: googleMapsApiKey]
     }
     splits {
     abi {
@@ -169,23 +179,38 @@ packagingOptions {
 // or the validateSigningRelease preflight) without the required credentials.
 // -----------------------------------------------------------------------------
 gradle.taskGraph.whenReady { taskGraph ->
-    if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
-        return
-    }
-    def releaseSigningTaskPrefixes = [
+    def releaseTaskPrefixes = [
         'assemble', 'bundle', 'package', 'install', 'sign', 'validateSigning',
     ]
-    def usesReleaseSigning = taskGraph.allTasks.any { task ->
+    def isReleaseBuild = taskGraph.allTasks.any { task ->
         def n = task.name
-        return n.endsWith('Release') && releaseSigningTaskPrefixes.any { p -> n.startsWith(p) }
+        return n.endsWith('Release') && releaseTaskPrefixes.any { p -> n.startsWith(p) }
     }
-    if (usesReleaseSigning) {
+    if (!isReleaseBuild) {
+        return
+    }
+
+    // F-07: release must have a real upload keystore configured.
+    if (!project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
         throw new GradleException(
             'Release keystore not configured. Set MYAPP_UPLOAD_STORE_FILE, ' +
             'MYAPP_UPLOAD_KEY_ALIAS, MYAPP_UPLOAD_STORE_PASSWORD and ' +
             'MYAPP_UPLOAD_KEY_PASSWORD in ~/.gradle/gradle.properties ' +
             '(or as ORG_GRADLE_PROJECT_* environment variables on CI). ' +
             'See android/SIGNING.md for setup instructions.'
+        )
+    }
+
+    // F-08: release must have a real Google Maps API key. The debug-time
+    // fallback in defaultConfig is deliberately non-functional so that
+    // shipping it would result in a broken map — better to fail the build.
+    if (!project.hasProperty('GOOGLE_MAPS_API_KEY')) {
+        throw new GradleException(
+            'Google Maps API key not configured for a release build. Set ' +
+            'GOOGLE_MAPS_API_KEY in ~/.gradle/gradle.properties (or as ' +
+            'ORG_GRADLE_PROJECT_GOOGLE_MAPS_API_KEY on CI). See ' +
+            'android/SECRETS.md for how to create a properly restricted ' +
+            'Android key in the Google Cloud Console.'
         )
     }
 }

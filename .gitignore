@@ -73,3 +73,10 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Secrets (F-08) — per-dev machine only. Do NOT commit real API keys.
+# env.example.js IS committed as a template so teammates know which keys to fill in.
+src/utils/constant/env.js
+.env
+.env.local
+.env.*.local
