@@ -84,3 +84,98 @@ tasks.matching { it.name == "cyclonedxBom" }.configureEach { task ->
     task.componentVersion = "1.0.13"
     task.includeBomSerialNumber = true
 }
+
+// -----------------------------------------------------------------------------
+// Cross-module `configureCMake<Variant>[<abi>]` → `prefab<Variant>Package`
+// build ordering fix (AGP prefab race condition).
+//
+// AGP schedules native tasks in this order:
+//
+//     configureCMake<Variant>[<abi>]         ← READS prefab_package dirs
+//         (produces build.ninja etc.)
+//     externalNativeBuild<Variant>            ← WRITES the .so files
+//         (invokes ninja on the generated build system)
+//     prefab<Variant>Package                  ← WRITES prefab_package/
+//         (bundles headers + .so into a prefab layout)
+//
+// react-native-reanimated 4.x AND :app both consume the prefab_package
+// directory of every prefab-producing subproject (currently worklets and
+// reanimated) as an INPUT to their configureCMake step. But the only
+// cross-project dep the RN gradle plugin sets up today is
+//
+//     reanimated:externalNativeBuild<V> ← worklets:externalNativeBuild<V>
+//
+// which is TOO LATE — by then configureCMake has already run and failed.
+// After `./gradlew clean` the prefab_package/ dirs are wiped, and Gradle's
+// parallel scheduler happily launches configureCMake on one worker while
+// prefabPackage is still queued on another, producing:
+//
+//     Error: invalid value for <package_path>: directory
+//     ".../react-native-{reanimated,worklets}/.../prefab_package/<v>/prefab"
+//     is not readable.
+//
+// Fix: enumerate every subproject that publishes a prefab<V>Package task
+// (these are the local prefab PRODUCERS), and wire the CONSUMERS' own
+// configureCMake<V>* tasks to depend on all of them.
+//
+// Consumers we know about in this project:
+//   - :app                                    consumes: reanimated + worklets
+//   - :react-native-reanimated                consumes: worklets
+//
+// We do NOT try to make this fully generic (i.e. every subproject depends
+// on every other's prefab), because reanimated:prefab<V>Package transitively
+// depends on worklets:configureCMake<V>* (via reanimated's externalNativeBuild
+// → worklets's externalNativeBuild → worklets's configureCMake), so
+// symmetrically wiring worklets:configureCMake → reanimated:prefab would
+// create a cycle. The consumption graph is directional and must be encoded
+// as such.
+//
+// `gradle.projectsEvaluated` fires after all subprojects have been
+// configured (avoids the "project already evaluated" error we hit at
+// F-10 with `afterEvaluate`); `tasks.matching(...).configureEach(...)`
+// keeps everything lazy so `./gradlew tasks/clean/help` still work.
+// -----------------------------------------------------------------------------
+gradle.projectsEvaluated {
+    // Enumerate LOCAL prefab producers. Prefab artifacts pulled from the
+    // Gradle transforms cache (react-android, hermes-android, fbjni) are
+    // always readable — the race only affects subprojects that must
+    // produce prefab_package/ from scratch each build.
+    def prefabProducerNames = [
+        ':react-native-reanimated',
+        ':react-native-worklets',
+    ]
+    def producers = prefabProducerNames.collect { rootProject.findProject(it) }
+                                        .findAll { it != null }
+
+    // Consumers, in a directional map so we never cross-wire producers
+    // to each other in a way that would form a cycle. Value is the list
+    // of specific producer paths the consumer needs (or `null` = all).
+    def consumerToProducerPaths = [
+        ':app'                     : null,                                    // app needs every prefab
+        ':react-native-reanimated' : [':react-native-worklets'] as Set<String>, // reanimated consumes worklets only
+    ]
+
+    ['Debug', 'Release'].each { variant ->
+        consumerToProducerPaths.each { consumerPath, allowedProducerPaths ->
+            def consumer = rootProject.findProject(consumerPath)
+            if (consumer == null) return
+
+            def prefabTasksForVariant = producers.findAll { producer ->
+                        producer.path != consumerPath &&
+                                (allowedProducerPaths == null ||
+                                        allowedProducerPaths.contains(producer.path))
+                    }
+                    .collect { producer -> producer.tasks.findByName("prefab${variant}Package") }
+                    .findAll { it != null }
+
+            if (prefabTasksForVariant.isEmpty()) return
+
+            consumer.tasks.matching { it.name.startsWith("configureCMake${variant}") }
+                    .configureEach { task ->
+                        prefabTasksForVariant.each { producerTask ->
+                            task.dependsOn(producerTask)
+                        }
+                    }
+        }
+    }
+}
