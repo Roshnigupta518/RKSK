@@ -10,12 +10,77 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        // F-10 supply-chain: needed to resolve the CycloneDX plugin marker
+        // artifact `org.cyclonedx.bom:org.cyclonedx.bom.gradle.plugin`, which
+        // lives on Gradle's plugin portal (its underlying jar is on Maven
+        // Central, but the marker resolves via the portal).
+        gradlePluginPortal()
     }
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // F-10 supply-chain: CycloneDX Gradle plugin emits a machine-readable
+        // SBOM (CycloneDX 1.6 JSON + XML) of every Maven coordinate the
+        // release variant assembles. See android/SUPPLY_CHAIN.md.
+        classpath("org.cyclonedx.bom:org.cyclonedx.bom.gradle.plugin:3.3.0")
     }
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// -----------------------------------------------------------------------------
+// F-10: CycloneDX SBOM generation (org.cyclonedx.bom v3.x API).
+//
+// Applied at the root project so the aggregate `cyclonedxBom` task walks
+// :app plus every autolinked React Native native module (:react-native-*)
+// as one composed SBOM. The per-project `cyclonedxDirectBom` task is
+// filtered to the release runtime classpath so debug-only and test-only
+// coordinates don't pollute the shipped-artifact bill of materials.
+//
+// The SBOM covers the Maven / AAR layer only — it does NOT introspect the
+// third-party C/C++ libraries statically linked inside libpdfium.so
+// (FreeType, OpenJPEG, libpng, libjpeg-turbo, zlib). For those, follow the
+// manual inspection commands in android/SUPPLY_CHAIN.md.
+//
+// Tasks:
+//   ./gradlew :cyclonedxBom          # aggregate SBOM in build/reports/cyclonedx/
+//   ./gradlew :app:cyclonedxDirectBom  # single-module SBOM
+// -----------------------------------------------------------------------------
+apply plugin: "org.cyclonedx.bom"
+
+// Configure `cyclonedxDirectBom` on every project (root + subprojects). We use
+// `tasks.matching { … }.configureEach { … }` — Gradle's fully lazy task
+// configuration API — so we do NOT need `afterEvaluate`. Using `afterEvaluate`
+// here would explode with "Cannot run Project.afterEvaluate(Closure) when the
+// project is already evaluated" for RN autolinked native modules that the
+// `com.facebook.react.rootproject` plugin has already finished evaluating by
+// the time our block runs.
+allprojects {
+    tasks.matching { it.name == 'cyclonedxDirectBom' }.configureEach { task ->
+        // Only inventory what actually ships in a release APK. Debug + test
+        // classpaths would balloon the SBOM with dev-only coordinates.
+        // Subprojects that don't expose `releaseRuntimeClasspath` (e.g. the
+        // root project itself) will simply produce an empty per-project SBOM
+        // — the aggregate at root pulls together the meaningful ones.
+        task.includeConfigs = ["releaseRuntimeClasspath"]
+        task.skipConfigs = [
+            ".*[Dd]ebug.*",
+            ".*[Tt]est.*",
+            ".*[Aa]ndroid[Tt]est.*",
+        ]
+        task.projectType = "application"
+
+        // Fills in <group>, <name>, <version>, <hashes>, <licenses> for every
+        // component so downstream SCA tools (grype / trivy) have full metadata.
+        task.includeMetadataResolution = true
+        task.includeBomSerialNumber = true
+    }
+}
+
+tasks.matching { it.name == "cyclonedxBom" }.configureEach { task ->
+    task.projectType = "application"
+    task.componentName = "com.rkskmp"
+    task.componentVersion = "1.0.13"
+    task.includeBomSerialNumber = true
+}
