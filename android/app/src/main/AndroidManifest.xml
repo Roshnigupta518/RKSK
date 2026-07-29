@@ -78,6 +78,65 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${GOOGLE_MAPS_API_KEY}" />
+      <!--
+          F-11 hardening: MainActivity previously carried a second intent-filter
+          declaring ACTION_VIEW + CATEGORY_DEFAULT + CATEGORY_BROWSABLE with no
+          <data> element. Because no scheme / host / mimeType was pinned, the
+          filter matched *any* Intent.ACTION_VIEW dispatched without a URI —
+          i.e. any app on the device could invoke:
+
+              Intent i = new Intent(Intent.ACTION_VIEW);
+              startActivity(i);
+
+          and RKSK's MainActivity would appear as a resolution candidate
+          (or be launched outright when no other handler matched). Combined
+          with android:launchMode="singleTask", this widened the surface for:
+
+            - task-hijack / task-affinity attacks (StrandHogg-style),
+            - unwanted activity reordering during sensitive flows
+              (JWT-carrying requests, camera capture, PDF viewing),
+            - forced foregrounding by malicious co-installed apps.
+
+          The filter was also broken as a *deep-link* handler because deep
+          links require a `<data>` element (scheme + host + optional
+          pathPrefix / pathPattern) to route from an https:// or custom-scheme
+          URI to the app.
+
+          Audit of the app confirmed the filter was dead code:
+            - `MainActivity.kt` does not override onNewIntent() and never
+              reads intent.getData().
+            - The JS side has zero `Linking.getInitialURL()` /
+              `Linking.addEventListener('url', …)` handlers (only outbound
+              Linking.openURL() calls: settings deep-links, Play Store).
+            - No Firebase Dynamic Links, no OAuth redirect callbacks, no
+              custom URL scheme, no react-navigation `linking` config.
+
+          The safe fix is therefore to remove the malformed filter entirely.
+          The MAIN + LAUNCHER filter below is retained (it's how the OS
+          launches the app icon), and android:exported="true" is REQUIRED
+          for that — do NOT flip it to "false". `exported="true"` is safe
+          precisely because MAIN + LAUNCHER is the only remaining filter.
+
+          If in the FUTURE the app genuinely needs to consume a deep link
+          (OTP magic link, share intent, OAuth callback, etc.), add a
+          *separate* intent-filter with a fully-specified <data> block
+          scoped to the exact scheme + host you own, e.g.:
+
+              <intent-filter android:autoVerify="true">
+                  <action android:name="android.intent.action.VIEW" />
+                  <category android:name="android.intent.category.DEFAULT" />
+                  <category android:name="android.intent.category.BROWSABLE" />
+                  <data android:scheme="https"
+                        android:host="rksk.nhmmp.gov.in"
+                        android:pathPrefix="/app/" />
+              </intent-filter>
+
+          …plus host a Digital Asset Links `assetlinks.json` file on that
+          domain so the OS verifies ownership (`autoVerify="true"`), and
+          add matching JS-side Linking handlers to actually consume the URL
+          instead of the current no-op. Never re-introduce a VIEW filter
+          without a `<data>` element.
+      -->
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
@@ -90,11 +149,6 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
-         <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-            </intent-filter>
       </activity>
     </application>
 </manifest>
