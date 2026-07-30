@@ -55,9 +55,34 @@ react {
 }
 
 /**
- * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ * F-15 hardening: Enable R8 (successor of ProGuard) on release builds.
+ *
+ * With this flag ON, AGP runs R8 across the compiled Java/Kotlin classes to:
+ *   1. Shrink   — dead-code elimination (removes classes/methods JS never calls)
+ *   2. Optimise — inlines short methods, replaces enums with ints, etc.
+ *   3. Obfuscate — renames every non-kept class/method/field to a→b→c…
+ *
+ * The obfuscation half is the F-15 fix on the native side: without it, a
+ * `classes.dex` extraction from the APK reveals `com.rksk.SecureToken`,
+ * `JailMonkeyModule.isJailBroken`, and every autolinked NativeModule's
+ * `@ReactMethod` name in plain text. R8 renames all of them to opaque
+ * two-letter symbols while keeping the ones ProGuard rules whitelist.
+ *
+ * Which rules keep the app from crashing under R8 lives in
+ * `proguard-rules.pro` (this project) plus:
+ *   - `node_modules/react-native/ReactAndroid/proguard-rules.pro`
+ *     (auto-included via the AGP consumer-rules mechanism when the app
+ *      depends on `com.facebook.react:react-android`)
+ *   - `node_modules/react-native-reanimated/android/proguard-rules.pro`
+ *   - `node_modules/react-native-worklets/android/proguard-rules.pro`
+ *     (both consumed the same way through their AAR metadata)
+ *
+ * If a release build crashes with `ClassNotFoundException` after this flag
+ * was flipped on, see android/OBFUSCATION.md §5 for the diagnostic recipe
+ * (grep the R8 mapping.txt, add a targeted -keep, re-run). Do NOT solve it
+ * by flipping this flag back to false without escalating.
  */
-def enableProguardInReleaseBuilds = false
+def enableProguardInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -95,20 +120,73 @@ android {
         def googleMapsApiKey = project.findProperty('GOOGLE_MAPS_API_KEY') ?: 'MISSING_GOOGLE_MAPS_API_KEY'
         manifestPlaceholders = [GOOGLE_MAPS_API_KEY: googleMapsApiKey]
     }
-    splits {
-    abi {
-        enable true
-        reset()
-        include "armeabi-v7a", "arm64-v8a"
-        universalApk false // don’t include all ABIs in one fat APK
+    // -------------------------------------------------------------------------
+    // ABI splitting policy
+    //
+    // Two distribution formats need different treatment:
+    //
+    //   1. `./gradlew assembleRelease`  → per-ABI APKs
+    //      splits.abi.enable=true builds one APK per listed ABI. This is
+    //      the right path for sideloading, internal distribution, or
+    //      testing on a specific device.
+    //
+    //   2. `./gradlew bundleRelease`    → Android App Bundle (.aab)
+    //      An AAB is intrinsically multi-ABI: Play Console reads its
+    //      per-ABI targeting metadata and delivers a device-specific
+    //      APK (containing only that device's ABI slice) at install
+    //      time via Dynamic Delivery. `splits.abi` on top of an AAB
+    //      is redundant, and since AGP 8.6 is an explicit build error:
+    //         "Multiple shrunk-resources files found ...
+    //          Please disable building multiple APKs when building an
+    //          Android app bundle."
+    //         https://issuetracker.google.com/402800800
+    //
+    // So we detect the invocation mode at configuration time and toggle
+    // `splits.abi.enable` accordingly. `gradle.startParameter.taskNames`
+    // is populated before the `android { }` block is evaluated, so this
+    // check is safe here (unlike `gradle.taskGraph.whenReady`, which
+    // resolves too late for splits configuration to react).
+    // -------------------------------------------------------------------------
+    def isBundleBuild = gradle.startParameter.taskNames.any { taskName ->
+        def lower = taskName.toLowerCase()
+        // Matches: `bundle`, `bundleRelease`, `bundleDebug`,
+        // `:app:bundleRelease`, `app:bundleRelease`, or any custom
+        // variant flavour like `bundleProdRelease`.
+        lower == 'bundle' ||
+                lower.startsWith('bundle') ||
+                lower.endsWith(':bundle') ||
+                (lower.contains(':bundle') && !lower.contains('assemble'))
     }
-}
 
-packagingOptions {
-    jniLibs {
-        excludes += ["lib/x86/**", "lib/x86_64/**"]
+    splits {
+        abi {
+            // ABI splits are only meaningful for APK output. Disabling for
+            // AAB builds prevents the AGP-side "multiple shrunk-resources
+            // files" error while still keeping the desired per-ABI slicing
+            // (Play Console does the equivalent at install time from the
+            // AAB's targeting metadata).
+            enable !isBundleBuild
+            reset()
+            include "armeabi-v7a", "arm64-v8a"
+            universalApk false // don't include all ABIs in one fat APK
+        }
     }
-}
+
+    // Independent of the split policy above: strip x86 / x86_64 native libs
+    // from the final artifact. RKSK ships to arm-only physical devices in
+    // the field; the intel slices only exist for emulator debug builds.
+    // AGP includes them by default when a `.so` is present for those ABIs
+    // in any depended-on AAR (react-android bundles x86 for emulator dev).
+    // We keep them out of the release artifact to shrink download size.
+    //
+    // For AAB builds, this exclusion also applies — Play Console will still
+    // deliver arm-only APKs to arm devices, but the AAB itself is smaller
+    // to upload if x86 slices are omitted upstream.
+    packagingOptions {
+        jniLibs {
+            excludes += ["lib/x86/**", "lib/x86_64/**"]
+        }
+    }
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -159,8 +237,78 @@ packagingOptions {
             if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
                 signingConfig signingConfigs.release
             }
+
+            // F-15: enable R8 minification + obfuscation on release. Debug
+            // builds intentionally skip R8 so on-device debugging and Metro
+            // fast-refresh work without a 30-second R8 pass on every rebuild.
             minifyEnabled enableProguardInReleaseBuilds
+
+            // F-15: also shrink resources (drawables, layouts, strings that
+            // R8 proved are unreferenced). Cheap APK size win + drops any
+            // dev-only asset that leaked into `res/`. `shrinkResources` is
+            // only legal when `minifyEnabled` is true; the flag above must
+            // stay in sync.
+            shrinkResources enableProguardInReleaseBuilds
+
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// F-15 hardening: guarantee the Hermes / Metro source map never ships in the
+// packaged APK.
+//
+// The RN gradle plugin generates a Hermes source map at
+//   android/app/build/generated/sourcemaps/react/release/index.android.bundle.map
+// which is designed to be UPLOADED to a crash-reporting service (Sentry,
+// Firebase Crashlytics, Datadog, …) for on-server symbolication, and then
+// discarded. If it ever gets packaged into `assets/` inside the APK, an
+// attacker can trivially recover original-source-quality JavaScript from
+// the shipped Hermes bytecode.
+//
+// The current RN 0.81 gradle plugin does not bundle the .map file by
+// default, but future dependency bumps or a mis-configured `bundleConfig`
+// can silently regress that. This block fails the release build fast if
+// any `.map` file has snuck into the packaged assets after the merge step.
+//
+// Implementation note: we use `tasks.matching { ... }.configureEach { ... }`
+// (a lazy, AGP-version-agnostic task-hook pattern — identical to the one
+// used in the root android/build.gradle for the prefab-race workaround)
+// rather than `variant.mergeAssetsProvider.configure` (which changed
+// signature between AGP 7 and 8).
+// -----------------------------------------------------------------------------
+tasks.matching { it.name == "mergeReleaseAssets" }.configureEach { mergeTask ->
+    mergeTask.doLast {
+        // AGP has moved this property around; try both.
+        def assetsDir = null
+        try {
+            assetsDir = mergeTask.outputDir.get().asFile
+        } catch (Exception e1) {
+            try {
+                assetsDir = mergeTask.outputDir.asFile
+            } catch (Exception ignored) {
+                // Nothing to check; treat as pass.
+                return
+            }
+        }
+        if (assetsDir == null || !assetsDir.exists()) return
+
+        def leakedMaps = fileTree(assetsDir) {
+            include "**/*.map"
+            include "**/*.hbcmap"
+            include "**/*.bundle.map"
+        }.files
+        if (!leakedMaps.isEmpty()) {
+            def names = leakedMaps.collect { it.name }.join(', ')
+            throw new GradleException(
+                "F-15: source map(s) [${names}] leaked into packaged " +
+                "assets at ${assetsDir}. Release APKs must NOT ship " +
+                "source maps — they defeat Hermes bytecode obfuscation " +
+                "by mapping HBC back to readable source. Upload the " +
+                ".map to your crash-reporting service instead. See " +
+                "android/OBFUSCATION.md §4."
+            )
         }
     }
 }

@@ -86,17 +86,35 @@ tasks.matching { it.name == "cyclonedxBom" }.configureEach { task ->
 }
 
 // -----------------------------------------------------------------------------
-// Cross-module `configureCMake<Variant>[<abi>]` → `prefab<Variant>Package`
+// Cross-module `configureCMake<CmakeBuildType>[<abi>]` → `prefab<AndroidVariant>Package`
 // build ordering fix (AGP prefab race condition).
 //
 // AGP schedules native tasks in this order:
 //
-//     configureCMake<Variant>[<abi>]         ← READS prefab_package dirs
+//     configureCMake<CmakeBuildType>[<abi>]  ← READS prefab_package dirs
 //         (produces build.ninja etc.)
-//     externalNativeBuild<Variant>            ← WRITES the .so files
+//     externalNativeBuild<AndroidVariant>     ← WRITES the .so files
 //         (invokes ninja on the generated build system)
-//     prefab<Variant>Package                  ← WRITES prefab_package/
+//     prefab<AndroidVariant>Package           ← WRITES prefab_package/
 //         (bundles headers + .so into a prefab layout)
+//
+// IMPORTANT — two distinct naming schemes are in play here:
+//
+//   * `prefab<AndroidVariant>Package` uses the ANDROID BUILD VARIANT name
+//     (`Debug`, `Release`) — matching what appears in `buildTypes { … }`.
+//
+//   * `configureCMake<CmakeBuildType>[abi]` uses the CMAKE BUILD TYPE
+//     (`Debug`, `RelWithDebInfo`, `Release`, `MinSizeRel`) — a separate
+//     enum from the Android variant. AGP maps Android variants to CMake
+//     build types with this default: `debug` → `Debug`, `release` →
+//     `RelWithDebInfo`. Projects that pass `cmake { arguments
+//     "-DCMAKE_BUILD_TYPE=Release" }` see `Release`; almost nobody
+//     overrides to `MinSizeRel`.
+//
+//   Missing this distinction was the whole reason the release build was
+//   still failing after we thought we'd fixed it. `startsWith("configureCMakeRelease")`
+//   never matched `configureCMakeRelWithDebInfo[arm64-v8a]`, so the wiring
+//   silently no-op'd for release-variant CMake tasks.
 //
 // react-native-reanimated 4.x AND :app both consume the prefab_package
 // directory of every prefab-producing subproject (currently worklets and
@@ -116,7 +134,7 @@ tasks.matching { it.name == "cyclonedxBom" }.configureEach { task ->
 //
 // Fix: enumerate every subproject that publishes a prefab<V>Package task
 // (these are the local prefab PRODUCERS), and wire the CONSUMERS' own
-// configureCMake<V>* tasks to depend on all of them.
+// configureCMake<CmakeBuildType>* tasks to depend on all of them.
 //
 // Consumers we know about in this project:
 //   - :app                                    consumes: reanimated + worklets
@@ -155,7 +173,18 @@ gradle.projectsEvaluated {
         ':react-native-reanimated' : [':react-native-worklets'] as Set<String>, // reanimated consumes worklets only
     ]
 
-    ['Debug', 'Release'].each { variant ->
+    // For each Android build variant, list every CMake build type that
+    // AGP may pick for it. The prefab producer task is named after the
+    // Android variant; the consumer configureCMake task is named after
+    // the CMake build type. We match consumer task names as `startsWith`
+    // so both `configureCMakeRelWithDebInfo` and
+    // `configureCMakeRelWithDebInfo[arm64-v8a]` are caught.
+    def cmakeBuildTypesForAndroidVariant = [
+        'Debug'  : ['Debug'],
+        'Release': ['RelWithDebInfo', 'Release', 'MinSizeRel'],
+    ]
+
+    cmakeBuildTypesForAndroidVariant.each { androidVariant, cmakeBuildTypes ->
         consumerToProducerPaths.each { consumerPath, allowedProducerPaths ->
             def consumer = rootProject.findProject(consumerPath)
             if (consumer == null) return
@@ -165,12 +194,16 @@ gradle.projectsEvaluated {
                                 (allowedProducerPaths == null ||
                                         allowedProducerPaths.contains(producer.path))
                     }
-                    .collect { producer -> producer.tasks.findByName("prefab${variant}Package") }
+                    .collect { producer -> producer.tasks.findByName("prefab${androidVariant}Package") }
                     .findAll { it != null }
 
             if (prefabTasksForVariant.isEmpty()) return
 
-            consumer.tasks.matching { it.name.startsWith("configureCMake${variant}") }
+            consumer.tasks.matching { task ->
+                        cmakeBuildTypes.any { cmakeType ->
+                            task.name.startsWith("configureCMake${cmakeType}")
+                        }
+                    }
                     .configureEach { task ->
                         prefabTasksForVariant.each { producerTask ->
                             task.dependsOn(producerTask)
