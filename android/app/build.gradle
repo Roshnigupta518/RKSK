@@ -471,6 +471,123 @@ gradle.taskGraph.whenReady { taskGraph ->
             'Android key in the Google Cloud Console.'
         )
     }
+
+    // -------------------------------------------------------------------------
+    // F-22: verify the D2D / cloud-backup opt-out is still wired up.
+    //
+    // Two source-tree assertions run at release-build time:
+    //   1. AndroidManifest.xml declares android:dataExtractionRules pointing
+    //      at our XML resource AND still has android:allowBackup="false".
+    //      Both are required — the former handles API 31+, the latter handles
+    //      API 24-30 and also acts as belt-and-braces on newer APIs.
+    //   2. The referenced XML resource still contains BOTH <cloud-backup>
+    //      and <device-transfer> blocks, and each still excludes the
+    //      "root" and "external" domains. A regression could be introduced
+    //      by e.g. a careless refactor that flips <exclude> to <include>,
+    //      deletes the <device-transfer> block, or trims one of the
+    //      required domain names.
+    //
+    // Both checks are string-level scans of the SOURCE files, not the merged
+    // outputs, because these attributes cannot be injected by a dependency —
+    // they must come from the app module itself. String-level is fragile in
+    // theory (someone could reformat with a lot of whitespace to defeat the
+    // match), but the release-build hook here is a defensive backstop, not
+    // the primary defense. The primary defense is the file living in git
+    // with the F-22 header comment.
+    //
+    // Both checks throw GradleException with a diagnostic that points at
+    // android/DATA_EXTRACTION.md so the fix path is one click away.
+    // -------------------------------------------------------------------------
+    def manifestFile = file('src/main/AndroidManifest.xml')
+    if (!manifestFile.exists()) {
+        throw new GradleException(
+            'F-22: expected AndroidManifest.xml at ' + manifestFile +
+            ' but it does not exist. Something is very wrong with the module layout.'
+        )
+    }
+    def manifestText = manifestFile.text
+    if (!manifestText.contains('android:dataExtractionRules="@xml/data_extraction_rules"')) {
+        throw new GradleException(
+            'F-22: android:dataExtractionRules="@xml/data_extraction_rules" ' +
+            'is missing from ' + manifestFile + '. Without it, Android 12+ ' +
+            'setup-wizard "Copy from old phone" (D2D transfer) will still ' +
+            'copy all app-private storage to the target device, bypassing ' +
+            'the allowBackup="false" opt-out. See android/DATA_EXTRACTION.md.'
+        )
+    }
+    if (!manifestText.contains('android:allowBackup="false"')) {
+        throw new GradleException(
+            'F-22: android:allowBackup="false" is missing from ' + manifestFile +
+            '. That attribute is still required for API 24-30 devices where ' +
+            'android:dataExtractionRules is silently ignored. See ' +
+            'android/DATA_EXTRACTION.md.'
+        )
+    }
+
+    def rulesFile = file('src/main/res/xml/data_extraction_rules.xml')
+    if (!rulesFile.exists()) {
+        throw new GradleException(
+            'F-22: expected data-extraction rules at ' + rulesFile +
+            ' but the file is missing. Restore it from git — its contents ' +
+            'and the manifest attribute must stay in sync. See ' +
+            'android/DATA_EXTRACTION.md.'
+        )
+    }
+    def rulesText = rulesFile.text
+    def requiredRulesPatterns = [
+        // Structural: both channels must be present and each must carry
+        // at least one <exclude> for the two domains we care about.
+        [
+            needle: '<cloud-backup',
+            hint  : 'the <cloud-backup> block was removed from data_extraction_rules.xml',
+        ],
+        [
+            needle: '<device-transfer',
+            hint  : 'the <device-transfer> block was removed from data_extraction_rules.xml — this reopens the API 31+ D2D transfer path',
+        ],
+        [
+            needle: '<exclude domain="root"',
+            hint  : 'no <exclude domain="root" /> found in data_extraction_rules.xml — internal-storage private data will be copied on backup/D2D',
+        ],
+        [
+            needle: '<exclude domain="external"',
+            hint  : 'no <exclude domain="external" /> found in data_extraction_rules.xml — external app-scoped storage will be copied on backup/D2D',
+        ],
+    ]
+    def missing = requiredRulesPatterns.findAll { entry -> !rulesText.contains(entry.needle) }
+    if (!missing.isEmpty()) {
+        def lines = missing.collect { entry -> '  - ' + entry.hint }.join('\n')
+        throw new GradleException(
+            'F-22: data_extraction_rules.xml does not carry the required ' +
+            'opt-out rules:\n' + lines + '\n' +
+            'Restore the excludes so that both <cloud-backup> and ' +
+            '<device-transfer> deny "root" AND "external" domains. See ' +
+            'android/DATA_EXTRACTION.md §3 for the canonical content.'
+        )
+    }
+
+    // Sanity: refuse to ship if someone flipped an <exclude> to <include>
+    // for the two domains we care about. <include> selectively OPTS IN
+    // to backup for a subset of files, which is the opposite of what F-22
+    // intends. We do the check as a substring on the CURRENT file text so
+    // an accidental edit is caught before the build proceeds.
+    def dangerousIncludes = [
+        '<include domain="root"',
+        '<include domain="external"',
+        '<include domain="device_root"',
+    ]
+    def foundDangerous = dangerousIncludes.findAll { pattern -> rulesText.contains(pattern) }
+    if (!foundDangerous.isEmpty()) {
+        throw new GradleException(
+            'F-22: data_extraction_rules.xml contains <include> rule(s) for ' +
+            "domain(s) ${foundDangerous.join(', ')}. F-22 opted out of both " +
+            'backup channels entirely; any <include> rule reopens data flow ' +
+            'to the cloud or a target device during D2D restore. If you ' +
+            'genuinely need to opt part of the app back in, extend ' +
+            'android/DATA_EXTRACTION.md with the threat-model rationale ' +
+            'before removing this guard.'
+        )
+    }
 }
 
 // -----------------------------------------------------------------------------

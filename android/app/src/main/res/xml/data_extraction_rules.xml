@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    F-22 hardening — opt RKSK out of both Android 12+ (API 31) backup channels.
+
+    Background:
+      Android exposes TWO independent "make a copy of my app data" channels:
+
+        1. Cloud backup (Google One / Drive full-app backups, and any
+           third-party Backup Transports that plug into the framework).
+        2. Device-to-device (D2D) transfer, used by the setup wizard's
+           "Copy from old phone" flow.
+
+      Pre-API 31 both were governed by android:allowBackup on <application>.
+      From API 31+ the two channels split:
+        - android:allowBackup       still gates the CLOUD channel.
+        - android:dataExtractionRules gates BOTH channels — cloud
+          via <cloud-backup> and D2D via <device-transfer>.
+
+      RKSK's AndroidManifest sets android:allowBackup="false", which is
+      correct for API 24-30 (blocks both). But on API 31+, absent a
+      <device-transfer> rule the setup-wizard D2D path will still copy
+      ALL app-private storage and app-scoped external storage to the
+      target device. That leaks the on-disk state that lives outside
+      the Keychain-backed encryption boundary (F-04):
+
+        - react-native-fs downloaded PDFs, offline form drafts, cached
+          media captured through image-picker / compressMedia
+        - DownloadManager files under external/
+        - shared_prefs/*.xml written by any RN module we ship
+        - SQLite files under databases/ (RKStorage.db is encrypted, but
+          its shape + key IDs are still observable)
+
+      Keystore-wrapped decryption keys are hardware-bound and do NOT
+      transfer, so redux-persist ciphertext arrives on the new device
+      undecryptable. But everything else — plaintext files that were
+      never encrypted at rest — flows verbatim. RKSK's threat model
+      cannot allow that: a stolen or lost device restored onto an
+      attacker's phone would leak PII outright.
+
+    Design decision — total opt-out, not partial:
+      A health-worker data-collection app has no local state that is
+      meaningful without a live server session. A fresh device MUST
+      re-authenticate via SSO/OTP and rehydrate from the backend.
+      Copying old-device local files gains nothing operationally and
+      only widens the exfiltration surface. So we exclude ALL domains
+      for BOTH channels rather than curating a whitelist.
+
+    <cloud-backup> attribute — disableIfNoEncryptionCapabilities="true"
+      is Google's recommended belt-and-braces. If the device (or the
+      user's Google account) cannot participate in E2E-encrypted
+      backups, no cloud backup runs at all. Redundant given our full
+      <exclude>, but cheap insurance if a future edit narrows the
+      exclude list without re-adding this flag.
+
+    Domain reference (per developer.android.com/about/versions/12/backup-restore):
+      root           - internal storage root (files/, databases/,
+                       shared_prefs/) — covers most private data
+      external       - getExternalFilesDir(), i.e. app-scoped external
+                       storage — NOT covered by "root"
+      device_root    - Device Protected Storage (Direct Boot). RKSK
+                       doesn't use DPS today, but excluding here
+                       future-proofs the file if we ever adopt the
+                       DirectBoot-aware APIs.
+
+    Verification: see android/DATA_EXTRACTION.md §Verification for
+    the ADB + emulator recipes that let you smoke-test that a D2D
+    restore actually skips this app.
+-->
+<data-extraction-rules>
+
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <exclude domain="root" />
+        <exclude domain="external" />
+        <exclude domain="device_root" />
+    </cloud-backup>
+
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="external" />
+        <exclude domain="device_root" />
+    </device-transfer>
+
+</data-extraction-rules>
