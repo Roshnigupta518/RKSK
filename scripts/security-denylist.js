@@ -17,21 +17,41 @@
  *      `react-native` itself, or Metro / codegen / TypeScript will
  *      silently do the wrong thing.
  *
+ *   3. A stripped-transitive-dependency has crept back into
+ *      node_modules (F-18 stripped-dep guard). Right now this only
+ *      tracks the LAME 3.100 + JLayer 1.0.1 excision inside
+ *      `react-native-compressor`, but the check is generic — any future
+ *      "we removed X via patch-package" hardening can register itself
+ *      in the STRIPPED_TRANSITIVE_DEPS table below.
+ *
  * Runs from the `postinstall` npm script so it catches:
  *
  *   - a fresh `npm ci` on CI,
  *   - `npm install <package>` on a dev machine,
- *   - a `git pull` that reintroduced a banned entry into package.json, and
+ *   - a `git pull` that reintroduced a banned entry into package.json,
  *   - a Dependabot PR that bumped `react-native` without also bumping
  *     the @react-native/* peers (Dependabot's grouped-updates config in
- *     .github/dependabot.yml is the belt; this check is the braces).
+ *     .github/dependabot.yml is the belt; this check is the braces), and
+ *   - a `react-native-compressor` version bump that made the
+ *     patches/react-native-compressor+*.patch fail to apply and
+ *     silently reintroduced LAME/JLayer.
+ *
+ * ORDERING WITH patch-package: this script runs AFTER `patch-package`
+ * (see the `postinstall` script in package.json). That ordering matters
+ * for check #3 — we grep node_modules for stripped symbols, and that
+ * grep is only meaningful once patches have been applied. patch-package
+ * is invoked with `--error-on-fail` so a failed patch application
+ * halts the install before we even get here; this check is the
+ * defense-in-depth layer that catches "patch succeeded but doesn't
+ * actually strip what we expected" (e.g. upstream renamed a file so
+ * the patch applies to the wrong location).
  *
  * The native-side denylist companion lives in `react-native.config.js`
  * under the `dependencies` block. Keep the two in sync — every entry
  * in DENYLIST here needs a matching entry there.
  *
- * See android/NATIVE_MODULES.md (F-12) and android/DEPENDENCIES.md
- * (F-16) for the rationale.
+ * See android/NATIVE_MODULES.md (F-12), android/DEPENDENCIES.md
+ * (F-16), and android/AUDIO_STRIP.md (F-18) for the rationale.
  */
 
 const fs = require('fs');
@@ -168,6 +188,176 @@ function reportDenylistHits(hits) {
     console.error('');
 }
 
+// -----------------------------------------------------------------------------
+// F-18: stripped-transitive-dependency guard.
+//
+// Some hardening findings work by *removing* a transitive dependency via
+// patch-package, rather than by removing a top-level package. That
+// arrangement is fragile in ways the F-12 top-level denylist can't catch:
+//
+//   - a react-native-compressor version bump may rename Audio*.kt files,
+//     silently making patches/react-native-compressor+1.13.0.patch
+//     apply to nothing;
+//   - a developer might hand-edit node_modules to "just try enabling
+//     audio compression" and re-introduce LAME on their branch;
+//   - the patch line-count context could match against fresh upstream
+//     content that happens to have similar wording, applying a partial
+//     hunk that leaves LAME imports around.
+//
+// So we also grep the on-disk node_modules content post-patch and fail
+// the install if the forbidden symbols show up. Each entry below
+// documents (a) the finding that motivated the strip, (b) a set of
+// filesystem globs to scan, and (c) the exact substrings that must
+// NOT appear in those files.
+// -----------------------------------------------------------------------------
+const STRIPPED_TRANSITIVE_DEPS = [
+    {
+        finding: 'F-18',
+        packageName: 'react-native-compressor',
+        // What the finding is about, for error messages.
+        summary:
+            'LAME 3.100 (unmaintained MP3 encoder with multiple heap-overflow ' +
+            'CVEs) + JLayer 1.0.1 (2008-vintage MP3 decoder) were stripped ' +
+            'from react-native-compressor via patch-package. Their reappearance ' +
+            "in node_modules means the patch didn't apply cleanly.",
+        // Files to inspect. Relative to the workspace root.
+        scanPaths: [
+            'node_modules/react-native-compressor/android/build.gradle',
+            'node_modules/react-native-compressor/android/src/main/java/com/reactnativecompressor/Audio/AudioCompressor.kt',
+        ],
+        // Substrings that MUST NOT appear as live code in the files above.
+        // We look for them as raw substrings, so ANY occurrence — comment
+        // or otherwise — currently trips the check. That is intentional
+        // for uppercase forbidden identifiers ('LameBuilder', 'WaveReader',
+        // 'JavaLayerException', 'com.naman14.androidlame') — those are
+        // Kotlin identifiers that cannot legitimately show up in comments
+        // in the post-patch state. See guarded gitub package coordinates
+        // below (`AndroidLame-kotlin`, `javazoom:jlayer:`); those CAN
+        // appear inside `//`-commented-out lines in the compressor's
+        // build.gradle without indicating regression, so we scope those
+        // to non-comment lines only via the `mustBeUncommented: true`
+        // marker below.
+        forbiddenSymbols: [
+            { needle: 'LameBuilder', mustBeUncommented: false },
+            { needle: 'WaveReader', mustBeUncommented: false },
+            { needle: 'com.naman14.androidlame', mustBeUncommented: false },
+            { needle: 'JavaLayerException', mustBeUncommented: false },
+            { needle: 'javazoom.jl.', mustBeUncommented: false },
+            {
+                needle: "'com.github.banketree:AndroidLame-kotlin:",
+                mustBeUncommented: true,
+            },
+            {needle: "'javazoom:jlayer:", mustBeUncommented: true},
+        ],
+        // Human-readable diagnostic pointer.
+        remediation:
+            'Run `npx patch-package` and confirm the patches/react-native-compressor+*.patch ' +
+            'file applied. If react-native-compressor was bumped, regenerate the patch ' +
+            'against the new version (see android/AUDIO_STRIP.md §Regenerating).',
+    },
+];
+
+function stripLineComments(source, fileExt) {
+    // Very small comment stripper — good enough for Kotlin/Groovy line
+    // comments (`//`). We do NOT try to parse `/* ... */` block comments;
+    // if a legit comment inside a block accidentally matches a forbidden
+    // symbol we prefer the false positive (louder is safer here).
+    const lines = source.split(/\r?\n/);
+    return lines
+        .map((line) => {
+            const idx = line.indexOf('//');
+            return idx === -1 ? line : line.slice(0, idx);
+        })
+        .join('\n');
+}
+
+function checkStrippedTransitiveDeps() {
+    const workspaceRoot = path.resolve(__dirname, '..');
+    const violations = [];
+
+    for (const entry of STRIPPED_TRANSITIVE_DEPS) {
+        for (const relPath of entry.scanPaths) {
+            const absPath = path.resolve(workspaceRoot, relPath);
+
+            if (!fs.existsSync(absPath)) {
+                // The file itself is missing — that's a strong signal
+                // that the patch either wasn't applied OR that the
+                // upstream package changed shape. Either way, we can't
+                // verify the strip, so we fail loud.
+                violations.push({
+                    entry,
+                    relPath,
+                    needle: '(file missing)',
+                    context: 'expected file does not exist',
+                });
+                continue;
+            }
+
+            const raw = fs.readFileSync(absPath, 'utf8');
+            const codeOnly = stripLineComments(raw, path.extname(absPath));
+
+            for (const {needle, mustBeUncommented} of entry.forbiddenSymbols) {
+                const haystack = mustBeUncommented ? codeOnly : raw;
+                if (haystack.includes(needle)) {
+                    // Grab the first matching line for a helpful diag.
+                    const matchLine =
+                        haystack
+                            .split(/\r?\n/)
+                            .find((l) => l.includes(needle)) || '';
+                    violations.push({
+                        entry,
+                        relPath,
+                        needle,
+                        context: matchLine.trim().slice(0, 160),
+                    });
+                }
+            }
+        }
+    }
+
+    return violations;
+}
+
+function reportStrippedTransitiveDeps(violations) {
+    console.error('');
+    console.error(
+        '\x1b[31m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m',
+    );
+    console.error(
+        '\x1b[31m║ STRIPPED TRANSITIVE DEP REGRESSION — install aborted                 ║\x1b[0m',
+    );
+    console.error(
+        '\x1b[31m╚══════════════════════════════════════════════════════════════════════╝\x1b[0m',
+    );
+    console.error('');
+
+    // Group violations by finding for readability.
+    const byFinding = new Map();
+    for (const v of violations) {
+        const key = v.entry.finding;
+        if (!byFinding.has(key)) byFinding.set(key, []);
+        byFinding.get(key).push(v);
+    }
+
+    for (const [finding, list] of byFinding.entries()) {
+        const entry = list[0].entry;
+        console.error(`Finding ${finding} — ${entry.packageName}`);
+        console.error(`  ${entry.summary}`);
+        console.error('');
+        console.error('  Regressions detected:');
+        for (const v of list) {
+            console.error(`    ✗ ${v.needle}`);
+            console.error(`        in ${v.relPath}`);
+            if (v.context) {
+                console.error(`        near: ${v.context}`);
+            }
+        }
+        console.error('');
+        console.error(`  Fix: ${entry.remediation}`);
+        console.error('');
+    }
+}
+
 function reportRnDrift(drift, rnVersion) {
     console.error('');
     console.error(
@@ -224,18 +414,30 @@ function main() {
     // ------------------------------------------------------------------
     const rnDrift = checkReactNativeAlignment(declared);
 
-    if (denylistHits.length === 0 && rnDrift.length === 0) {
+    // ------------------------------------------------------------------
+    // Check 3 (F-18): stripped transitive deps still stripped.
+    // ------------------------------------------------------------------
+    const strippedRegressions = checkStrippedTransitiveDeps();
+
+    if (
+        denylistHits.length === 0 &&
+        rnDrift.length === 0 &&
+        strippedRegressions.length === 0
+    ) {
         // Silent success — keeps install output uncluttered.
         return;
     }
 
-    // Report BOTH failure classes if both fire, then exit non-zero. This
+    // Report ALL failure classes if any fire, then exit non-zero. This
     // avoids the "fix one, run install, discover the other" churn.
     if (denylistHits.length > 0) {
         reportDenylistHits(denylistHits);
     }
     if (rnDrift.length > 0) {
         reportRnDrift(rnDrift, stripRangePrefix(declared['react-native']));
+    }
+    if (strippedRegressions.length > 0) {
+        reportStrippedTransitiveDeps(strippedRegressions);
     }
 
     process.exit(1);

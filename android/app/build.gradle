@@ -363,6 +363,28 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
+// -----------------------------------------------------------------------------
+// F-18 hardening — belt-and-braces exclusion of LAME 3.100 + JLayer 1.0.1.
+//
+// react-native-compressor 1.13.0 pulls in two problematic transitive deps
+// (`com.github.banketree:AndroidLame-kotlin:v0.0.1`, which wraps LAME 3.100,
+// and `javazoom:jlayer:1.0.1`, a 2008-vintage MP3 decoder). RKSK never
+// invokes audio compression, so both are dead weight AND known-CVE attack
+// surface.
+//
+// The primary defense is `patches/react-native-compressor+1.13.0.patch`,
+// which rewrites the compressor's own `build.gradle` and Kotlin sources to
+// drop the deps. This block is a defense-in-depth backup: even if
+// patch-package is skipped, the patch fails to apply cleanly after a
+// `react-native-compressor` bump, or someone hand-edits the compressor
+// build.gradle, Gradle will still refuse to resolve these coordinates
+// project-wide. See android/AUDIO_STRIP.md.
+// -----------------------------------------------------------------------------
+configurations.all {
+    exclude group: 'com.github.banketree', module: 'AndroidLame-kotlin'
+    exclude group: 'javazoom',             module: 'jlayer'
+}
+
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
