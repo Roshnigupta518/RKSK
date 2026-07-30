@@ -85,11 +85,133 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
-    <!-- For background services permission -->
+    <!--
+        Background-sync stack. RKSK ships an offline-first workflow for
+        health workers — forms captured without connectivity are queued
+        and uploaded later, and master-data / awareness videos are
+        pulled down for offline use. That work runs inside
+        `com.asterinet.react.bgactions.RNBackgroundActionsTask`, a
+        foreground service declared below with foregroundServiceType
+        "dataSync" (see the <service> block for the Play-policy
+        justification of that specific type).
+
+          - FOREGROUND_SERVICE        umbrella permission for any
+                                      Service.startForeground(...) call.
+          - FOREGROUND_SERVICE_DATA_SYNC   Android 14+ (API 34) requires a
+                                      permission that matches the
+                                      declared foregroundServiceType, or
+                                      the service is refused at start
+                                      time. We use `dataSync` because
+                                      the workload is user-initiated
+                                      long-running data transfer
+                                      (offline forms up, master data
+                                      down). See android/PERMISSIONS.md.
+          - WAKE_LOCK                 Required so the CPU isn't parked
+                                      mid-upload while the phone screen
+                                      is off. RN's default HTTP client
+                                      uses OkHttp connect/read timeouts
+                                      that DO fire when the CPU sleeps,
+                                      producing spurious sync failures
+                                      without this permission.
+          - POST_NOTIFICATIONS        API 33+ (Android 13) runtime
+                                      permission for the persistent
+                                      ongoing-sync notification the
+                                      foreground service must show. The
+                                      OS enforces this even for
+                                      framework-visible foreground-
+                                      service notifications.
+    -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+        F-23 hardening: strip over-broad transitive permissions that RN
+        modules request but this app has no business holding.
+
+        Each removal below targets a permission that:
+          (a) is NOT declared by the app manifest itself,
+          (b) is injected by a third-party AAR that RKSK depends on
+              transitively, and
+          (c) has NO code path in the app that actually exercises the
+              functionality it grants (verified against src/ during
+              F-23 investigation).
+
+        The manifest-merger `tools:node="remove"` directive identifies
+        <uses-permission> nodes by their android:name and drops any
+        library-injected sibling with the same identifier from the
+        final merged manifest. The pattern is identical to F-19's
+        <uses-library> strip.
+
+        If a future edit legitimately needs one of these permissions,
+        DELETE the corresponding block below AND file the
+        justification in android/PERMISSIONS.md. Do not silently add
+        back — the release-build Gradle guard in
+        android/app/build.gradle also asserts these stay absent from
+        the merged output.
+
+        Individual justification for each strip:
+
+          1. DOWNLOAD_WITHOUT_NOTIFICATION (from react-native-blob-util)
+             lets the app trigger `DownloadManager.request(...)` with
+             the download progress hidden from the user. This is the
+             textbook silent-exfiltration capability. RKSK's only
+             DownloadManager caller is downloadFile() in
+             src/utils/helper.js, which calls
+             `ReactNativeBlobUtil.config({ useDownloadManager: true })`
+             WITHOUT `notification: false`, so the user always sees a
+             download-progress notification. The permission is dead
+             weight AND red-flagged by Play Console pre-launch
+             scanners.
+
+          2. RECEIVE_BOOT_COMPLETED (from androidx.work:work-runtime,
+             pulled in by react-native-maps) allows a BroadcastReceiver
+             to fire on device boot. WorkManager needs this ONLY on
+             API < 23 to reschedule pending jobs after reboot; on
+             API ≥ 23 it delegates to JobScheduler which persists
+             work items across reboots natively. RKSK's minSdkVersion
+             is 24, so the permission is unreachable on every runtime
+             the app supports. Retaining it would let any code path
+             (or supply-chain attacker) register a boot receiver that
+             starts the app at power-on with no user gesture — a
+             textbook auto-start persistence primitive.
+
+          3. USE_BIOMETRIC (from react-native-keychain) is required
+             only if the app uses `ACCESS_CONTROL.BIOMETRY_*` /
+             `BIOMETRY_ANY_OR_DEVICE_PASSCODE` when calling
+             Keychain.setInternetCredentials(...) or
+             Keychain.setGenericPassword(...). RKSK's Keychain wrapper
+             at src/utils/security/secureToken.js and
+             src/utils/security/encryptionKey.js was intentionally
+             simplified during F-04 to a passphrase-free / no-
+             access-control configuration (see the F-04 changelog),
+             so the biometric surface is unused. If a future edit
+             adds biometric-gated storage, restore this permission
+             AND update android/PERMISSIONS.md with the new access
+             pattern.
+
+          4. USE_FINGERPRINT (also from react-native-keychain) is the
+             pre-API-28 counterpart of USE_BIOMETRIC. Deprecated by
+             Android in API 28 (Pie). Even if biometric is
+             reintroduced later, USE_FINGERPRINT should stay off —
+             the BiometricPrompt API (available on our minSdk=24
+             via the AndroidX shim) works with just USE_BIOMETRIC.
+
+        See android/PERMISSIONS.md for the app-wide inventory.
+    -->
+    <uses-permission
+        android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.RECEIVE_BOOT_COMPLETED"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.USE_BIOMETRIC"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.USE_FINGERPRINT"
+        tools:node="remove" />
 
     <!--
         F-22 hardening: block BOTH backup / restore channels on all API
@@ -174,11 +296,73 @@
           android:required="false"
           tools:node="remove" />
 
-      <!-- Add this service for background actions -->
-        <service 
+      <!--
+          F-23 hardening — foreground-service classification.
+
+          `RNBackgroundActionsTask` is react-native-background-actions's
+          bundled Service class. It hosts the sync loop implemented in
+          src/utils/bgservices/backgroundService.js which:
+
+            1. Uploads offline-captured form data (ATP, Peer Educator,
+               Peer Brigade, Referral, Individual Referral) to the
+               backend when connectivity returns.
+            2. Downloads master data lists (peer educator list, brigade
+               list, IEC material, awareness videos, referral catalog)
+               so the app can operate offline.
+            3. Refreshes the user profile from the backend.
+
+          Every sync cycle updates a persistent notification with a
+          human-readable description of the current step
+          ("Syncing atp form data...", "Data sync completed ✅", etc.),
+          so the workload is always user-visible on API 26+ where
+          foreground-service notifications are non-dismissible.
+
+          Google's Android 14+ (API 34) foreground-service policy
+          requires the declared foregroundServiceType to match the
+          actual work. Per developer.android.com/about/versions/14/
+          changes/fgs-types-required and the Play Console policy
+          summary, "dataSync" is defined as:
+
+              "Data transfer operations, such as:
+               - Uploading or downloading data over the network
+               - Backup and restore operations
+               - Import or export operations
+               - Fetching data
+               - Local file processing
+               - Transferring data between a device and the cloud
+                 over a network."
+
+          RKSK's usage is a direct match for the "uploading/downloading
+          data over the network" and "transferring data between a
+          device and the cloud" subclauses — the workload is
+          user-initiated (background sync only runs when the user is
+          signed in and has captured offline data), operates over the
+          network, and produces observable UI state. It is NOT
+          location tracking, media playback, camera capture, or health
+          monitoring, so the more specialised foreground-service types
+          (`location`, `mediaPlayback`, `camera`, `microphone`,
+          `health`) do not apply.
+
+          Android 15 (API 35) introduces a 6-hour daily
+          `dataSync`/`mediaProcessing` quota. RKSK's sync cycles are
+          intermittent — the loop sleeps between passes and
+          terminates once no work remains (see the
+          `checkIfSyncPending()` -> `stopAllBackgroundServices()`
+          path in backgroundService.js) — so we are well under the
+          quota in practice. If future product changes turn the sync
+          loop into a persistent poller, revisit this justification
+          and consider switching to WorkManager's periodic
+          `WorkRequest` which is exempt from the quota.
+
+          The matching `<uses-permission
+          android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />`
+          declaration lives at the top of this manifest — API 34+
+          refuses to start the service if the permission is missing
+          for the declared type.
+      -->
+      <service
           android:name="com.asterinet.react.bgactions.RNBackgroundActionsTask"
-          android:foregroundServiceType="dataSync"
-        />
+          android:foregroundServiceType="dataSync" />
 
         <!--
             F-06 hardening: react-native-webview ships a FileProvider whose default

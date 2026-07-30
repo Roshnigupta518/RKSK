@@ -314,50 +314,79 @@ tasks.matching { it.name == "mergeReleaseAssets" }.configureEach { mergeTask ->
 }
 
 // -----------------------------------------------------------------------------
-// F-19 hardening: guarantee the vestigial `org.apache.http.legacy` uses-library
-// declaration (injected by com.google.android.gms:play-services-maps) is
-// actually gone from the final merged AndroidManifest.
+// Merged-manifest strip guards — release-only.
 //
-// AndroidManifest.xml carries a `tools:node="remove"` directive that instructs
-// the merger to drop the play-services-maps-injected node. But manifest-merger
-// rules quietly regress in three failure modes we need to catch:
+// Several findings excise permissions or <uses-library> declarations that
+// third-party AARs inject transitively. Each is handled in AndroidManifest.xml
+// by a `tools:node="remove"` directive that instructs the manifest-merger
+// to drop the library-injected sibling with the same identifier. That
+// directive can silently regress in three well-known modes:
 //
-//   1. A future play-services-maps version could rename the attribute or wrap
-//      the <uses-library> inside another element, which would make the merger's
-//      identifier-based match miss the removal.
-//   2. A NEW dependency (Firebase, GMS Analytics, ML Kit) could ship its own
-//      <uses-library android:name="org.apache.http.legacy"> declaration; the
-//      merger's `remove` node is scoped to the app's own manifest and does not
-//      apply to arbitrary numbers of injected copies.
-//   3. A developer diffing/porting the app manifest could delete the
-//      tools:node="remove" line by accident when reformatting.
+//   1. An upstream AAR could rename or wrap the injected node in a way that
+//      makes the merger's identifier-based match miss it.
+//   2. A NEW dependency (Firebase, GMS Analytics, ML Kit, etc.) could ship
+//      its own copy of the same node — the app's single removal rule still
+//      applies, but some merge modes preserve one copy from the highest-
+//      priority manifest.
+//   3. A developer could delete the `tools:node="remove"` block by accident
+//      during a manifest cleanup / reformat.
 //
-// This task runs after processReleaseManifest and greps the OUTPUT manifest for
-// the exact string. Any hit fails the release build with a diagnostic that
-// points back to android/APACHE_HTTP_LEGACY.md.
+// So we grep the OUTPUT of the merged-manifest tasks for each stripped
+// identifier and fail the release build if any of them reappears.
 //
-// We deliberately scope this to RELEASE builds. Debug builds regenerate the
-// merged manifest on every incremental change; running the guard there would
-// slow the inner-loop `./gradlew installDebug` cycle without any security
-// upside — attackers don't ship debug APKs.
-// -----------------------------------------------------------------------------
 // The task names differ between AGP variants:
 //   - AGP 7.x → `processReleaseManifest` (produces the merged manifest)
 //   - AGP 8+  → `processReleaseMainManifest` (renamed; same role) plus
 //               `processReleaseManifestForPackage` (a downstream step that
 //               strips build-only attributes and writes the copy that
 //               actually ships in the APK).
-// We hook BOTH the merged-manifest task and the packaged-manifest task so
-// we validate what leaves each step, and so a future AGP rename of the
-// merged task doesn't silently disable the guard (the packaged task
-// would still catch a regression).
-def f19ManifestTaskNames = [
+// We hook every variant so a future AGP rename doesn't silently disable
+// the guard and so we validate what leaves each step.
+//
+// Debug builds intentionally skip the guard — the inner-loop
+// `./gradlew installDebug` cycle should stay fast, and attackers don't
+// ship debug APKs.
+// -----------------------------------------------------------------------------
+def mergedManifestStripRegistry = [
+    [
+        finding : "F-19",
+        needle  : 'android:name="org.apache.http.legacy"',
+        subject : 'the vestigial org.apache.http.legacy <uses-library> node',
+        docRef  : 'android/APACHE_HTTP_LEGACY.md',
+    ],
+    [
+        finding : "F-23",
+        needle  : 'android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"',
+        subject : 'the DOWNLOAD_WITHOUT_NOTIFICATION permission (silent-download primitive from react-native-blob-util)',
+        docRef  : 'android/PERMISSIONS.md §DOWNLOAD_WITHOUT_NOTIFICATION',
+    ],
+    [
+        finding : "F-23",
+        needle  : 'android:name="android.permission.RECEIVE_BOOT_COMPLETED"',
+        subject : 'the RECEIVE_BOOT_COMPLETED permission (auto-start primitive from androidx.work)',
+        docRef  : 'android/PERMISSIONS.md §RECEIVE_BOOT_COMPLETED',
+    ],
+    [
+        finding : "F-23",
+        needle  : 'android:name="android.permission.USE_BIOMETRIC"',
+        subject : 'the USE_BIOMETRIC permission (unused — Keychain configured without biometric access control)',
+        docRef  : 'android/PERMISSIONS.md §USE_BIOMETRIC',
+    ],
+    [
+        finding : "F-23",
+        needle  : 'android:name="android.permission.USE_FINGERPRINT"',
+        subject : 'the USE_FINGERPRINT permission (deprecated on API 28+, unused by RKSK Keychain policy)',
+        docRef  : 'android/PERMISSIONS.md §USE_FINGERPRINT',
+    ],
+]
+
+def mergedManifestTaskNames = [
     "processReleaseManifest",
     "processReleaseMainManifest",
     "processReleaseManifestForPackage",
 ] as Set
 
-tasks.matching { f19ManifestTaskNames.contains(it.name) }
+tasks.matching { mergedManifestTaskNames.contains(it.name) }
     .configureEach { manifestTask ->
         manifestTask.doLast {
             // Use Gradle's declared outputs for THIS task run rather than
@@ -374,8 +403,9 @@ tasks.matching { f19ManifestTaskNames.contains(it.name) }
                 outputs = manifestTask.outputs.files.files
             } catch (Exception e) {
                 logger.warn(
-                    "[F-19] Could not read outputs of task ${manifestTask.name}: " +
-                    "${e.message}. Skipping guard check for this task."
+                    "[merged-manifest guard] Could not read outputs of " +
+                    "task ${manifestTask.name}: ${e.message}. Skipping " +
+                    "check for this task."
                 )
                 return
             }
@@ -402,24 +432,48 @@ tasks.matching { f19ManifestTaskNames.contains(it.name) }
                 return
             }
 
-            def offenders = manifestFiles.findAll { f ->
-                f.text.contains('android:name="org.apache.http.legacy"')
+            // Collect ALL violations in a single pass, then fail once with
+            // an aggregated diagnostic. This avoids the "fix one, hit the
+            // next" churn that comes from a fail-fast loop.
+            def violations = []
+            mergedManifestStripRegistry.each { entry ->
+                def offenders = manifestFiles.findAll { f ->
+                    f.text.contains(entry.needle)
+                }
+                if (!offenders.isEmpty()) {
+                    violations << [
+                        finding : entry.finding,
+                        subject : entry.subject,
+                        docRef  : entry.docRef,
+                        needle  : entry.needle,
+                        paths   : offenders.collect { it.absolutePath },
+                    ]
+                }
             }
-            if (!offenders.isEmpty()) {
-                def paths = offenders.collect { it.absolutePath }.join('\n    ')
-                throw new GradleException(
-                    "F-19: the vestigial org.apache.http.legacy <uses-library> " +
-                    "node is still present after ${manifestTask.name}:\n" +
-                    "    ${paths}\n" +
-                    "\n" +
-                    "This means the `tools:node=\"remove\"` directive in " +
-                    "android/app/src/main/AndroidManifest.xml is not matching " +
-                    "the library-injected node — most commonly because a new " +
-                    "AAR (Firebase / Play Services module / ML Kit) injects a " +
-                    "second copy that our single removal rule cannot address. " +
-                    "See android/APACHE_HTTP_LEGACY.md §Troubleshooting."
-                )
+            if (violations.isEmpty()) return
+
+            def report = new StringBuilder()
+            report.append(
+                "Merged-manifest strip regression detected in " +
+                "${manifestTask.name}. The following stripped identifiers " +
+                "are back in the final release manifest:\n\n"
+            )
+            violations.each { v ->
+                report.append("  ${v.finding}: ${v.subject}\n")
+                report.append("    needle: ${v.needle}\n")
+                v.paths.each { p -> report.append("    in:     ${p}\n") }
+                report.append("    fix:    see ${v.docRef}\n")
+                report.append("\n")
             }
+            report.append(
+                "Common cause: a new AAR (Firebase / Play Services / ML Kit / " +
+                "an RN module bump) injected a copy of the identifier that " +
+                "our single `tools:node=\"remove\"` in AndroidManifest.xml " +
+                "cannot address. Add a matching removal or update the " +
+                "documentation referenced above with the new threat-model " +
+                "rationale before shipping."
+            )
+            throw new GradleException(report.toString())
         }
     }
 

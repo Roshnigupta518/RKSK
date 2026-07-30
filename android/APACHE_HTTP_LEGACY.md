@@ -221,15 +221,24 @@ If ALL three end up empty on a future AGP release, the guard silently
 becomes a no-op. Verify by running:
 
 ```bash
-./gradlew :app:processReleaseMainManifest --info | grep -i 'F-19'
+./gradlew :app:processReleaseMainManifest --info | grep -i 'merged-manifest guard\|Merged-manifest strip'
 ```
 
 and expect either a passed run with no warning, or an explicit warning
-of the form `[F-19] Could not read outputs of task <name>`. If you
-see the warning, extend the `f19ManifestTaskNames` set in
+of the form `[merged-manifest guard] Could not read outputs of task <name>`.
+If you see the warning, extend the `mergedManifestTaskNames` set in
 `android/app/build.gradle` to include the new task name, or fall
 back to `fileTree(project.layout.buildDirectory.dir("intermediates/<agp-path>"))`
 with a task-specific subdirectory.
+
+> **Note (F-23 refactor):** the guard block was generalised when F-23
+> added four more stripped identifiers (`DOWNLOAD_WITHOUT_NOTIFICATION`,
+> `RECEIVE_BOOT_COMPLETED`, `USE_BIOMETRIC`, `USE_FINGERPRINT`). The
+> current implementation iterates over `mergedManifestStripRegistry` and
+> aggregates violations, so a single build run reports every regression
+> at once. To add a new stripped identifier, append an entry to that
+> list rather than duplicating the walk. See `android/PERMISSIONS.md`
+> for the full permission inventory.
 
 ### 5.4 The guard flags stale files from a previous build
 
