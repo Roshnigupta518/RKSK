@@ -2,22 +2,36 @@
 /* eslint-disable no-console */
 
 /**
- * Security denylist check.
+ * Security & supply-chain postinstall check.
  *
- * Fails the install with a non-zero exit code if package.json references
- * any package that the security review has explicitly forbidden. Runs
- * from the `postinstall` npm script so it catches:
+ * Fails the install with a non-zero exit code if:
+ *
+ *   1. package.json references any package that the security review has
+ *      explicitly forbidden (F-12 denylist).
+ *
+ *   2. The @react-native/* family of packages has drifted out of
+ *      alignment with the react-native core version (F-16 drift guard).
+ *      RN's inter-package coupling is tight: `@react-native/babel-preset`,
+ *      `@react-native/metro-config`, `@react-native/eslint-config`, and
+ *      `@react-native/typescript-config` MUST share the same version as
+ *      `react-native` itself, or Metro / codegen / TypeScript will
+ *      silently do the wrong thing.
+ *
+ * Runs from the `postinstall` npm script so it catches:
  *
  *   - a fresh `npm ci` on CI,
- *   - `npm install <package>` on a dev machine, and
- *   - a `git pull` that reintroduced a banned entry into package.json.
+ *   - `npm install <package>` on a dev machine,
+ *   - a `git pull` that reintroduced a banned entry into package.json, and
+ *   - a Dependabot PR that bumped `react-native` without also bumping
+ *     the @react-native/* peers (Dependabot's grouped-updates config in
+ *     .github/dependabot.yml is the belt; this check is the braces).
  *
- * The corresponding native-side belt-and-braces defense lives in
- * `react-native.config.js` under the `dependencies` block, which
- * short-circuits React Native autolinking for the same package list.
- * Keep the two in sync — every entry here needs a matching entry there.
+ * The native-side denylist companion lives in `react-native.config.js`
+ * under the `dependencies` block. Keep the two in sync — every entry
+ * in DENYLIST here needs a matching entry there.
  *
- * See android/NATIVE_MODULES.md for the rationale behind each entry.
+ * See android/NATIVE_MODULES.md (F-12) and android/DEPENDENCIES.md
+ * (F-16) for the rationale.
  */
 
 const fs = require('fs');
@@ -63,19 +77,65 @@ function collectDeclaredDeps(pkg) {
     };
 }
 
-function main() {
-    const pkg = readPkg();
-    const declared = collectDeclaredDeps(pkg);
+// -----------------------------------------------------------------------------
+// F-16: React Native family version-drift guard.
+//
+// These packages MUST all be pinned to the exact same version as
+// `react-native`. A drift means Metro compiles JS against one API surface
+// while the native runtime expects another — Metro / codegen bugs surface
+// as unrelated runtime crashes on device, and the diagnostic path from
+// "app crashes on startup" back to "@react-native/babel-preset was 0.81.4
+// while react-native was 0.81.5" is painful. Fail fast at install time.
+//
+// Some `@react-native/*` packages are on independent version tracks and
+// are intentionally NOT gated by this check:
+//   - @react-native/new-app-screen  — a dev-time sample screen, safe to drift
+//   - Any future scoped package not in the alignment list below.
+// -----------------------------------------------------------------------------
+const REACT_NATIVE_ALIGNED_PACKAGES = [
+    '@react-native/babel-preset',
+    '@react-native/eslint-config',
+    '@react-native/metro-config',
+    '@react-native/typescript-config',
+    '@react-native/new-app-screen',
+];
 
-    const hits = DENYLIST.filter((entry) =>
-        Object.prototype.hasOwnProperty.call(declared, entry.name),
-    );
+// Strip semver range prefixes (`^`, `~`, `>=`, `>`, `<=`, `<`, `=`) so a
+// developer using `~0.81.4` doesn't trip the check just because of the
+// prefix character. We compare the resolved base version — the number.
+function stripRangePrefix(spec) {
+    if (typeof spec !== 'string') return spec;
+    return spec.replace(/^[\^~=<>]+/, '').trim();
+}
 
-    if (hits.length === 0) {
-        // Silent success — keeps install output uncluttered.
-        return;
+function checkReactNativeAlignment(declared) {
+    const rnSpec = declared['react-native'];
+    if (!rnSpec) {
+        // No react-native declared? Weird, but not this script's problem.
+        return [];
     }
 
+    const rnVersion = stripRangePrefix(rnSpec);
+    const drift = [];
+
+    for (const pkgName of REACT_NATIVE_ALIGNED_PACKAGES) {
+        const peerSpec = declared[pkgName];
+        if (!peerSpec) continue; // package not used — fine, skip
+
+        const peerVersion = stripRangePrefix(peerSpec);
+        if (peerVersion !== rnVersion) {
+            drift.push({
+                name: pkgName,
+                declared: peerSpec,
+                expected: rnVersion,
+            });
+        }
+    }
+
+    return drift;
+}
+
+function reportDenylistHits(hits) {
     console.error('');
     console.error(
         '\x1b[31m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m',
@@ -106,6 +166,77 @@ function main() {
     );
     console.error('policy on adding or removing native modules.');
     console.error('');
+}
+
+function reportRnDrift(drift, rnVersion) {
+    console.error('');
+    console.error(
+        '\x1b[31m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m',
+    );
+    console.error(
+        '\x1b[31m║ REACT NATIVE FAMILY VERSION DRIFT — install aborted (F-16)           ║\x1b[0m',
+    );
+    console.error(
+        '\x1b[31m╚══════════════════════════════════════════════════════════════════════╝\x1b[0m',
+    );
+    console.error('');
+    console.error(
+        `\`react-native\` is declared at ${rnVersion}, but the following peer`,
+    );
+    console.error(
+        'packages that must move in lockstep with it are out of alignment:',
+    );
+    console.error('');
+    for (const d of drift) {
+        console.error(
+            `  ✗ ${d.name}   declared: ${d.declared}   expected: ${d.expected}`,
+        );
+    }
+    console.error('');
+    console.error(
+        'Align every entry above to match the react-native version, then rerun',
+    );
+    console.error(
+        '`npm install`. If you are intentionally bumping RN, do it as a single',
+    );
+    console.error(
+        'commit that touches ALL of these entries plus @react-native-community/cli-*.',
+    );
+    console.error(
+        'See android/DEPENDENCIES.md §3 for the RN upgrade playbook.',
+    );
+    console.error('');
+}
+
+function main() {
+    const pkg = readPkg();
+    const declared = collectDeclaredDeps(pkg);
+
+    // ------------------------------------------------------------------
+    // Check 1 (F-12): denylist violations.
+    // ------------------------------------------------------------------
+    const denylistHits = DENYLIST.filter((entry) =>
+        Object.prototype.hasOwnProperty.call(declared, entry.name),
+    );
+
+    // ------------------------------------------------------------------
+    // Check 2 (F-16): React Native family alignment.
+    // ------------------------------------------------------------------
+    const rnDrift = checkReactNativeAlignment(declared);
+
+    if (denylistHits.length === 0 && rnDrift.length === 0) {
+        // Silent success — keeps install output uncluttered.
+        return;
+    }
+
+    // Report BOTH failure classes if both fire, then exit non-zero. This
+    // avoids the "fix one, run install, discover the other" churn.
+    if (denylistHits.length > 0) {
+        reportDenylistHits(denylistHits);
+    }
+    if (rnDrift.length > 0) {
+        reportRnDrift(rnDrift, stripRangePrefix(declared['react-native']));
+    }
 
     process.exit(1);
 }

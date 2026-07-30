@@ -9,7 +9,11 @@
     "start": "react-native start",
     "test": "jest",
     "postinstall": "node scripts/security-denylist.js && patch-package",
-    "security:denylist": "node scripts/security-denylist.js"
+    "security:denylist": "node scripts/security-denylist.js",
+    "deps:audit": "npm audit --omit=dev --audit-level=moderate",
+    "deps:audit:full": "npm audit --audit-level=low",
+    "deps:outdated": "npm outdated --long || true",
+    "deps:check": "npm run deps:outdated && npm run deps:audit"
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.8",
@@ -71,9 +75,9 @@
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",
     "@react-native-community/cli": "^20.1.2",
-    "@react-native-community/cli-platform-android": "20.0.0",
+    "@react-native-community/cli-platform-android": "^20.1.2",
     "@react-native-community/cli-platform-ios": "^20.1.2",
-    "@react-native/babel-preset": "0.81.4",
+    "@react-native/babel-preset": "0.81.7",
     "@react-native/eslint-config": "0.81.4",
     "@react-native/metro-config": "0.81.4",
     "@react-native/typescript-config": "0.81.4",

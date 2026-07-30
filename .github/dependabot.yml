@@ -1,0 +1,150 @@
+# =============================================================================
+# Dependabot configuration for RKSK (F-16 hardening)
+# =============================================================================
+#
+# Purpose:
+#   The audit finding F-16 flags `react-native` being pinned to an exact
+#   point release (`0.81.4`) without any process to notice patch drops.
+#   The RN team explicitly recommends exact pinning (RN's inter-package
+#   version coupling is tighter than a typical library), so the fix is
+#   NOT to loosen the pin — it is to add an automated process that
+#   PROPOSES a bump the moment a patch or minor version is published.
+#
+#   Dependabot then produces reviewable PRs that a human can merge (or
+#   defer) after eyeballing the changelog. The RN core exact pin stays
+#   authoritative; drift becomes visible instead of silent.
+#
+# What this file wires up:
+#   1. npm ecosystem check for `package.json` — weekly cadence, grouped
+#      so all React-Native-family packages arrive in a SINGLE PR (not 8
+#      scattered ones), matching how the RN team ships releases.
+#   2. Security updates are enabled ALWAYS (Dependabot files security
+#      PRs on advisories regardless of the weekly schedule).
+#   3. GitHub Actions ecosystem check for any future workflow files.
+#
+# When to override:
+#   - If a Dependabot PR proposes a MINOR RN bump (e.g. 0.81.x → 0.82.x),
+#     read android/DEPENDENCIES.md §3 before merging. Minor bumps carry
+#     breaking changes and require a full regression pass.
+#   - If a Dependabot PR proposes a MAJOR jump in any transitive
+#     dependency, treat it as a full sprint task (not a routine merge).
+#
+# Docs: https://docs.github.com/code-security/dependabot
+# =============================================================================
+version: 2
+updates:
+  # ---------------------------------------------------------------------------
+  # npm — the React Native + JS dependency surface
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 8
+    versioning-strategy: "increase-if-necessary"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps(dev)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "auto-generated"
+
+    # Group related packages so one PR = one intended change, instead of
+    # eight PRs that must all merge together to compile.
+    groups:
+      # React Native core + first-party @react-native/* packages MUST
+      # move together. When RN 0.81.5 drops, so do @react-native/babel-preset,
+      # @react-native/gradle-plugin, @react-native/metro-config, etc. A PR
+      # that bumps `react-native` alone (or any @react-native/* alone) is
+      # guaranteed to fail Metro / codegen.
+      react-native-core:
+        patterns:
+          - "react-native"
+          - "@react-native/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # @react-native-community/cli-* also moves as one — the platform
+      # sub-packages depend on the top-level CLI at a matching version.
+      react-native-cli:
+        patterns:
+          - "@react-native-community/cli"
+          - "@react-native-community/cli-*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # React Navigation moves as a family too — @react-navigation/native,
+      # -stack, -drawer, -bottom-tabs all interlock.
+      react-navigation:
+        patterns:
+          - "@react-navigation/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Redux Toolkit + related state-mgmt libs.
+      redux-family:
+        patterns:
+          - "@reduxjs/*"
+          - "redux"
+          - "redux-*"
+          - "react-redux"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Babel toolchain — @babel/core, preset-env, runtime, plugins.
+      babel-toolchain:
+        patterns:
+          - "@babel/*"
+          - "babel-*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Types packages — @types/react, @types/jest, etc.
+      types:
+        patterns:
+          - "@types/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Everything else that only shifts by patch — auto-groupable.
+      other-patches:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+
+    # Do NOT auto-bump versions that F-12's security-denylist forbids.
+    # Dependabot doesn't know about that gate; ignoring here prevents
+    # the postinstall hook from failing every Dependabot PR.
+    ignore:
+      - dependency-name: "react-native-send-intent"
+
+  # ---------------------------------------------------------------------------
+  # GitHub Actions — placeholder for the day CI is wired up
+  # ---------------------------------------------------------------------------
+  # No workflows live in `.github/workflows/` yet, but declaring this
+  # ecosystem keeps Dependabot ready. It's a no-op until a workflow is
+  # added, so there's no reason to comment it out.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Asia/Kolkata"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "ci"
+      - "auto-generated"
