@@ -3,13 +3,87 @@
     package="com.rkskmp">
 
     <uses-permission android:name="android.permission.INTERNET" />
-     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!--
+        F-14 hardening: legacy shared-storage permissions are scoped to the API
+        range where they actually grant something. Publishing them unbounded
+        surfaces a scary "modify or delete your storage" grant in the OS
+        permission list on modern devices, and gets flagged by the Play
+        Console pre-launch report as an unjustified sensitive permission
+        even though on API 30+ the OS silently ignores them.
+
+        Attack surface being closed:
+          * API 19-28: WRITE_EXTERNAL_STORAGE grants write access to the
+            ENTIRE `/sdcard/*` (every other app's shared files, DCIM,
+            Downloads, Pictures, etc.) — enormously broader than the app's
+            single "save downloaded PDF to Downloads" use case.
+          * API 29+ : WRITE_EXTERNAL_STORAGE is a no-op for user files but
+            still appears on the permission grant screen, degrading trust.
+          * API 33+ : READ_EXTERNAL_STORAGE is superseded by the per-media
+            READ_MEDIA_* permissions and has no effect.
+
+        Why `tools:replace="android:maxSdkVersion"` is REQUIRED:
+        Two transitive React Native libraries declare these permissions in
+        their own AndroidManifest.xml WITHOUT a maxSdkVersion:
+            node_modules/react-native-blob-util/android/src/main/AndroidManifest.xml
+                <uses-permission WRITE_EXTERNAL_STORAGE />
+                <uses-permission READ_EXTERNAL_STORAGE />
+            node_modules/react-native-fs/android/src/main/AndroidManifest.xml
+                <uses-permission WRITE_EXTERNAL_STORAGE />
+        Without the marker, AGP's manifest merger keeps the library
+        declaration (un-bounded) and drops our maxSdkVersion, silently
+        defeating the fix. `tools:replace` forces our attribute to win.
+        See https://developer.android.com/build/manage-manifests#markers
+
+        Functional impact:
+          * downloadFile() in src/utils/helper.js uses ReactNativeBlobUtil
+            with `useDownloadManager: true`, i.e. it delegates writes to
+            Android's system DownloadManager service. From API 29+ that
+            service places files in public Downloads WITHOUT requiring
+            the app to hold WRITE_EXTERNAL_STORAGE.
+          * All app-internal file I/O (RNFS.stat on picker output,
+            image / video compression cache) targets app-private paths
+            (getExternalFilesDir / cacheDir), which never require these
+            permissions on API 19+.
+    -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"
+        tools:replace="android:maxSdkVersion" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"
+        tools:replace="android:maxSdkVersion" />
+
+    <!--
+        F-14 hardening: modern per-media read permissions (API 33+).
+
+        These MUST be declared because src/route/index.js requests them at
+        runtime for API 33+ devices:
+
+            Platform.Version >= 33
+              ? [ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION,
+                 READ_EXTERNAL_STORAGE,       // scoped to <=32 by manifest
+                 READ_MEDIA_IMAGES,           // declared below
+                 READ_MEDIA_VIDEO,            // declared below
+                 CAMERA]
+
+        Prior to F-14 both READ_MEDIA_* were commented out of the manifest,
+        so on Android 13+ devices the runtime `PermissionsAndroid.request(
+        READ_MEDIA_IMAGES)` call was silently auto-denied by the OS (an
+        app cannot request a runtime permission it did not declare) and
+        image-picker gallery reads relied on the fallback ACTION_GET_CONTENT
+        path.
+
+        READ_MEDIA_AUDIO is intentionally NOT declared — the app has no
+        audio-file read use case, and adding it would enlarge the grant
+        surface without justification.
+    -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> -->
 
     <!-- For background services permission -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
