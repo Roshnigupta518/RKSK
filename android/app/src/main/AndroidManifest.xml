@@ -102,6 +102,53 @@
       android:networkSecurityConfig="@xml/network_security_config"
       android:supportsRtl="true">
 
+      <!--
+          F-19 hardening: strip the vestigial org.apache.http.legacy declaration.
+
+          `com.google.android.gms:play-services-maps:19.1.0` (transitively pulled
+          in by react-native-maps) injects the following into its own AAR's
+          AndroidManifest.xml at line 33:
+
+              <uses-library android:name="org.apache.http.legacy"
+                            android:required="false" />
+
+          The manifest merger then propagates it into the app's final manifest
+          under <application>. That declaration exists purely as a compat
+          safety-net for consumers on very old Play Services versions that
+          still had code paths reaching `org.apache.http.HttpClient`; Maps SDK
+          runtime has been on OkHttp / HttpURLConnection since v18+ and does
+          not actually reach into the legacy library.
+
+          Leaving it in has real cost:
+             1. `org.apache.http.legacy.jar` shipped by AOSP is Apache
+                HttpClient 4.x code frozen circa 2013–2015 and has multiple
+                unpatched CVEs (CVE-2014-3577 hostname bypass, CVE-2015-5262
+                TLS MitM, CVE-2020-13956 URI parsing) that will never be
+                back-ported because the artefact is unmaintained.
+             2. It signals to security scanners (MobSF, AppSweep, Play Console
+                pre-launch) that legacy HTTP is available to the app.
+             3. It expands the trusted classpath — any dependency, or an
+                attacker who lands reflective code, can invoke
+                `org.apache.http.*` classes with weak TLS defaults.
+
+          RKSK's own Java/Kotlin surface and every react-native module we ship
+          are verified free of `org.apache.http.*` imports (see
+          android/APACHE_HTTP_LEGACY.md §Verification). We therefore instruct
+          the manifest merger to REMOVE the play-services-maps-injected node
+          via `tools:node="remove"`. The `android:name` value must match the
+          library's declaration verbatim — the merger identifies uses-library
+          nodes by their `android:name` and the removal only fires on an
+          exact match.
+
+          If a future dependency legitimately needs Apache HTTP, we must first
+          replace it with a maintained client (OkHttp, ktor, Retrofit),
+          not restore this node.
+      -->
+      <uses-library
+          android:name="org.apache.http.legacy"
+          android:required="false"
+          tools:node="remove" />
+
       <!-- Add this service for background actions -->
         <service 
           android:name="com.asterinet.react.bgactions.RNBackgroundActionsTask"
