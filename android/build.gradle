@@ -212,3 +212,76 @@ gradle.projectsEvaluated {
         }
     }
 }
+
+// -----------------------------------------------------------------------------
+// F-24 hardening: propagate -ffile-prefix-map to EVERY Android library
+// subproject's NDK build.
+//
+// The app-level flags in android/app/build.gradle only cover :app's own C++
+// compile output (libappmodules.so). React Native autolinked native modules
+// live in their OWN subprojects — :react-native-worklets, :react-native-
+// screens, :react-native-gesture-handler, :react-native-reanimated, etc. —
+// and each has its own AGP config + CMake invocation, so app-level cFlags
+// don't reach them.
+//
+// The F-24 release-build guard confirmed this on 2026-07-31: 8 of the 10
+// leaking .so files were library subprojects (libworklets.so, librnscreens.so,
+// libgesturehandler.so, libreanimated.so — both arm64-v8a + armeabi-v7a),
+// with paths like:
+//
+//     lambda at /Users/Geeta/Desktop/NHM/rksk/node_modules/react-native-worklets/...
+//     lambda at /Users/Geeta/Library/Android/sdk/ndk/27.1.12297006/toolchains/...
+//
+// This block adds the SAME three -ffile-prefix-map rules used by :app to
+// every Android library subproject's defaultConfig.externalNativeBuild.cmake
+// so all module CMake builds get consistent path hygiene.
+//
+// Ordering is critical (see android/app/build.gradle for the detailed
+// rationale): Clang's -ffile-prefix-map uses LAST-match-wins, so we declare
+// broadest → narrowest. If reordered, project-tree paths would be swallowed
+// by the broadest rule and lose their `/rksk/` prefix, or worse, produce a
+// destination string that itself matches a leak needle.
+//
+// We use `subproject.plugins.withType(...)` (Gradle's fully lazy plugin-
+// application listener) rather than `afterEvaluate { }`. This avoids the
+// "Cannot run Project.afterEvaluate(Closure) when the project is already
+// evaluated" trap that F-10 hit during CycloneDX integration — some RN
+// autolinked modules finish evaluating before this root block runs, and
+// `afterEvaluate` on an already-evaluated project throws.
+//
+// The DSL methods `cFlags(...)` / `cppFlags(...)` are additive — they
+// APPEND to whatever the library already declared. We do NOT overwrite
+// module-specific flags (e.g. -DNDEBUG, worklets' own -DHAS_ATOMIC),
+// only inject our hygiene tokens.
+//
+// The propagation applies to ALL variants (debug + release) because
+// keeping debug builds hygiene-clean is defence-in-depth against
+// accidentally-shipped debug APKs (via sideload, an internal beta
+// channel misconfiguration, or CI mishap). Compile-time impact is
+// negligible: three additional Clang args per compilation unit.
+// -----------------------------------------------------------------------------
+subprojects { subproject ->
+    subproject.plugins.withId('com.android.library') {
+        def homeDir = System.getProperty("user.home")
+        def gradleUserHome = "${homeDir}/.gradle"
+        def projectRoot = rootProject.projectDir.absolutePath
+        // Broadest FIRST, narrowest LAST — Clang last-wins semantics.
+        def pathHygieneFlags = [
+            "-ffile-prefix-map=${homeDir}=/build-home",
+            "-ffile-prefix-map=${gradleUserHome}=/gradle-cache",
+            "-ffile-prefix-map=${projectRoot}=/rksk",
+        ]
+        subproject.android {
+            defaultConfig {
+                externalNativeBuild {
+                    cmake {
+                        pathHygieneFlags.each { flag ->
+                            cFlags flag
+                            cppFlags flag
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

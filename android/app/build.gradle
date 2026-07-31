@@ -119,6 +119,145 @@ android {
         // render until the real key is supplied). See android/SECRETS.md.
         def googleMapsApiKey = project.findProperty('GOOGLE_MAPS_API_KEY') ?: 'MISSING_GOOGLE_MAPS_API_KEY'
         manifestPlaceholders = [GOOGLE_MAPS_API_KEY: googleMapsApiKey]
+
+        // ---------------------------------------------------------------------
+        // F-24 hardening: sanitize embedded absolute paths in native (.so) libs.
+        //
+        // Prior to this fix, `libappmodules.so` (the C++ library the app's own
+        // Gradle build produces from codegen-emitted TurboModule glue) shipped
+        // strings like:
+        //
+        //   /Users/Geeta/.gradle/caches/8.14.3/transforms/6ab28e5d...
+        //       /transformed/react-android-0.81.4-release/prefab/modules/
+        //       reactnative/include/react/renderer/core/propsConversions.h
+        //
+        // in its .rodata section. Root cause: the `propsConversions.h` header
+        // (part of the react-android prefab package that ships with RN) uses
+        // the `__FILE__` preprocessor macro inside an inline error/log macro.
+        // When our compilation of a codegen .cpp file #includes that header
+        // via `-I <prefab path>`, clang expands `__FILE__` to the absolute
+        // path of the header AS IT WAS FOUND. That absolute path — including
+        // developer username, home directory, Gradle version, cache
+        // transform hash, and RN version — then gets baked into the binary
+        // as a plain-text string literal.
+        //
+        // AGP does strip DWARF debug sections during packaging (that's why
+        // the packaged .so is ~1.4MB vs ~30MB in intermediates), but strip
+        // does NOT touch .rodata. Path leaks in .rodata can only be
+        // *prevented* at compile time, not removed afterward.
+        //
+        // Attack surface being closed:
+        //   * Attribution / doxxing: an attacker with the release APK can
+        //     unzip lib/arm64-v8a/*.so, run `strings`, and immediately
+        //     learn the developer's OS username and home-directory layout.
+        //   * Reconnaissance: the leak also exposes the exact Gradle
+        //     version, React Native version, and the Gradle cache
+        //     transform hash — enough to reproduce our build environment
+        //     for targeted exploit work.
+        //   * Play Console pre-launch review flag: multiple app-store
+        //     scanners (MobSF, Ostorlab, NowSecure) flag `/Users/`,
+        //     `/home/`, or hostname strings in native libraries as
+        //     "sensitive data hardcoded in binaries."
+        //
+        // Fix: use Clang's `-ffile-prefix-map=SRC=DST` compile flag. Per
+        // https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-ffile-prefix-map
+        // this remaps every path Clang emits — `__FILE__` expansions,
+        // `__builtin_FILE()` calls, DWARF DW_AT_comp_dir, DW_AT_decl_file,
+        // and assertion strings — from SRC to DST. It supersedes and
+        // implies both `-fdebug-prefix-map` and `-fmacro-prefix-map`.
+        //
+        // *** ORDERING (CRITICAL) ***
+        // Per Clang docs: "When multiple -ffile-prefix-map options are
+        // given, later ones take precedence." So when a path could
+        // match more than one rule, the LAST-declared matching rule
+        // wins. We therefore declare from BROADEST to NARROWEST:
+        //
+        //   1. FIRST: System.getProperty("user.home")  →  /build-home
+        //        Catch-all for any path under the developer's home
+        //        directory that isn't covered by a narrower rule
+        //        below — the NDK toolchain (`~/Library/Android/sdk/
+        //        ndk/…` on macOS), Yarn global cache, npm _prebuilt
+        //        cache, and so on. Destination is `/build-home` (NOT
+        //        `/home` — the leading `/home/` substring would
+        //        itself trip the F-24 release-build guard, producing
+        //        a false-positive rewrite report).
+        //
+        //   2. SECOND: <homeDir>/.gradle  →  /gradle-cache
+        //        Covers `~/.gradle/caches/**` — the prefab-transform
+        //        directory that caused the original propsConversions.h
+        //        leak. Wins over rule 1 for anything under `.gradle`.
+        //
+        //   3. THIRD (last): rootProject.projectDir  →  /rksk
+        //        Covers `node_modules/**`, `android/**`, and app-
+        //        specific source paths. Wins over rules 1 and 2 for
+        //        any project-tree path. Because our repo is checked
+        //        out under `<homeDir>/Desktop/NHM/rksk`, without this
+        //        rule EVERY project file would get rewritten to
+        //        `/build-home/Desktop/NHM/rksk/…`, which is
+        //        technically leak-free but loses the readable
+        //        `/rksk/…` prefix that makes crash-stack analysis
+        //        easier.
+        //
+        // Verified against the F-24 release-build guard output from
+        // 2026-07-31: the ORIGINAL ordering (rksk / gradle-cache /
+        // home) failed because clang's last-wins meant every project
+        // path got rewritten to `/home/Desktop/NHM/rksk/...`, which
+        // (a) leaked the project subdirectory structure past the
+        // remap boundary and (b) tripped the guard on `/home/`.
+        // Reordering to (home / gradle-cache / rksk) resolves both.
+        //
+        // These flags apply to EVERY C/C++ compilation unit AGP feeds
+        // into the CMake build for this app, including autolinked RN
+        // modules that don't set their own hygiene (react-native-*
+        // modules generally don't). AGP appends these to CMAKE_C_FLAGS
+        // / CMAKE_CXX_FLAGS after any per-module defaults, so specific
+        // library CMakeLists.txt files cannot silently override them.
+        //
+        // We also add the equivalent to release build type (see
+        // buildTypes.release below) to defeat any per-variant flag
+        // override. Applying at BOTH defaultConfig and buildTypes.release
+        // is belt-and-braces; either alone would work for the current
+        // AGP version, but AGP flag-application order has shifted
+        // twice in the 7.x → 8.x range and we want the guard to be
+        // regression-proof.
+        //
+        // Debug builds also benefit: no path leaks in debug .so files
+        // means an accidentally-shipped debug APK (via sideload,
+        // internal beta channel, or an CI misconfiguration) doesn't
+        // regress the fix. Debuggability isn't affected — the source
+        // file names inside `/rksk/`, `/gradle-cache/`, etc. remain
+        // intelligible, and IDE source-mapping still works because
+        // IDE-time symbol lookup uses DWARF DW_AT_comp_dir which we
+        // remap to `/rksk` (the IDE knows the actual project root
+        // from its own workspace configuration).
+        //
+        // NDK compatibility: `-ffile-prefix-map` is Clang-only, needs
+        // Clang 10+ (macro remap) and 6+ (debug remap). NDK r21+ ships
+        // Clang 9+ with all three, and NDK r23+ ships Clang 12+. RKSK
+        // pins NDK r27 (Clang 18), so all three flags are supported.
+        //
+        // See android/NATIVE_PATH_HYGIENE.md for verification recipes
+        // and the release-build guard that enforces the fix.
+        // ---------------------------------------------------------------------
+        externalNativeBuild {
+            cmake {
+                def prefixMap = { src, dst -> "-ffile-prefix-map=${src}=${dst}" }
+                def homeDir = System.getProperty("user.home")
+                def gradleUserHome = "${homeDir}/.gradle"
+                def projectRoot = rootProject.projectDir.absolutePath
+                // Broadest FIRST, narrowest LAST — see ordering comment above.
+                // Clang's last-wins semantics mean rule ordering is inverted
+                // vs. the natural "specific-first" intuition.
+                def pathHygieneFlags = [
+                    prefixMap(homeDir, "/build-home"),
+                    prefixMap(gradleUserHome, "/gradle-cache"),
+                    prefixMap(projectRoot, "/rksk"),
+                ].join(" ")
+
+                cFlags   pathHygieneFlags
+                cppFlags pathHygieneFlags
+            }
+        }
     }
     // -------------------------------------------------------------------------
     // ABI splitting policy
@@ -251,6 +390,40 @@ android {
             shrinkResources enableProguardInReleaseBuilds
 
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+
+            // F-24 belt-and-braces: repeat the -ffile-prefix-map flags at the
+            // release-buildType level. The identical flags are already set at
+            // defaultConfig scope above, but AGP's flag-application order has
+            // shifted twice in the 7.x → 8.x range (see AGP release notes for
+            // 7.4.0 and 8.1.0 on `externalNativeBuild` inheritance). Duplicating
+            // at buildType scope ensures a future AGP behaviour change that
+            // silently drops defaultConfig flags for release variants (or a
+            // future RN Gradle plugin release that overrides them) does not
+            // regress F-24. Clang deduplicates identical flags silently, so
+            // there is zero runtime or build-time cost to the redundancy.
+            //
+            // Debug builds intentionally do NOT get this second application —
+            // if a future change breaks path hygiene for debug, we want that
+            // caught by the release-build guard (see the mergeReleaseNativeLibs
+            // hook further down) rather than masked by defense-in-depth.
+            externalNativeBuild {
+                cmake {
+                    def homeDir = System.getProperty("user.home")
+                    def gradleUserHome = "${homeDir}/.gradle"
+                    def projectRoot = rootProject.projectDir.absolutePath
+                    // See defaultConfig block above for the ordering rationale
+                    // — broadest FIRST, narrowest LAST because Clang's
+                    // -ffile-prefix-map uses last-wins semantics.
+                    def pathHygieneFlags = [
+                        "-ffile-prefix-map=${homeDir}=/build-home",
+                        "-ffile-prefix-map=${gradleUserHome}=/gradle-cache",
+                        "-ffile-prefix-map=${projectRoot}=/rksk",
+                    ].join(" ")
+
+                    cFlags   pathHygieneFlags
+                    cppFlags pathHygieneFlags
+                }
+            }
         }
     }
 }
@@ -472,6 +645,246 @@ tasks.matching { mergedManifestTaskNames.contains(it.name) }
                 "cannot address. Add a matching removal or update the " +
                 "documentation referenced above with the new threat-model " +
                 "rationale before shipping."
+            )
+            throw new GradleException(report.toString())
+        }
+    }
+
+// -----------------------------------------------------------------------------
+// F-24 hardening: reject release .so files that leak developer paths/usernames.
+//
+// The `-ffile-prefix-map` flags in defaultConfig + buildTypes.release above are
+// the *prevention* layer — they stop absolute build-machine paths from ever
+// being embedded in a .so file during compilation. This guard is the
+// *detection* layer — it opens every .so file that AGP is about to package
+// into the release APK/AAB and greps the raw byte stream for a curated set of
+// leak indicators. Any hit fails the release build.
+//
+// Why we need BOTH layers:
+//   * A future NDK/Clang version could remove or rename -ffile-prefix-map
+//     (unlikely — the flag is standardised across GCC and Clang) and
+//     silently allow paths to leak again.
+//   * A prebuilt .so shipped by an RN module's AAR (react-native-video's
+//     ExoPlayer JNI, react-native-vision-camera's frame processor, etc.)
+//     bypasses our compile flags entirely because we don't recompile it —
+//     we just copy it into `lib/*` at package time. The only way to catch
+//     leaks in prebuilts is to scan the final packaged bytes.
+//   * A future developer could clone the repo to a path that clang's
+//     prefix-map heuristics don't fully cover (e.g. through a symlink,
+//     or under a case-normalised container filesystem) and reintroduce
+//     the leak without noticing.
+//
+// The scan is intentionally string-literal-based and non-heuristic. It looks
+// for known-bad substrings that unambiguously indicate an absolute local
+// path (`/Users/`, `/home/`, `/Volumes/`, `C:\Users\`) plus two runtime-
+// derived tokens (the current user's OS username and $HOME) that catch the
+// case where an attacker on the same CI runner as us could otherwise blend
+// in. False positives are extremely unlikely because these tokens don't
+// occur in legitimate native code, symbol names, RTTI, or JNI signatures.
+//
+// Cost: a full scan of ~20MB of .so files across 4 ABI directories takes
+// under one second even on modest CI hardware. The task is wired into
+// `mergeReleaseNativeLibs` (the AGP task that assembles the final .so tree
+// before packaging) so it runs exactly once per release build and its
+// up-to-date check works via that task's outputs.
+//
+// Scoped to RELEASE only. Debug builds keep paths for local stack-trace
+// analysis, and the inner-loop `installDebug` cycle stays fast.
+// -----------------------------------------------------------------------------
+tasks.matching { it.name == "mergeReleaseNativeLibs" }
+    .configureEach { mergeNativeTask ->
+        mergeNativeTask.doLast {
+            def outputs
+            try {
+                outputs = mergeNativeTask.outputs.files.files
+            } catch (Exception e) {
+                logger.warn(
+                    "[F-24] Could not read outputs of task ${mergeNativeTask.name}: " +
+                    "${e.message}. Skipping native-lib path-leak scan."
+                )
+                return
+            }
+
+            def soFiles = []
+            outputs.each { root ->
+                if (root == null || !root.exists()) return
+                if (root.isFile() && root.name.endsWith(".so")) {
+                    soFiles << root
+                } else if (root.isDirectory()) {
+                    soFiles += fileTree(root) { include "**/*.so" }.files
+                }
+            }
+            soFiles = soFiles.unique()
+
+            if (soFiles.isEmpty()) {
+                logger.warn(
+                    "[F-24] mergeReleaseNativeLibs produced no .so outputs to scan. " +
+                    "This is unusual for a release build; verify the CMake config " +
+                    "actually compiled the app's native modules. Skipping guard."
+                )
+                return
+            }
+
+            // Curated leak indicators. Order does not matter — every needle
+            // is applied to every file. Runtime-derived needles use the
+            // *build machine's* current environment; on CI this will pick
+            // up e.g. `runner`, `/home/runner`, etc.
+            def leakNeedles = [
+                [needle: '/Users/',   reason: 'macOS absolute path'],
+                [needle: '/home/',    reason: 'Linux absolute path'],
+                [needle: '/Volumes/', reason: 'macOS external-volume path'],
+                [needle: 'C:\\Users\\', reason: 'Windows absolute path'],
+                [needle: System.getProperty("user.name"),
+                 reason: 'current build-machine username'],
+                [needle: System.getProperty("user.home"),
+                 reason: 'current build-machine $HOME'],
+            ].findAll { it.needle && !it.needle.isEmpty() }
+             .unique { it.needle }
+
+            // ------------------------------------------------------------------
+            // Upstream-leak allowlist for KNOWN, INVESTIGATED, IRREPARABLE
+            // prebuilt .so files.
+            //
+            // The .so files RKSK compiles locally are covered by the
+            // -ffile-prefix-map flags in :app and every :react-native-* library
+            // (see android/build.gradle §subprojects). But some AARs ship
+            // *prebuilt* .so files inside their Gradle transform — we do not
+            // recompile them and cannot inject flags. If those prebuilts leak
+            // upstream author paths, our guard would fire on every build and
+            // the developer would have no remediation available.
+            //
+            // Each allowlist entry is a triple:
+            //   - filePattern    : regex matched against the .so file basename
+            //   - contextNeedle  : a longer string that MUST appear within ±200
+            //                      bytes of the flagged hit for the hit to be
+            //                      suppressed. Choosing a specific longer
+            //                      substring (e.g. a full CI runner path)
+            //                      makes the suppression narrow — a novel
+            //                      leak in the same file that lacks this
+            //                      context is still fatal.
+            //   - reason         : documented rationale for the suppression.
+            //
+            // Adding to this allowlist is a DELIBERATE ACT — every entry
+            // documents an unfixable leak and its threat-model justification
+            // (see android/NATIVE_PATH_HYGIENE.md §4.2 for the upstream-fix
+            // preference order). The default is fail-closed.
+            def upstreamLeakAllowlist = [
+                [
+                    filePattern  : ~/libfbjni\.so$/,
+                    contextNeedle: '/home/runner/work/fbjni/',
+                    reason       : 'Facebook fbjni prebuilt (GitHub Actions ' +
+                                   'CI runner path). fbjni ships inside ' +
+                                   'com.facebook.fbjni:fbjni-* as a prebuilt ' +
+                                   'AAR. Since RN 0.71+ fbjni is pulled in as ' +
+                                   'a Gradle dependency of react-android; we ' +
+                                   'do not recompile it. The leaked path is ' +
+                                   'public (fbjni is OSS on GitHub Actions), ' +
+                                   'non-identifying to RKSK, and unfixable ' +
+                                   'without vendoring fbjni.',
+                ],
+            ]
+
+            def violations = []
+            soFiles.each { soFile ->
+                byte[] bytes = null
+                try {
+                    bytes = soFile.bytes
+                } catch (Exception e) {
+                    logger.warn(
+                        "[F-24] Could not read ${soFile.absolutePath}: ${e.message}. " +
+                        "Skipping this .so for the scan."
+                    )
+                    return
+                }
+                // Decode as ISO-8859-1 (Latin-1) so every byte 0x00-0xFF
+                // maps to a distinct char, preserving the file's raw byte
+                // sequence for substring search. UTF-8 decoding would
+                // corrupt any high-bit binary content and could produce
+                // false negatives on paths encoded across byte boundaries.
+                def haystack = new String(bytes, "ISO-8859-1")
+                leakNeedles.each { entry ->
+                    if (haystack.contains(entry.needle)) {
+                        // Extract a short excerpt around the first hit for
+                        // diagnostic clarity. Guard the substring range so
+                        // near-start / near-end hits don't throw.
+                        def idx = haystack.indexOf(entry.needle)
+                        def start = Math.max(0, idx - 20)
+                        def end = Math.min(haystack.length(),
+                                           idx + entry.needle.length() + 60)
+                        // Sanitise: keep only printable ASCII in the excerpt
+                        // so shell terminals don't render binary noise.
+                        def excerpt = haystack.substring(start, end)
+                            .replaceAll(/[^\x20-\x7E]/, '·')
+
+                        // Check upstream allowlist: if THIS file matches an
+                        // allowlist entry AND the context around the hit
+                        // (±200 bytes) contains the entry's contextNeedle,
+                        // suppress the hit. We use a wider window than the
+                        // display excerpt above because the leaked string
+                        // (e.g. a full CI runner path) may extend well past
+                        // the 60-byte display window.
+                        def suppressed = upstreamLeakAllowlist.any { al ->
+                            if (!al.filePattern.matcher(soFile.name).find()) {
+                                return false
+                            }
+                            def ctxStart = Math.max(0, idx - 200)
+                            def ctxEnd = Math.min(haystack.length(),
+                                                  idx + entry.needle.length() + 200)
+                            def ctx = haystack.substring(ctxStart, ctxEnd)
+                            return ctx.contains(al.contextNeedle)
+                        }
+                        if (suppressed) {
+                            logger.info(
+                                "[F-24] suppressing known upstream leak in " +
+                                "${soFile.name} (needle '${entry.needle}'; " +
+                                "see android/NATIVE_PATH_HYGIENE.md §4.2)."
+                            )
+                            return
+                        }
+
+                        violations << [
+                            file:    soFile.absolutePath,
+                            needle:  entry.needle,
+                            reason:  entry.reason,
+                            excerpt: excerpt,
+                        ]
+                    }
+                }
+            }
+
+            if (violations.isEmpty()) return
+
+            def report = new StringBuilder()
+            report.append(
+                "F-24: native library path-leak detected in " +
+                "${mergeNativeTask.name} output. The following .so files " +
+                "contain absolute build-machine paths that would ship in " +
+                "the release APK:\n\n"
+            )
+            violations.each { v ->
+                def relFile = v.file.replace(rootProject.projectDir.absolutePath, ".")
+                report.append("  file:    ${relFile}\n")
+                report.append("  needle:  \"${v.needle}\" (${v.reason})\n")
+                report.append("  excerpt: ...${v.excerpt}...\n")
+                report.append("\n")
+            }
+            report.append(
+                "Common causes and fixes:\n" +
+                "  * A new RN module or upstream AAR ships a prebuilt .so\n" +
+                "    that leaks its author's build paths. Report upstream\n" +
+                "    and consider vendoring a patched version.\n" +
+                "  * A native module the app builds locally is missing\n" +
+                "    -ffile-prefix-map coverage. Verify the flags in\n" +
+                "    android/app/build.gradle §defaultConfig.externalNativeBuild\n" +
+                "    reach the offending compilation unit; if not, extend\n" +
+                "    the prefix-map set to cover the leaked path's prefix.\n" +
+                "  * The developer's home directory is on an unusual mount\n" +
+                "    that the prefix-map does not resolve to the same string\n" +
+                "    the compiler sees (e.g. a macOS Firmlink or Linux bind\n" +
+                "    mount). Verify System.getProperty(\"user.home\") returns\n" +
+                "    the same path clang embeds; realpath both if needed.\n" +
+                "\n" +
+                "See android/NATIVE_PATH_HYGIENE.md for full remediation."
             )
             throw new GradleException(report.toString())
         }
