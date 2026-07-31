@@ -1,0 +1,50 @@
+diff --git a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
+--- a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
++++ b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
+@@ -22,6 +22,12 @@
+ import com.facebook.react.common.MapBuilder
+ import com.facebook.react.common.build.ReactBuildConfig
+ import com.facebook.react.uimanager.ThemedReactContext
++// F-26 hardening: additional gate that reflects the CONSUMING APP's variant
++// (react-native-webview is compiled as a source library so this BuildConfig
++// tracks the app's build type, unlike ReactBuildConfig.DEBUG which comes from
++// the prebuilt react-android AAR and can drift if AAR variant selection is
++// misconfigured). See android/WEBVIEW_DEBUGGING.md.
++import com.reactnativecommunity.webview.BuildConfig
+ import org.json.JSONException
+ import org.json.JSONObject
+ import java.io.UnsupportedEncodingException
+@@ -88,7 +94,15 @@
+             ViewGroup.LayoutParams.MATCH_PARENT,
+             ViewGroup.LayoutParams.MATCH_PARENT
+         )
+-        if (ReactBuildConfig.DEBUG) {
++        // F-26 hardening: require BOTH gates to be debug for content-debugging
++        // to auto-enable. ReactBuildConfig.DEBUG alone is a compile-time constant
++        // baked into the react-android AAR variant chosen at link time; if AAR
++        // variant selection ever drifts (custom com.facebook.react plugin config,
++        // manual override, variantFilter), a release APK could ship with
++        // WebView content debugging enabled. Requiring the LIBRARY's own
++        // BuildConfig.DEBUG (which reflects THIS app's build variant) closes
++        // that gap statically. See android/WEBVIEW_DEBUGGING.md §Threat model.
++        if (ReactBuildConfig.DEBUG && BuildConfig.DEBUG) {
+             WebView.setWebContentsDebuggingEnabled(true)
+         }
+         webView.setDownloadListener(DownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+@@ -712,6 +726,16 @@
+     }
+ 
+     fun setWebviewDebuggingEnabled(viewWrapper: RNCWebViewWrapper, enabled: Boolean) {
++        // F-26 hardening: the setWebContentsDebuggingEnabled() call is a static
++        // method on android.webkit.WebView — invoking it with `true` enables
++        // chrome://inspect debugging for EVERY WebView in the process for the
++        // entire process lifetime. In release builds we ignore the JS prop
++        // entirely; a rogue or accidentally-shipped <WebView webviewDebuggingEnabled />
++        // must never be able to flip the process-wide flag on a customer's device.
++        // Debug builds retain the original behaviour so dev-loop tooling still works.
++        if (!BuildConfig.DEBUG) {
++            return
++        }
+         RNCWebView.setWebContentsDebuggingEnabled(enabled)
+     }
+ 

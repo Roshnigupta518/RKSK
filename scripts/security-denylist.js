@@ -17,12 +17,21 @@
  *      `react-native` itself, or Metro / codegen / TypeScript will
  *      silently do the wrong thing.
  *
- *   3. A stripped-transitive-dependency has crept back into
- *      node_modules (F-18 stripped-dep guard). Right now this only
- *      tracks the LAME 3.100 + JLayer 1.0.1 excision inside
- *      `react-native-compressor`, but the check is generic — any future
- *      "we removed X via patch-package" hardening can register itself
- *      in the STRIPPED_TRANSITIVE_DEPS table below.
+ *   3. A stripped-or-hardened-transitive-dependency has regressed inside
+ *      node_modules (F-18 & F-26 patched-dep guard). "Stripped" is used
+ *      loosely — some entries strip code (LAME/JLayer inside
+ *      react-native-compressor, F-18) while others harden code (F-26
+ *      compile-time gates on react-native-webview's remote-debugging
+ *      surface). Both cases share the same failure mode: patch-package
+ *      applied against a version of the file it no longer understands,
+ *      leaving pristine (vulnerable) code in place. The check is generic
+ *      — each entry in STRIPPED_TRANSITIVE_DEPS declares a pair of
+ *      substring lists:
+ *
+ *         forbiddenSymbols  — MUST NOT appear (pristine leftovers)
+ *         requiredSymbols   — MUST appear (patched-in markers)
+ *
+ *      A regression on EITHER list fails the install.
  *
  * Runs from the `postinstall` npm script so it catches:
  *
@@ -34,7 +43,10 @@
  *     .github/dependabot.yml is the belt; this check is the braces), and
  *   - a `react-native-compressor` version bump that made the
  *     patches/react-native-compressor+*.patch fail to apply and
- *     silently reintroduced LAME/JLayer.
+ *     silently reintroduced LAME/JLayer, and
+ *   - a `react-native-webview` version bump that reshuffled
+ *     RNCWebViewManagerImpl.kt line numbers and left the F-26
+ *     WebView-remote-debugging gates unhardened.
  *
  * ORDERING WITH patch-package: this script runs AFTER `patch-package`
  * (see the `postinstall` script in package.json). That ordering matters
@@ -51,7 +63,8 @@
  * in DENYLIST here needs a matching entry there.
  *
  * See android/NATIVE_MODULES.md (F-12), android/DEPENDENCIES.md
- * (F-16), and android/AUDIO_STRIP.md (F-18) for the rationale.
+ * (F-16), android/AUDIO_STRIP.md (F-18), and
+ * android/WEBVIEW_DEBUGGING.md (F-26) for the rationale.
  */
 
 const fs = require('fs');
@@ -255,6 +268,66 @@ const STRIPPED_TRANSITIVE_DEPS = [
             'file applied. If react-native-compressor was bumped, regenerate the patch ' +
             'against the new version (see android/AUDIO_STRIP.md §Regenerating).',
     },
+    {
+        finding: 'F-26',
+        packageName: 'react-native-webview',
+        summary:
+            "WebView remote-debugging (chrome://inspect) is a static process-wide " +
+            'switch on Android — one call to WebView.setWebContentsDebuggingEnabled(true) ' +
+            'exposes every WebView in the process (DOM, JS console, cookies, ' +
+            'localStorage) to anyone with USB access. patch-package pins two ' +
+            'gates in RNCWebViewManagerImpl.kt: (1) the auto-enable path at ' +
+            'WebView instantiation requires BOTH ReactBuildConfig.DEBUG and ' +
+            "the library's own BuildConfig.DEBUG to be true, and (2) the " +
+            'JS-controllable `webviewDebuggingEnabled` prop is a no-op in ' +
+            'release builds. If either gate is missing post-patch, the ' +
+            'audit finding is un-remediated.',
+        scanPaths: [
+            'node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt',
+        ],
+        // Pristine leftovers — if any of these appear, the patch failed.
+        // We anchor on the exact pristine strings that the patch REMOVES.
+        // Post-patch:
+        //   - `if (ReactBuildConfig.DEBUG) {`  →  `if (ReactBuildConfig.DEBUG && BuildConfig.DEBUG) {`
+        //   - `setWebviewDebuggingEnabled(...)` body no longer begins with
+        //     a bare `RNCWebView.setWebContentsDebuggingEnabled(enabled)` —
+        //     it now begins with the `// F-26 hardening:` comment block
+        //     and the `if (!BuildConfig.DEBUG) return` guard.
+        // Both pristine substrings below cannot reappear via a legitimate
+        // upstream refactor without also breaking the F-26 hardening.
+        forbiddenSymbols: [
+            {
+                needle: 'if (ReactBuildConfig.DEBUG) {',
+                mustBeUncommented: true,
+            },
+        ],
+        // Patched-in markers — if any is missing, the patch did not apply
+        // to the location we expected (upstream reshuffled lines / renamed
+        // symbols) and the hardening is silently absent.
+        requiredSymbols: [
+            // The single import that both gates depend on. If this is
+            // missing, neither gate compiles and the patch clearly failed.
+            {needle: 'import com.reactnativecommunity.webview.BuildConfig'},
+            // Compound instantiation-time gate.
+            {needle: 'if (ReactBuildConfig.DEBUG && BuildConfig.DEBUG) {'},
+            // Prop-path release-build short-circuit. The exact combination
+            // of `!BuildConfig.DEBUG` inside `setWebviewDebuggingEnabled`
+            // is unique to the F-26 patch.
+            {needle: 'if (!BuildConfig.DEBUG) {'},
+            // Belt-and-braces: the F-26 comment banner. This won't survive
+            // an upstream cleanup that strips comments, so we don't lean
+            // on it as the sole marker — but its absence alongside a
+            // missing gate makes the failure message unambiguous.
+            {needle: 'F-26 hardening'},
+        ],
+        remediation:
+            'Run `npx patch-package` and confirm patches/react-native-webview+*.patch ' +
+            'applied. If react-native-webview was bumped, regenerate the patch ' +
+            'against the new version (see android/WEBVIEW_DEBUGGING.md ' +
+            '§Regeneration playbook). Do NOT publish a release build until this ' +
+            'guard is green — a failed patch here means chrome://inspect can ' +
+            'attach to production WebViews.',
+    },
 ];
 
 function stripLineComments(source, fileExt) {
@@ -296,6 +369,7 @@ function checkStrippedTransitiveDeps() {
             const raw = fs.readFileSync(absPath, 'utf8');
             const codeOnly = stripLineComments(raw, path.extname(absPath));
 
+            // ---- forbidden (pristine leftovers) ----
             for (const {needle, mustBeUncommented} of entry.forbiddenSymbols) {
                 const haystack = mustBeUncommented ? codeOnly : raw;
                 if (haystack.includes(needle)) {
@@ -308,7 +382,28 @@ function checkStrippedTransitiveDeps() {
                         entry,
                         relPath,
                         needle,
+                        kind: 'forbidden',
                         context: matchLine.trim().slice(0, 160),
+                    });
+                }
+            }
+
+            // ---- required (patched-in markers) ----
+            // Optional field: only some entries assert positive markers.
+            // A patch that just deletes lines has nothing meaningful to
+            // check for post-patch; a patch that modifies-in-place (like
+            // F-26) does.
+            const requiredSymbols = entry.requiredSymbols || [];
+            for (const {needle, mustBeUncommented} of requiredSymbols) {
+                const haystack = mustBeUncommented ? codeOnly : raw;
+                if (!haystack.includes(needle)) {
+                    violations.push({
+                        entry,
+                        relPath,
+                        needle,
+                        kind: 'required',
+                        // No context line — the whole point is that it's absent.
+                        context: '(expected marker is missing from file)',
                     });
                 }
             }
@@ -346,7 +441,11 @@ function reportStrippedTransitiveDeps(violations) {
         console.error('');
         console.error('  Regressions detected:');
         for (const v of list) {
-            console.error(`    ✗ ${v.needle}`);
+            // Legacy entries pre-F-26 didn't set `kind` — default to
+            // 'forbidden' for backwards compatibility.
+            const kind = v.kind || 'forbidden';
+            const arrow = kind === 'required' ? '✗ missing:' : '✗ leftover:';
+            console.error(`    ${arrow} ${v.needle}`);
             console.error(`        in ${v.relPath}`);
             if (v.context) {
                 console.error(`        near: ${v.context}`);
