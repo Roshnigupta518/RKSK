@@ -551,6 +551,18 @@ def mergedManifestStripRegistry = [
         subject : 'the USE_FINGERPRINT permission (deprecated on API 28+, unused by RKSK Keychain policy)',
         docRef  : 'android/PERMISSIONS.md §USE_FINGERPRINT',
     ],
+    [
+        finding : "F-25",
+        needle  : 'android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"',
+        subject : 'the WorkManager DiagnosticsReceiver (DUMP-protected, exported=true, dev-only diagnostic surface)',
+        docRef  : 'android/RECEIVER_HYGIENE.md §DiagnosticsReceiver',
+    ],
+    [
+        finding : "F-25",
+        needle  : 'android:name="androidx.profileinstaller.ProfileInstallReceiver"',
+        subject : 'the ProfileInstaller receiver (DUMP-protected, exported=true, baseline-profile install/save surface)',
+        docRef  : 'android/RECEIVER_HYGIENE.md §ProfileInstallReceiver',
+    ],
 ]
 
 def mergedManifestTaskNames = [

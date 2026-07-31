@@ -13,6 +13,10 @@ below documents the "why" for reviewers.
 Related findings:
 * **F-14** — WRITE/READ_EXTERNAL_STORAGE without `maxSdkVersion` (fixed).
 * **F-23** — Over-broad background / silent-download permissions (fixed).
+* **F-25** — WorkManager / ProfileInstaller receivers exported under
+  `android.permission.DUMP` (fixed). See `android/RECEIVER_HYGIENE.md`
+  for the receiver-side analysis; both fixes share the same
+  `mergedManifestStripRegistry` guard in `android/app/build.gradle`.
 
 ---
 
@@ -404,6 +408,7 @@ Pre-launch report's "Sensitive permissions" section should NOT list
 |------|--------|---------|
 | 2026-07-15 | Added `WRITE/READ_EXTERNAL_STORAGE` `maxSdkVersion` scopes + `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` for API 33+. | F-14 |
 | 2026-07-30 | Stripped `DOWNLOAD_WITHOUT_NOTIFICATION`, `RECEIVE_BOOT_COMPLETED`, `USE_BIOMETRIC`, `USE_FINGERPRINT` via manifest merger. Added release-build guard. Documented `foregroundServiceType="dataSync"` policy justification. | F-23 |
+| 2026-07-31 | Stripped `androidx.work.impl.diagnostics.DiagnosticsReceiver` + `androidx.profileinstaller.ProfileInstallReceiver` (DUMP-protected, exported=true) via the same `mergedManifestStripRegistry` guard. See `android/RECEIVER_HYGIENE.md`. | F-25 |
 
 When editing this file, add a new row with the date, a one-line
 summary, and the finding ID (or "MAINT" for maintenance-only

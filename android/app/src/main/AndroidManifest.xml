@@ -297,6 +297,126 @@
           tools:node="remove" />
 
       <!--
+          F-25 hardening: strip DUMP-protected diagnostic / profileinstaller
+          receivers that AndroidX transitive dependencies inject into the
+          merged manifest as android:exported="true".
+
+          THE VULNERABILITY
+
+          `androidx.work:work-runtime:2.9.1` (pulled in transitively by
+          react-native-maps) and `androidx.profileinstaller:profileinstaller:
+          1.4.1` (pulled in transitively by the AGP baseline-profile
+          machinery) each register a BroadcastReceiver whose manifest
+          entry declares:
+
+              android:exported="true"
+              android:permission="android.permission.DUMP"
+
+          The intent is "only privileged tools can trigger this receiver."
+          But `android.permission.DUMP` has protectionLevel
+
+              signature|privileged|development
+
+          The `development` flag means the permission CAN be granted at
+          runtime to non-system apps via `adb shell pm grant`. On any
+          device with ADB debugging enabled, or on a rooted device, an
+          attacker can obtain DUMP and then invoke either receiver.
+
+          What the receivers do when invoked:
+
+            * DiagnosticsReceiver (action `androidx.work.diagnostics.
+              REQUEST_DIAGNOSTICS`) — WorkManager writes its internal
+              scheduler state to logcat: pending Worker class names,
+              constraints, initial delays, and back-off history. That
+              leaks the app's autolinked background workflow shape to
+              anyone with logcat access.
+
+            * ProfileInstallReceiver (actions `INSTALL_PROFILE`,
+              `SKIP_FILE`, `SAVE_PROFILE`, `BENCHMARK_OPERATION`) —
+              triggers baseline-profile install / clear / save /
+              benchmark operations. `SAVE_PROFILE` is particularly
+              interesting to an attacker: it dumps the current
+              runtime-captured hot-method profile to disk, which is
+              essentially a call-graph fingerprint of the current
+              session.
+
+          THREAT MODEL
+
+          Realistic exploitation vectors for RKSK:
+            1. A malicious app on a rooted / dev-mode field device
+               grants itself DUMP via ADB and triggers either receiver
+               to enumerate WorkManager task classes or capture a
+               runtime profile.
+            2. A physical-access attacker with an unlocked bootloader
+               / Frida installation triggers the receivers via `adb
+               shell am broadcast` before the app is even foregrounded.
+            3. Play Console pre-launch scanners (MobSF, Ostorlab,
+               NowSecure) flag `exported="true"` receivers as attack
+               surface regardless of the guarding permission's level.
+
+          Not exploitable via:
+            * Zero-click network — the receivers are only invocable
+              via local IPC (Intent broadcast), not remotely.
+            * A normal / unprivileged Play Store app on a stock device
+              — DUMP is not granted to standard apps.
+
+          Overall severity: LOW-TO-MEDIUM. But the remediation cost is
+          also negligible (one `tools:node="remove"` per receiver), so
+          the fix is worth it as defense-in-depth against dev-mode /
+          rooted-device exploitation, and to close the corresponding
+          pre-launch report finding.
+
+          WHY STRIP RATHER THAN DOWNGRADE TO exported="false"
+
+          Both receivers are triggered by OUT-OF-PROCESS callers —
+          `DiagnosticsReceiver` by dev-tool broadcasts, `ProfileInstall
+          Receiver` by Play Store service or `am broadcast`. Nothing
+          IN RKSK's own code path invokes either receiver. Forcing
+          `exported="false"` would make them invocable only from
+          in-process code — which is exactly zero call sites, so the
+          net effect is identical to full removal. `tools:node="remove"`
+          is more honest about the intent and removes the entire
+          `<receiver>` block from the merged manifest, reducing the
+          static-analysis attack surface as well as the runtime one.
+
+          WHY THIS IS SAFE FOR RKSK SPECIFICALLY
+
+            * DiagnosticsReceiver — pure dev tool. Zero production
+              value. Removing it strictly removes attack surface.
+            * ProfileInstallReceiver — enables Google Play to install
+              baseline profiles at first launch for a cold-start
+              improvement (~10-30% on some devices). RKSK ships NO
+              user-authored baseline profile
+              (`android/app/src/main/baseline-prof.txt` does not
+              exist), so the merged profile only contains minor
+              transitive contributions from AndroidX libraries. The
+              practical cold-start regression is negligible for a
+              health-worker app where users spend hours in the app
+              per session after opening it once.
+
+          If the product team ever ships a hand-authored baseline
+          profile (via Macrobenchmark or AGP's profile-generation
+          tasks) AND the resulting cold-start improvement is
+          measurable, delete the ProfileInstallReceiver removal
+          block below AND update android/RECEIVER_HYGIENE.md with
+          the new rationale.
+
+          The release-build Gradle guard in
+          android/app/build.gradle §mergedManifestStripRegistry
+          also asserts both receivers stay absent from the merged
+          output.
+
+          See android/RECEIVER_HYGIENE.md for the full threat model,
+          DUMP protection-level analysis, and verification recipes.
+      -->
+      <receiver
+          android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+          tools:node="remove" />
+      <receiver
+          android:name="androidx.profileinstaller.ProfileInstallReceiver"
+          tools:node="remove" />
+
+      <!--
           F-23 hardening — foreground-service classification.
 
           `RNBackgroundActionsTask` is react-native-background-actions's
