@@ -19,6 +19,7 @@ const Dashboard = ({ navigation }) => {
   const activityPlanList = useAppSelector(state => state.activityPlan.data);
   const magList = useAppSelector(state => state.iecMaterialList.data);
   const awarenessVideoList = useAppSelector(state => state.awarenessVideoList.data);
+  const onBoarding = useAppSelector(state => state.login.data);
 
   const dashboardCounts = useMemo(() => {
     return calculateDashboardCounts(activityPlanList);
@@ -98,6 +99,8 @@ const Dashboard = ({ navigation }) => {
 
       {/* ---------------- Cards Section ---------------- */}
       <View style={styles.cardContainer}>
+      {onBoarding.trainerId != '0' &&
+        <>
         <View style={styles.row}>
           {renderCard(dashboardCounts?.completedThisMonth, 
             "Activities\nCompleted\nThis Month", 
@@ -121,6 +124,8 @@ const Dashboard = ({ navigation }) => {
             )}
           </View>
         </View>
+        </>
+      }
 
         <View style={styles.row}>
           {renderCard(magList?.length, `IEC Materials`, colors.orange,
