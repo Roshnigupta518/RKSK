@@ -82,8 +82,8 @@
         audio-file read use case, and adding it would enlarge the grant
         surface without justification.
     -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> -->
 
     <!--
         Background-sync stack. RKSK ships an offline-first workflow for

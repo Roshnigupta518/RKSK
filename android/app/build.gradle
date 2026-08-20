@@ -107,8 +107,8 @@ android {
         applicationId "com.rkskmp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 23
-        versionName "1.0.15"
+        versionCode 24
+        versionName "1.0.16"
 
         // F-08: inject Google Maps API key at build time so it never lives
         // in source control. Developers set GOOGLE_MAPS_API_KEY in
