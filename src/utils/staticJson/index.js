@@ -10,7 +10,8 @@ export const activityPlace = [
     { "value": 3, "label": "सामुदायिक भवन" },
     { "value": 4, "label": "खेल का मैदान" },
     { "value": 5, "label": "आयुष्मान आरोग्य मंदिर" },
-    { "value": 6, "label": "अन्य" }
+    { "value": 7, "label": "पंचायत भवन" },
+    { "value": 6, "label": "अन्य" },
 ]
 
 export const activityType = [
