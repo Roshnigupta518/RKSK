@@ -27,7 +27,12 @@ export const fetchAshaByVacantSupervisor = createAsyncThunk(
 
       console.log({fetchAshaByVacantSupervisor:response})
 
-      const data = mapToPickerFormat(response.data || [])
+      const finalData = mapToPickerFormat(response.data || [])
+      let data = finalData || [];
+      data = [
+        { label: 'Not available', value: 0 },
+        ...(finalData || []),
+      ];
       return { blockId, data };
     } catch (err) {
       console.log({err})
@@ -47,6 +52,7 @@ const MastersSlice = createSlice({
     peerEducatorByAsha: {},
     genderByPeerEducator: {},
     loading: false,
+    villageByBlock: {}
   },
   
 
@@ -61,6 +67,7 @@ const MastersSlice = createSlice({
       if (type === 'village') state.villageByAsha[id] = data;
       if (type === 'peerEducator') state.peerEducatorByAsha[id] = data;
       if (type === 'peerEducatorGender') state.genderByPeerEducator[id] = data;
+      if (type === 'villageByBlock') state.villageByBlock[id] = data;
     },
     
 
@@ -74,6 +81,7 @@ const MastersSlice = createSlice({
         state.villageByAsha = {};
         state.peerEducatorByAsha = {};
         state.genderByPeerEducator = {};
+        state.villageByBlock = []
       }
 
       if (level === 'block') {
@@ -82,6 +90,7 @@ const MastersSlice = createSlice({
         state.villageByAsha = {};
         state.peerEducatorByAsha = {};
         state.genderByPeerEducator = {};
+        state.villageByBlock = []
       }
 
       if (level === 'ashaSahyogi') {
@@ -89,12 +98,14 @@ const MastersSlice = createSlice({
         state.villageByAsha = {};
         state.peerEducatorByAsha = {};
         state.genderByPeerEducator = {};
+        state.villageByBlock = []
       }
 
       if (level === 'asha') {
         state.villageByAsha = {};
         state.peerEducatorByAsha = {};
         state.genderByPeerEducator = {};
+        state.villageByBlock = []
       }
 
       if (level === 'peerEducator') {
@@ -158,6 +169,11 @@ const MastersSlice = createSlice({
             state.genderByPeerEducator[id] = data;
             saveToLocal(`GENDER_${id}`, data);
             break;
+
+          case 19: // village by block if asha is not available
+            state.villageByBlock[id] = data;
+            saveToLocal(`VILLAGE_BY_BLOCK_${id}`, data);
+            break; 
         }
       })
       .addCase(fetchMasters.rejected, state => {

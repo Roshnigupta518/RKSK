@@ -159,20 +159,20 @@ export const mapToPickerFormat = (arr = []) =>
 export const getMastersDataHandle = async ({ flag, id = 0, cluster = 0 }) => {
   try {
     const url = `${API.GET_MASTER}Flag=${flag}&Id=${id}&Cluster=${cluster}`;
+    console.log({url})
     const result = await getApi(url);
 
     if (result?.status === 200 && Array.isArray(result?.data)) {
-      // const data = mapToPickerFormat(result.data);
       const data = mapToPickerFormat(result.data) || [];
         let finalData = data;
 
-        if (flag === 4) {
+        if (flag === 4 || flag === 7) {
           finalData = [
             { label: 'Not available', value: 0 },
             ...(data || []),
           ];
         }
-
+       console.log({finalData})
       // 1️⃣ Save to local storage
       let storageKey = '';
 
@@ -197,6 +197,9 @@ export const getMastersDataHandle = async ({ flag, id = 0, cluster = 0 }) => {
           break;
         case 14:
           storageKey = `PEER_EDUCATOR_GENDER_${id}`;
+          break;
+        case 19:
+          storageKey = `VILLAGE_BY_BLOCK_${id}`;
           break;
         default:
           break;
@@ -230,6 +233,9 @@ export const getMastersDataHandle = async ({ flag, id = 0, cluster = 0 }) => {
           break;
         case 14:
           type = 'peerEducatorGender';
+          break;
+        case 19:
+          type = 'villageByBlock';
           break;
         default:
           break;

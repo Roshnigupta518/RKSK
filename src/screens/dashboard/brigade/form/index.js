@@ -45,6 +45,7 @@ const BrigadeForm = ({ navigation }) => {
         villageByAsha = {},         // Flag 8
         peerEducatorByAsha = {},    // Flag 13
         genderByPeerEducator = {},  // Flag 14
+        villageByBlock = {},  // Flag 19
         loading,
     } = useAppSelector(state => state.masters);
 
@@ -53,7 +54,8 @@ const BrigadeForm = ({ navigation }) => {
         block: blockByDistrict[inputs.district] || [],
         supervisor: ashaSahyogiByBlock[inputs.block] || [],        // Flag 4 (ASHA Sahyogi)
         asha: ashaBySahyogi[inputs.supervisorName] || [],     // Flag 7 
-        village: villageByAsha[inputs.ashaName] || [],            // Flag 8
+        // village: villageByAsha[inputs.ashaName] || [],            // Flag 8
+        village: inputs.ashaName == 0 ? villageByBlock[inputs.block] || [] : villageByAsha[inputs.ashaName] || [], // Flag 8,19
         sathiya: peerEducatorByAsha[inputs.ashaName] || [],       // Flag 13
         // gender: genderByPeerEducator[inputs.sathiyaName] || [],   // Flag 14
 
@@ -408,6 +410,20 @@ const BrigadeForm = ({ navigation }) => {
                                                 }
 
                                                 if (item.key === 'ashaName') {
+                                                    if (val == 0) {
+                                                        dispatch(fetchMasters({ 
+                                                          flag: 19, 
+                                                          id: inputs?.block 
+                                                        }));
+                                                      
+                                                        setInputs(prev => ({
+                                                          ...prev,
+                                                          village: '',
+                                                          sathiyaName: '',
+                                                          gender: '',
+                                                        }));
+                                                      }
+
                                                     dispatch(fetchMasters({ flag: 8, id: val }));   // Village
                                                     dispatch(fetchMasters({ flag: 13, id: val })); // Peer Educator
 

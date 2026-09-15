@@ -7,9 +7,9 @@
 import { envSecrets } from './env';
 
 export const environment = {
-     baseUrl: 'https://rksk.nhmmp.gov.in/rkskapi/api/',
-     imageUrl: 'https://rksk.nhmmp.gov.in/rkskapi/api/',
-    // baseUrl: 'http://139.5.6.137/RKSKUATAPI/api/',
-    // imageUrl : 'http://139.5.6.137/RKSKUATAPI/',
+    //  baseUrl: 'https://rksk.nhmmp.gov.in/rkskapi/api/',
+    //  imageUrl: 'https://rksk.nhmmp.gov.in/rkskapi/api/',
+    baseUrl: 'http://139.5.6.137/RKSKUATAPI/api/',
+    imageUrl : 'http://139.5.6.137/RKSKUATAPI/',
     GOOGLE_API_KEY: envSecrets.GOOGLE_API_KEY,
   };
