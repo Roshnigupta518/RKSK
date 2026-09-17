@@ -52,7 +52,8 @@ const MastersSlice = createSlice({
     peerEducatorByAsha: {},
     genderByPeerEducator: {},
     loading: false,
-    villageByBlock: {}
+    villageByBlock: {},
+    peerEducatorByVillage:{}
   },
   
 
@@ -68,6 +69,7 @@ const MastersSlice = createSlice({
       if (type === 'peerEducator') state.peerEducatorByAsha[id] = data;
       if (type === 'peerEducatorGender') state.genderByPeerEducator[id] = data;
       if (type === 'villageByBlock') state.villageByBlock[id] = data;
+      if (type === 'peerEducatorByVillage') state.peerEducatorByVillage[id] = data;
     },
     
 
@@ -81,7 +83,8 @@ const MastersSlice = createSlice({
         state.villageByAsha = {};
         state.peerEducatorByAsha = {};
         state.genderByPeerEducator = {};
-        state.villageByBlock = []
+        state.villageByBlock = [];
+        state.peerEducatorByVillage = {}
       }
 
       if (level === 'block') {
@@ -90,7 +93,8 @@ const MastersSlice = createSlice({
         state.villageByAsha = {};
         state.peerEducatorByAsha = {};
         state.genderByPeerEducator = {};
-        state.villageByBlock = []
+        state.villageByBlock = [],
+        state.peerEducatorByVillage = {}
       }
 
       if (level === 'ashaSahyogi') {
@@ -98,14 +102,16 @@ const MastersSlice = createSlice({
         state.villageByAsha = {};
         state.peerEducatorByAsha = {};
         state.genderByPeerEducator = {};
-        state.villageByBlock = []
+        state.villageByBlock = [],
+        state.peerEducatorByVillage = {}
       }
 
       if (level === 'asha') {
         state.villageByAsha = {};
         state.peerEducatorByAsha = {};
         state.genderByPeerEducator = {};
-        state.villageByBlock = []
+        state.villageByBlock = [],
+        state.peerEducatorByVillage = {}
       }
 
       if (level === 'peerEducator') {
@@ -173,6 +179,11 @@ const MastersSlice = createSlice({
           case 19: // village by block if asha is not available
             state.villageByBlock[id] = data;
             saveToLocal(`VILLAGE_BY_BLOCK_${id}`, data);
+            break; 
+
+          case 20: // peer educator by village if asha is not available
+            state.peerEducatorByVillage[id] = data;
+            saveToLocal(`PEER_EDUCATOR_BY_VILLAGE_${id}`, data);
             break; 
         }
       })

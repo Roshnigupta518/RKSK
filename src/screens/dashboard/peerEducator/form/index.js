@@ -71,6 +71,7 @@ const PeerEducatorForm = ({ navigation }) => {
     peerEducatorByAsha = {},    // Flag 13
     genderByPeerEducator = {},  // Flag 14
     villageByBlock = {}, // Flag 19
+    peerEducatorByVillage = {}, // Flag 20
     loading,
   } = useAppSelector(state => state.masters);
 
@@ -88,7 +89,8 @@ const PeerEducatorForm = ({ navigation }) => {
     asha: ashaBySahyogi[inputs.supervisorName] || [],     // Flag 7 
     // village: villageByAsha[inputs.ashaName] || [],     // Flag 8,19
     village: inputs.ashaName == 0 ? villageByBlock[inputs.block] || [] : villageByAsha[inputs.ashaName] || [], // Flag 8,19
-    sathiya: peerEducatorByAsha[inputs.ashaName] || [],       // Flag 13
+    // sathiya: peerEducatorByAsha[inputs.ashaName] || [],       // Flag 13
+    sathiya: inputs.ashaName == 0 ? peerEducatorByVillage[inputs.village] || []: peerEducatorByAsha[inputs.ashaName] || [],
     gender: genderByPeerEducator[inputs.sathiyaName] || [],   // Flag 14
     location: activityPlace || [],
     activityType: activityType || [],
@@ -514,8 +516,6 @@ const PeerEducatorForm = ({ navigation }) => {
                         handleError('', item.key);
 
                         if (item.key === 'supervisorName') {
-                          // dispatch(fetchMasters({ flag: 7, id: val })); // ASHA by ASHA Sahyogi
-                          console.log({ val })
                           if (val == 0) {
                             // 🔥 vacant supervisor case
                             dispatch(fetchAshaByVacantSupervisor({
@@ -540,8 +540,7 @@ const PeerEducatorForm = ({ navigation }) => {
                             dispatch(fetchMasters({ 
                               flag: 19, 
                               id: inputs?.block 
-                            }));
-                          
+                            })); //village by block
                             setInputs(prev => ({
                               ...prev,
                               village: '',
@@ -555,6 +554,22 @@ const PeerEducatorForm = ({ navigation }) => {
                           setInputs(prev => ({
                             ...prev,
                             village: '',
+                            sathiyaName: '',
+                            gender: '',
+                          }));
+                        }
+
+                         // Peer Educator by Village
+                        if (item.key === 'village') {
+                          if (inputs.ashaName == 0) {
+                            dispatch(fetchMasters({
+                              flag: 20,
+                              id: val, // selected villageId
+                            }));
+                          }
+
+                          setInputs(prev => ({
+                            ...prev,
                             sathiyaName: '',
                             gender: '',
                           }));

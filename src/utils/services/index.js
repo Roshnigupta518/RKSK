@@ -201,6 +201,9 @@ export const getMastersDataHandle = async ({ flag, id = 0, cluster = 0 }) => {
         case 19:
           storageKey = `VILLAGE_BY_BLOCK_${id}`;
           break;
+        case 20:
+          storageKey = `PEER_EDUCATOR_BY_VILLAGE_${id}`;
+          break;
         default:
           break;
       }
@@ -236,6 +239,9 @@ export const getMastersDataHandle = async ({ flag, id = 0, cluster = 0 }) => {
           break;
         case 19:
           type = 'villageByBlock';
+          break;
+        case 20:
+          type = 'peerEducatorByVillage';
           break;
         default:
           break;

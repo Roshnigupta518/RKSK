@@ -46,6 +46,7 @@ const BrigadeForm = ({ navigation }) => {
         peerEducatorByAsha = {},    // Flag 13
         genderByPeerEducator = {},  // Flag 14
         villageByBlock = {},  // Flag 19
+        peerEducatorByVillage = {}, // Flag 20
         loading,
     } = useAppSelector(state => state.masters);
 
@@ -56,7 +57,8 @@ const BrigadeForm = ({ navigation }) => {
         asha: ashaBySahyogi[inputs.supervisorName] || [],     // Flag 7 
         // village: villageByAsha[inputs.ashaName] || [],            // Flag 8
         village: inputs.ashaName == 0 ? villageByBlock[inputs.block] || [] : villageByAsha[inputs.ashaName] || [], // Flag 8,19
-        sathiya: peerEducatorByAsha[inputs.ashaName] || [],       // Flag 13
+        // sathiya: peerEducatorByAsha[inputs.ashaName] || [],       // Flag 13
+        sathiya: inputs.ashaName == 0 ? peerEducatorByVillage[inputs.village] || []: peerEducatorByAsha[inputs.ashaName] || [],
         // gender: genderByPeerEducator[inputs.sathiyaName] || [],   // Flag 14
 
     };
@@ -218,7 +220,7 @@ const BrigadeForm = ({ navigation }) => {
             if (inputs.supervisorName === undefined || inputs.supervisorName === null || inputs.supervisorName === '') {
                 tempErrors.supervisorName = 'Please select supervisor';
             }
-            if (!inputs.ashaName) tempErrors.ashaName = 'Please select ASHA';
+            if (!inputs.ashaName === undefined || inputs.ashaName === null || inputs.ashaName === '') tempErrors.ashaName = 'Please select ASHA';
             if (!inputs.village) tempErrors.village = 'Please select village';
             if (!inputs.sathiyaName) tempErrors.sathiyaName = 'Please select peer educator';
         }
@@ -431,18 +433,22 @@ const BrigadeForm = ({ navigation }) => {
                                                         ...prev,
                                                         village: '',
                                                         sathiyaName: '',
-                                                        // gender: '',
                                                     }));
                                                 }
 
-                                                if (item.key === 'sathiyaName') {
-                                                    // dispatch(fetchMasters({ flag: 14, id: val })); // Gender
-                                                    // dispatch(setPeerEducatorId(val))
-                                                    // setInputs(prev => ({
-                                                    //     ...prev,
-                                                    //     gender: '',
-                                                    // }));
-                                                    // startBackgroundService(syncTaskName.syncPeerReportingCount)
+                                                  // Peer Educator by Village
+                                                if (item.key === 'village') {
+                                                    if (inputs.ashaName == 0) {
+                                                    dispatch(fetchMasters({
+                                                        flag: 20,
+                                                        id: val, // selected villageId
+                                                    }));
+                                                    }
+                        
+                                                    setInputs(prev => ({
+                                                    ...prev,
+                                                    sathiyaName: '',
+                                                    }));
                                                 }
                                             }}
                                         />

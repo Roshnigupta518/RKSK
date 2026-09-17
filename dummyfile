@@ -1,0 +1,16 @@
+cd /Users/Geeta/Desktop/NHM/rksk/android
+./gradlew --stop
+rm -rf app/.cxx
+rm -rf .cxx
+rm -rf app/build
+rm -rf build
+rm -rf ~/.gradle/caches/8.14.3/transforms/6ab28e5d6003888dc378c77ac39a79c0
+rm -rf ~/.gradle/caches/8.14.3/transforms
+export PATH="/Users/Geeta/.nvm/versions/node/v20.20.2/bin:$PATH"
+
+which node
+node -v
+
+./gradlew :app:assembleDebug --no-daemon
+cd ..
+npx react-native run-android

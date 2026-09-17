@@ -31,18 +31,18 @@ import { logger } from '../../../utils/logger';
 const INITIALINPUT = {
   //Peer educator login
   // userName: 'JHBUA6099', 
-  // password: '123456',
+  // password: 'Admin@123',
 
   //Trainer login
-  userName: 'Jhabua#F2', //Basoda#M1  
-  password: 'Admin@123',
+  // userName: 'Jhabua#F2', //Basoda#M1  
+  // password: 'Admin@123',
 
   // live trainer login
   //  userName: 'Ghughri#M2', 
   //  password: 'Admin@123',
 
-  // userName: '', 
-  // password: '',
+  userName: '', 
+  password: '',
 };
 
 const Login = ({ navigation }) => {
